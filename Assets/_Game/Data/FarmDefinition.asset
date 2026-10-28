@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89a58ef9041865a4cba59f84397d7895, type: 3}
+  m_Name: FarmDefinition
+  m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.FarmDefinition
+  _zones:
+  - {fileID: 11400000, guid: f9a747d789084604c8324a46ce14d812, type: 2}
+  - {fileID: 11400000, guid: 15e46c111039fdc4488696d9e696e1d7, type: 2}
+  - {fileID: 11400000, guid: 9652a8cae25394c4f8e4da133fd27f6b, type: 2}
+  _crops:
+  - {fileID: 11400000, guid: 0d1f66a878e77a747b0410697096f0b1, type: 2}
+  - {fileID: 11400000, guid: 21478a3096c04724b8d63c86b461b443, type: 2}
+  - {fileID: 11400000, guid: 169f92101fac20c4aba79bb5bbb37370, type: 2}
+  - {fileID: 11400000, guid: 67376a1f0848b374a944c67bba8510e4, type: 2}
+  - {fileID: 11400000, guid: 9f482f5321053bd4e860d2889985dd43, type: 2}
+  - {fileID: 11400000, guid: d4901de2b8203b64391a5f34d90a1809, type: 2}
+  - {fileID: 11400000, guid: 2b80b99f74dda3e42a0cd71beab7d25a, type: 2}
+  - {fileID: 11400000, guid: bddb89a8722407540aef76bb5cdb3bd2, type: 2}
+  - {fileID: 11400000, guid: 91fc3692e83af044895572e63d2a5085, type: 2}
+  - {fileID: 11400000, guid: ed1d95877c004c84f80bb32b87713cf2, type: 2}
+  - {fileID: 11400000, guid: c1fdabc4c90b5824e99fd8fbb8b8500f, type: 2}
+  - {fileID: 11400000, guid: e559f381b74f7704f93ab0db303f3a69, type: 2}
+  - {fileID: 11400000, guid: 804e9241c4852bb42b99f37138144436, type: 2}
+  - {fileID: 11400000, guid: bafea3d1db40451459afeaa59f9b1ce7, type: 2}
+  - {fileID: 11400000, guid: 7694b80f83886e843a83e9a3c6c0cd59, type: 2}
+  - {fileID: 11400000, guid: 3494fcf9f4fd11f41bb75e6b13423ccf, type: 2}
+  - {fileID: 11400000, guid: 19ae4dc53decd4747853167369f53767, type: 2}
+  - {fileID: 11400000, guid: dfabf9ad0e521694c8c0075658f2dc57, type: 2}
+  - {fileID: 11400000, guid: 4cc274d5b3a04e3498c8c69be8d9ddc9, type: 2}
+  - {fileID: 11400000, guid: c0f9cbd73f2fab546baa3ce622831899, type: 2}
+  - {fileID: 11400000, guid: 540da6599f140e24e8ccaa680cbf8b0f, type: 2}
+  - {fileID: 11400000, guid: 4e2f3bde2e34f7744b48e39c6309054f, type: 2}
+  - {fileID: 11400000, guid: 212fab794074b02428fe1f71d14aa15e, type: 2}
+  - {fileID: 11400000, guid: 96514196ffd62d14bad436fd9dba6322, type: 2}
+  - {fileID: 11400000, guid: 9bb66d80ef59d8247a1aaa90dd7f579c, type: 2}
+  _startCoins: 60
+  _startSeeds:
+  - Crop: {fileID: 11400000, guid: 0d1f66a878e77a747b0410697096f0b1, type: 2}
+    Count: 5

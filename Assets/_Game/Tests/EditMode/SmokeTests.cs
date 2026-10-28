@@ -8,7 +8,7 @@ namespace VeQue.Tests
         [Test]
         public void LogicAssembly_IsReferenced()
         {
-            Assert.AreEqual(LogicAssembly.Name, typeof(LogicAssembly).Assembly.GetName().Name);
+            Assert.AreEqual("VeQue.Logic", typeof(Farm).Assembly.GetName().Name);
         }
     }
 }

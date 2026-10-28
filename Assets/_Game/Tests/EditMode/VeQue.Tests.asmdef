@@ -4,7 +4,8 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "VeQue.Logic"
+        "VeQue.Logic",
+        "VeQue.View"
     ],
     "includePlatforms": [
         "Editor"

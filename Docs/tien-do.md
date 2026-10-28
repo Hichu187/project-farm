@@ -28,9 +28,30 @@
 
 ### Còn lại
 - Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation).
-- Xóa `LogicAssembly` khi Phần 1 có class thật.
+- ~~Xóa `LogicAssembly` khi Phần 1 có class thật.~~ (đã xóa ở Phần 1)
 
-## Phần 1 – Logic thuần + unit test (TẠM DỪNG – kiến trúc đã đề xuất, chưa duyệt)
+## Phần 1 – Logic thuần + unit test (XONG – 29/10/2026, 45/45 test xanh)
+
+### Đã làm
+- `Assets/_Game/Logic/`: `CropDef`, `ZoneDef`, `FarmDef`, `PlotId`, `PlotState` (+ `PlotStatus`), `ZoneState`, `FarmState`, `IClock` (+ `SystemClock`), `FarmResult`, `Farm`.
+- `Assets/_Game/Tests/EditMode/`: `FakeClock`, `FarmTests` (kích thước 3×4, 4×5, 5×6). Test khói trỏ sang `Farm`; xóa `LogicAssembly`.
+
+### Quyết định
+- Thứ tự mở ô: theo hàng, từ góc trên-trái (row 0 = hàng trên cùng), chỉ số = `row * Width + col`.
+- `StartOpenCount` = số ô mở miễn phí khi khu được mở khóa; Khu 2, 3 dùng 1 (đặt ở data Phần 2).
+- `CropDef.HarvestYield` (≥ 1) = số nông sản mỗi lần thu hoạch.
+- Giá `int`, xu `long`.
+- Đồng hồ lùi → coi như 0 giây trôi qua (không âm). Chống chỉnh giờ đầy đủ để Phần 7.
+- `UnlockNextPlot` luôn mở ô kế tiếp → bỏ mã `NotNextPlot`, thêm `ZoneFull`, `UnknownPlot`, `UnknownZone`, `NothingToHarvest`.
+- Khi tạo `Farm` từ state đã lưu: kiểm tra khớp data (số khu, id, kích thước) và cấp lại ô miễn phí còn thiếu.
+
+### Kiểm tra
+- [x] Compile không lỗi.
+- [x] Test Runner EditMode: 45/45 xanh (`FarmTests` 44, `SmokeTests` 1).
+
+### Còn lại
+- TODO(Phần 5): sự kiện `Changed` trên `Farm`.
+- TODO(Phần 7): `FarmState` dùng `Dictionary` — `JsonUtility` không serialize được, cần chuyển đổi khi lưu.
 
 ## Phần 4 – Camera (TẠM ỔN trong Editor – làm trước Phần 1–3 theo yêu cầu; còn template WebGL + test máy thật)
 
@@ -51,3 +72,27 @@
 - Người dùng setup scene + thử trong Editor.
 - Template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) — chưa làm.
 - Kiểm tra trên iPhone Safari + Android; cân nhắc ngưỡng kéo theo `Screen.dpi`.
+
+## Phần 2 – Data (ScriptableObject) (XONG – 29/10/2026, 49/49 test xanh)
+
+### Đã làm
+- `Assets/_Game/View/Data/`: `CropDefinition`, `ZoneDefinition`, `FarmDefinition` (namespace `VeQue.View.Data`), mỗi cái có `ToDef()` sang class thuần.
+- `Assets/_Game/Editor/`: asmdef `VeQue.Editor` (Editor only, namespace `VeQue.EditorTools` — tránh trùng `UnityEditor.Editor`) + `DefaultDataGenerator` (menu **Về Quê → Tạo data mặc định**). Chạy lại được: ghi số liệu, giữ sprite đã gán.
+- `VeQue.Tests` thêm reference `VeQue.View`; `FarmDefinitionTests` đọc `Assets/_Game/Data/FarmDefinition.asset`.
+
+### Quyết định
+- 25 cây trong data, có cờ `enabled`; MVP bật 4: rau muống, cải xanh, cà chua, bí đỏ. Bật thêm khi có art, không cần sửa code.
+- Thời gian lớn nhập theo phút (`growMinutes`), chuyển sang giây khi `ToDef()`.
+- 3 khu 4×5. Khu 1 mở sẵn 4 ô (16 giá). Khu 2, 3 mở miễn phí 1 ô khi mở khóa (19 giá — bỏ giá cuối 2100 và 20400 của bảng gốc).
+- Giá mở ô ≈ 40 × 1.12^(n−1), làm tròn; tổng Khu 1 / 2 / 3 ≈ 1.715 / 15.585 / 150.050 xu.
+- Vốn ban đầu 60 xu + 5 hạt rau muống.
+
+### Còn lại
+- [x] Đã tạo data (25 cây, 3 khu, FarmDefinition); Test Runner 49/49 xanh.
+- Sprite cây gán ở Phần 3.
+
+## Tiếp theo (khi quay lại)
+1. Phần 3 – Map & art: chốt bố cục map (A/B/C, thử trên bản "Về Quê Chơi Thử"); kiểm tra Sprout Lands có sprite cho 4 cây MVP; cắt tileset/cây, Sprite Atlas, Tilemap Ground/Decor/Plots, `ZoneAnchor` (gắn cùng GameObject với `FocusArea`), gán sprite vào `CropDefinition`.
+2. Phần 4 – còn template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) + thử trên iPhone Safari / Android.
+3. Phần 5 – thêm sự kiện `Changed` trên `Farm` (TODO trong `Farm.cs`).
+4. Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation); giảm build < 10 MB (Phần 6/8).

@@ -1,0 +1,19 @@
+{
+    "name": "VeQue.Editor",
+    "rootNamespace": "VeQue.EditorTools",
+    "references": [
+        "VeQue.Logic",
+        "VeQue.View"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
