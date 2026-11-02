@@ -13,7 +13,12 @@ MonoBehaviour:
   m_Name: khu1
   m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.ZoneDefinition
   _id: khu1
-  _width: 4
-  _height: 5
-  _startOpenCount: 4
-  _unlockPrices: 280000002d00000032000000370000004100000046000000500000005a000000640000006e0000007d0000008c0000009b000000af000000c3000000dc000000
+  _beds:
+  - Origin: {x: 13, y: 14, z: 0}
+    Width: 6
+    Height: 2
+  - Origin: {x: 13, y: 11, z: 0}
+    Width: 6
+    Height: 2
+  _startOpenCount: 6
+  _unlockPrices: 280000002d00000032000000370000003c000000410000004600000050000000550000005f0000006900000073000000820000008c0000009b000000aa000000be000000d2000000

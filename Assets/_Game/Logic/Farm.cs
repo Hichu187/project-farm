@@ -91,7 +91,7 @@ namespace VeQue.Logic
             return FarmResult.Ok;
         }
 
-        // Mở ô kế tiếp của khu (theo hàng, từ góc trên-trái). Mở xong ô cuối thì khu sau được mở khóa.
+        // Mở ô kế tiếp của khu (hết luống này mới sang luống sau). Mở xong ô cuối thì khu sau được mở khóa.
         public FarmResult UnlockNextPlot(string zoneId)
         {
             if (!Definition.TryGetZoneIndex(zoneId, out int index))
@@ -125,7 +125,7 @@ namespace VeQue.Logic
             if (zone.IsFull || !IsZoneAvailable(index))
                 return false;
 
-            plot = zone.IdAt(zone.OpenCount);
+            plot = Definition.Zones[index].PlotIdAt(zone.OpenCount);
             price = GetUnlockPrice(index);
             return true;
         }
@@ -179,11 +179,10 @@ namespace VeQue.Logic
             if (!Definition.TryGetZoneIndex(id.ZoneId, out int index))
                 return false;
 
-            ZoneState zone = State.Zones[index];
-            if (!zone.Contains(id.Col, id.Row))
+            if (!Definition.Zones[index].TryGetPlotIndex(id.BedIndex, id.Col, id.Row, out int plotIndex))
                 return false;
 
-            plot = zone.Plots[zone.IndexOf(id.Col, id.Row)];
+            plot = State.Zones[index].Plots[plotIndex];
             return true;
         }
 
@@ -196,7 +195,7 @@ namespace VeQue.Logic
             {
                 ZoneDef def = Definition.Zones[i];
                 ZoneState zone = State.Zones[i];
-                if (zone == null || zone.ZoneId != def.Id || zone.Width != def.Width || zone.Height != def.Height
+                if (zone == null || zone.ZoneId != def.Id
                     || zone.Plots == null || zone.Plots.Length != def.PlotCount
                     || zone.OpenCount < 0 || zone.OpenCount > def.PlotCount)
                     throw new ArgumentException($"Khu thứ {i} trong state không khớp data '{def.Id}'.");

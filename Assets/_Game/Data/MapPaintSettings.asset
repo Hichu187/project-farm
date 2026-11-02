@@ -1,0 +1,97 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76a7426d8585cb84bb75438fabb06c93, type: 3}
+  m_Name: MapPaintSettings
+  m_EditorClassIdentifier: VeQue.Editor::VeQue.EditorTools.MapPaintSettings
+  _mapSize: {x: 46, y: 26}
+  _grassTiles:
+  - Tile: {fileID: 11400000, guid: bed96ec056c5c444892ef851c10c7e7d, type: 2}
+    Weight: 75
+  - Tile: {fileID: 11400000, guid: 674827fe9f431e646940272ca7888e02, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: 08adb405d26181748b937da9cb4bed4d, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: faa9025b5131759428b7d4cd4109292e, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: 8d86ff399efe11644919a1ecf6702d20, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: 80465f887b1e8ef4394cdcba301519fd, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: ee2a3ac08d2813b46b23e15885cf2f89, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: 0ce0b30a87617ec43975ae5fb2491798, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: b5ad3aa83d29c324b8b511e61fa3195d, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: aee525f33213b294481d923d7523233b, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: ece6118032a8a774e911a1a5eab6baa4, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: 3f435bcf764383a4495c22e0fe04b281, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: e1bf5badcf3e1bd4a915c7e19f5b31f6, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: 4f8e040d6ae935642a5e911bb4ed4894, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: 7bbfb9a1553947045a32ff22d43bbb4a, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: d7dc93f41afa87c46831148a9ceb98b8, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: f838220a05a11724c8091cbbbda45ae9, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: 18a624c42cd7d6b49aee8f26a891fbd6, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: 05b45f453677504479016f19dc59fec5, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: 405fa07c604559e498f39788b88073ce, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: 566d4ba3be574f043af7f51306acf64e, type: 2}
+    Weight: 1
+  - Tile: {fileID: 11400000, guid: 860e69571d5204d4ba2d140104ee8e01, type: 2}
+    Weight: 1
+  _grassSeed: 1
+  _paintYard: 1
+  _yardRect:
+    x: 0
+    y: 0
+    width: 46
+    height: 26
+  _yardTiles:
+    TopLeft: {fileID: 11400000, guid: 76e35858f0f76da48bc08e0ca73c40d4, type: 2}
+    Top: {fileID: 11400000, guid: dead740d7bde2b0418d95c2a638e6422, type: 2}
+    TopRight: {fileID: 11400000, guid: 666a0d9e558edd74d803b6368ec665ad, type: 2}
+    Left: {fileID: 11400000, guid: f972468339d04bd4bb98807fcf341dc0, type: 2}
+    Center: {fileID: 0}
+    Right: {fileID: 11400000, guid: 0dd06f90dc7d5164e9012ef09f5fb0cd, type: 2}
+    BottomLeft: {fileID: 11400000, guid: d2c140bf45aa1dc4da623fa62ee9f9d2, type: 2}
+    Bottom: {fileID: 11400000, guid: f1c96150fc083e244adbdd90122f3366, type: 2}
+    BottomRight: {fileID: 11400000, guid: 716317749ad667145a701fe5b1e82fc3, type: 2}
+  _fenceTiles:
+    TopLeft: {fileID: 11400000, guid: e8df7b1eb6eb1d94a97ff6f76f3a33c9, type: 2}
+    Top: {fileID: 11400000, guid: 3054ae46e0494d44e886b638ec96bb49, type: 2}
+    TopRight: {fileID: 11400000, guid: e8df7b1eb6eb1d94a97ff6f76f3a33c9, type: 2}
+    Left: {fileID: 11400000, guid: f6db9f53a40c94448b0322deec0426c4, type: 2}
+    Center: {fileID: 0}
+    Right: {fileID: 11400000, guid: f6db9f53a40c94448b0322deec0426c4, type: 2}
+    BottomLeft: {fileID: 11400000, guid: e8df7b1eb6eb1d94a97ff6f76f3a33c9, type: 2}
+    Bottom: {fileID: 11400000, guid: 3054ae46e0494d44e886b638ec96bb49, type: 2}
+    BottomRight: {fileID: 11400000, guid: e8df7b1eb6eb1d94a97ff6f76f3a33c9, type: 2}
+  _fenceOffset:
+    Left: 1
+    Right: 1
+    Top: 0
+    Bottom: 1
+  _gateEdge: 0
+  _gateStart: 8
+  _gateSize: 2
+  _farm: {fileID: 11400000, guid: 22da0b7b25c3b6548bea2bbf72b457f0, type: 2}
+  _plotTile: {fileID: 0}

@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEditor;
+using UnityEngine;
 using VeQue.Logic;
 using VeQue.View.Data;
 
@@ -9,6 +10,7 @@ namespace VeQue.Tests
     public class FarmDefinitionTests
     {
         private const string FarmPath = "Assets/_Game/Data/FarmDefinition.asset";
+        private const int PlotsPerZone = 24;
 
         private static FarmDefinition LoadAsset()
         {
@@ -27,11 +29,23 @@ namespace VeQue.Tests
             for (int i = 0; i < state.Zones.Length; i++)
             {
                 ZoneDef zone = def.Zones[i];
-                Assert.AreEqual(zone.Width * zone.Height, state.Zones[i].Plots.Length, zone.Id);
+                Assert.AreEqual(2, zone.Beds.Count, zone.Id);
+                Assert.AreEqual(PlotsPerZone, zone.PlotCount, zone.Id);
+                Assert.AreEqual(PlotsPerZone, state.Zones[i].Plots.Length, zone.Id);
             }
-            Assert.AreEqual(4, state.Zones[0].OpenCount);
+            Assert.AreEqual(6, state.Zones[0].OpenCount);
             Assert.AreEqual(0, state.Zones[1].OpenCount);
             Assert.AreEqual(0, state.Zones[2].OpenCount);
+        }
+
+        [Test]
+        public void ToDef_DefaultData_LaterZonesHaveOneFreePlot()
+        {
+            FarmDef def = LoadAsset().ToDef();
+
+            Assert.AreEqual(6, def.Zones[0].StartOpenCount);
+            Assert.AreEqual(1, def.Zones[1].StartOpenCount);
+            Assert.AreEqual(1, def.Zones[2].StartOpenCount);
         }
 
         [Test]
@@ -64,6 +78,9 @@ namespace VeQue.Tests
         {
             FarmDef def = LoadAsset().ToDef();
 
+            Assert.AreEqual(18, def.Zones[0].UnlockPrices.Count);
+            Assert.AreEqual(23, def.Zones[1].UnlockPrices.Count);
+            Assert.AreEqual(23, def.Zones[2].UnlockPrices.Count);
             Assert.AreEqual(40, def.Zones[0].UnlockPrices[0]);
             int previous = 0;
             foreach (ZoneDef zone in def.Zones)
@@ -73,6 +90,17 @@ namespace VeQue.Tests
                     Assert.Greater(price, previous, zone.Id);
                     previous = price;
                 }
+            }
+        }
+
+        [Test]
+        public void BoundingBox_DefaultData_IsSixByFive()
+        {
+            foreach (ZoneDefinition zone in LoadAsset().Zones)
+            {
+                RectInt box = zone.BoundingBox;
+                Assert.AreEqual(6, box.width, zone.Id);
+                Assert.AreEqual(5, box.height, zone.Id);
             }
         }
     }

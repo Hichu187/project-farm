@@ -30,7 +30,7 @@
 - Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation).
 - ~~Xóa `LogicAssembly` khi Phần 1 có class thật.~~ (đã xóa ở Phần 1)
 
-## Phần 1 – Logic thuần + unit test (XONG – 29/10/2026, 45/45 test xanh)
+## Phần 1 – Logic thuần + unit test (XONG – 29/10/2026; sửa theo mô hình luống 02/11/2026, xem mục Map D)
 
 ### Đã làm
 - `Assets/_Game/Logic/`: `CropDef`, `ZoneDef`, `FarmDef`, `PlotId`, `PlotState` (+ `PlotStatus`), `ZoneState`, `FarmState`, `IClock` (+ `SystemClock`), `FarmResult`, `Farm`.
@@ -72,8 +72,9 @@
 - Người dùng setup scene + thử trong Editor.
 - Template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) — chưa làm.
 - Kiểm tra trên iPhone Safari + Android; cân nhắc ngưỡng kéo theo `Screen.dpi`.
+- Theo Map D: bỏ `_focusRef` 90×160 (chỉ rộng 5,6 tile, không đủ khu 6 tile), tới tâm bounding box rồi mới đổi bậc zoom, giới hạn trong mép map (`_mapPadding` trong scene đang là 5/5/5/2,5).
 
-## Phần 2 – Data (ScriptableObject) (XONG – 29/10/2026, 49/49 test xanh)
+## Phần 2 – Data (ScriptableObject) (XONG – 29/10/2026; sửa theo mô hình luống 02/11/2026, xem mục Map D)
 
 ### Đã làm
 - `Assets/_Game/View/Data/`: `CropDefinition`, `ZoneDefinition`, `FarmDefinition` (namespace `VeQue.View.Data`), mỗi cái có `ToDef()` sang class thuần.
@@ -91,8 +92,44 @@
 - [x] Đã tạo data (25 cây, 3 khu, FarmDefinition); Test Runner 49/49 xanh.
 - Sprite cây gán ở Phần 3.
 
+02/11/2026 – Chốt Map D (trải ngang), khu = nhiều luống
+
+## Thay đổi thiết kế Map D (02/11/2026)
+
+### Quyết định
+- Map 44×26 tile, trải ngang. Tọa độ trong `Docs/MVP-Plan.md` Phần 3 chỉ là tham chiếu; người dùng tự đặt vị trí cuối cùng trong scene.
+- Mỗi khu = 2 luống 6×2, cách nhau 1 tile → 24 ô. Ô định danh bằng `(zoneId, bedIndex, col, row)`; hết luống này mới mở sang luống sau.
+- Khu 1 mở sẵn 6 ô; Khu 2, 3 mở miễn phí 1 ô khi mở khóa → bảng giá mới có 18 / 23 / 23 giá. Thay cho số liệu 4 ô và 16 / 19 / 19 giá ghi ở Phần 2.
+- Background trời làm sau, che khoảng trống trên/dưới map ở màn hình dài.
+- Chạm ao, chuồng, nhà kho, đất mở rộng → hiện "sắp có" (làm ở Phần 6).
+
+- Giá mở ô ≈ 40 × 1.102^(n−1), giữ giá cuối 18.200; tổng Khu 1 / 2 / 3 = 1.860 / 18.765 / 175.450 xu.
+
+### Đã làm
+- Code Logic, Data, test đã sửa theo mô hình luống (`BedDef`, `BedDefinition`, `PlotId.BedIndex`); menu tạo data giữ origin luống đã có.
+- Đã tạo lại data; Test Runner EditMode 60/60 xanh (`FarmTests` 53, `FarmDefinitionTests` 6, `SmokeTests` 1).
+
+### Còn lại
+- Viết `ZoneAnchor`, sửa camera theo bounding box.
+- TODO (sau MVP): nâng cấp ô đất.
+
+## Phần 3 – Map & art (ĐANG LÀM)
+
+### Đã làm
+- Scene có Grid `Map` và 3 Tilemap `Ground`, `Decor`, `Plots`; `Ground` đã có tile.
+- `Docs/huong-dan-setup-khu-trong.md` đã viết lại theo Map D.
+- Tool Editor **Về Quê → Tạo map** (`MapPaintSettings`, `MapPainter`, `MapPaintWindow`): nhập kích thước rồi vẽ từng lớp: Ground (cỏ random theo Weight + seed, sân), Decor (hàng rào có **Fence Offset**, giữ phần vẽ tay), Plots (ô đất theo `Beds`). Có nút thêm nhiều tile cỏ cùng lúc.
+- Người dùng đã vẽ Ground và hàng rào bằng tool, xác nhận tạm ổn (03/11/2026): map 46×26, bên trong rào 42×23 = 966 ô.
+
+### Còn lại
+- Người dùng setup 3 zone theo hướng dẫn: gán **Plot Tile**, vẽ `Plots`, tạo `Zone1`–`Zone3` + `FocusArea`, gán **Areas**, đổi **Focus Ref** = (113, 200), **Map Padding** = 0 (scene đã lưu chưa có các mục này).
+- Vẽ tay phần còn lại trên `Decor`: ao, chuồng, kho, viền cỏ, cây, rơm.
+- Các mục kiểm tra còn lại của tool: Plots, Ctrl+Z.
+- Kiểm tra Sprout Lands có sprite cho 4 cây MVP; cắt tileset/cây, Sprite Atlas, gán sprite vào `CropDefinition`.
+- `ZoneAnchor` (gắn cùng GameObject với `FocusArea`).
+
 ## Tiếp theo (khi quay lại)
-1. Phần 3 – Map & art: chốt bố cục map (A/B/C, thử trên bản "Về Quê Chơi Thử"); kiểm tra Sprout Lands có sprite cho 4 cây MVP; cắt tileset/cây, Sprite Atlas, Tilemap Ground/Decor/Plots, `ZoneAnchor` (gắn cùng GameObject với `FocusArea`), gán sprite vào `CropDefinition`.
-2. Phần 4 – còn template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) + thử trên iPhone Safari / Android.
+1. Phần 3 – setup 3 zone theo `Docs/huong-dan-setup-khu-trong.md`; kế hoạch `ZoneAnchor` + camera đang chờ duyệt; sau đó art.
+2. Phần 4 – sửa camera theo Map D, template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) + thử trên iPhone Safari / Android.
 3. Phần 5 – thêm sự kiện `Changed` trên `Farm` (TODO trong `Farm.cs`).
 4. Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation); giảm build < 10 MB (Phần 6/8).

@@ -4,7 +4,7 @@ using VeQue.View.Data;
 
 namespace VeQue.EditorTools
 {
-    // Tạo/cập nhật data mặc định từ bảng số đã chốt. Chạy lại được: chỉ ghi số liệu, sprite đã gán được giữ.
+    // Tạo/cập nhật data mặc định từ bảng số đã chốt. Chạy lại được: chỉ ghi số liệu, sprite và origin luống đã có được giữ.
     public static class DefaultDataGenerator
     {
         public const string DataFolder = "Assets/_Game/Data";
@@ -15,6 +15,8 @@ namespace VeQue.EditorTools
         private const long StartCoins = 60;
         private const string StartSeedCropId = "rau_muong";
         private const int StartSeedCount = 5;
+        private const int BedWidth = 6;
+        private const int BedHeight = 2;
 
         private readonly struct CropRow
         {
@@ -41,16 +43,14 @@ namespace VeQue.EditorTools
         private readonly struct ZoneRow
         {
             public readonly string Id;
-            public readonly int Width;
-            public readonly int Height;
+            public readonly Vector3Int[] BedOrigins;
             public readonly int StartOpen;
             public readonly int[] Prices;
 
-            public ZoneRow(string id, int width, int height, int startOpen, int[] prices)
+            public ZoneRow(string id, Vector3Int[] bedOrigins, int startOpen, int[] prices)
             {
                 Id = id;
-                Width = width;
-                Height = height;
+                BedOrigins = bedOrigins;
                 StartOpen = startOpen;
                 Prices = prices;
             }
@@ -86,21 +86,23 @@ namespace VeQue.EditorTools
             new CropRow("dua_luoi", "Dưa lưới", 2880, 390, 2, 392, false),
         };
 
-        // Giá mở ô ≈ 40 × 1.12^(n−1), làm tròn. Khu 2, 3 mở miễn phí 1 ô nên có 19 giá.
+        // Mỗi khu 2 luống 6×2 = 24 ô; origin là vị trí tham chiếu của Map D (luống trên trước).
+        // Giá mở ô ≈ 40 × 1.102^(n−1), làm tròn. Khu 1 mở sẵn 6 ô (18 giá); Khu 2, 3 mở miễn phí 1 ô (23 giá).
         private static readonly ZoneRow[] Zones =
         {
-            new ZoneRow("khu1", 4, 5, 4, new[]
+            new ZoneRow("khu1", new[] { new Vector3Int(13, 14, 0), new Vector3Int(13, 11, 0) }, 6, new[]
             {
-                40, 45, 50, 55, 65, 70, 80, 90, 100, 110, 125, 140, 155, 175, 195, 220,
+                40, 45, 50, 55, 60, 65, 70, 80, 85, 95, 105, 115, 130, 140, 155, 170, 190, 210,
             }),
-            new ZoneRow("khu2", 4, 5, 1, new[]
+            new ZoneRow("khu2", new[] { new Vector3Int(21, 14, 0), new Vector3Int(21, 11, 0) }, 1, new[]
             {
-                245, 275, 310, 345, 385, 430, 485, 540, 610, 680, 760, 850, 950, 1070, 1200, 1350, 1500, 1700, 1900,
+                230, 255, 280, 310, 340, 375, 410, 455, 500, 550, 605, 670, 740, 815, 895, 985, 1100, 1200, 1300, 1450,
+                1600, 1750, 1950,
             }),
-            new ZoneRow("khu3", 4, 5, 1, new[]
+            new ZoneRow("khu3", new[] { new Vector3Int(13, 6, 0), new Vector3Int(13, 3, 0) }, 1, new[]
             {
-                2400, 2650, 3000, 3300, 3700, 4200, 4700, 5200, 5900, 6600, 7300, 8200, 9200, 10300, 11600, 12900,
-                14500, 16200, 18200,
+                2150, 2350, 2600, 2850, 3150, 3500, 3850, 4250, 4650, 5150, 5650, 6250, 6900, 7600, 8350, 9200, 10200,
+                11200, 12300, 13600, 15000, 16500, 18200,
             }),
         };
 
@@ -109,7 +111,7 @@ namespace VeQue.EditorTools
         {
             if (AssetDatabase.LoadAssetAtPath<FarmDefinition>(FarmPath) != null
                 && !EditorUtility.DisplayDialog("Tạo data mặc định",
-                    "Data đã có. Ghi đè số liệu bằng bảng mặc định? Sprite đã gán được giữ nguyên.", "Ghi đè", "Hủy"))
+                    "Data đã có. Ghi đè số liệu bằng bảng mặc định? Sprite đã gán và origin luống đã có được giữ nguyên.", "Ghi đè", "Hủy"))
                 return;
 
             EnsureFolder(DataFolder);
@@ -143,8 +145,17 @@ namespace VeQue.EditorTools
                 zones[i] = LoadOrCreate<ZoneDefinition>($"{ZonesFolder}/{row.Id}.asset");
                 var so = new SerializedObject(zones[i]);
                 so.FindProperty("_id").stringValue = row.Id;
-                so.FindProperty("_width").intValue = row.Width;
-                so.FindProperty("_height").intValue = row.Height;
+                SerializedProperty beds = so.FindProperty("_beds");
+                int existingBeds = beds.arraySize;
+                beds.arraySize = row.BedOrigins.Length;
+                for (int b = 0; b < row.BedOrigins.Length; b++)
+                {
+                    SerializedProperty bed = beds.GetArrayElementAtIndex(b);
+                    if (b >= existingBeds)
+                        bed.FindPropertyRelative("Origin").vector3IntValue = row.BedOrigins[b];
+                    bed.FindPropertyRelative("Width").intValue = BedWidth;
+                    bed.FindPropertyRelative("Height").intValue = BedHeight;
+                }
                 so.FindProperty("_startOpenCount").intValue = row.StartOpen;
                 SerializedProperty prices = so.FindProperty("_unlockPrices");
                 prices.arraySize = row.Prices.Length;

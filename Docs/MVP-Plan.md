@@ -3,10 +3,10 @@
 Mỗi phần nhỏ, chạy và kiểm tra được trước khi sang phần sau. Phần nào code lớn (đánh dấu 🔍) thì đưa kiến trúc chi tiết để duyệt trước.
 
 ## Thay đổi so với instructions
-- Kích thước từng khu lấy từ `ZoneDefinition` (ScriptableObject), không viết cứng 4×5. Logic định danh ô bằng `(zoneId, col, row)`.
-- Camera toàn cảnh KHÔNG thấy hết nông trại: Reference Resolution khoảng 208×370 (≈13 tile bề ngang, zoom 5x trên màn 1080–1170 px). Zoom vào khu khoảng 90×160 (≈12x).
-- Bố cục map (A/B/C): [CẦN CHỐT], thử trên bản "Về Quê Chơi Thử".
-- Số ô mở sẵn Khu 1: [CẦN CHỐT], đặt trong `ZoneDefinition.startOpenCount`.
+- Khu = nhiều luống, lấy từ `ZoneDefinition` (ScriptableObject). Logic định danh ô bằng `(zoneId, bedIndex, col, row)`.
+- Camera toàn cảnh KHÔNG thấy hết nông trại: Reference Resolution khoảng 208×370 (≈13 tile bề ngang, zoom 5x trên màn 1080–1170 px). Zoom vào khu theo bounding box (~10x).
+- Bố cục map: Map D (trải ngang, 44×26), xem Phần 3.
+- Số ô mở sẵn: Khu 1 là 6; Khu 2, 3 mở miễn phí 1 ô khi mở khóa. Đặt trong `ZoneDefinition.startOpenCount`.
 
 ---
 
@@ -24,18 +24,18 @@ Mỗi phần nhỏ, chạy và kiểm tra được trước khi sang phần sau.
 
 ## Phần 1 – Logic thuần + unit test 🔍
 Toàn bộ trong `VeQue.Logic`, không dùng `UnityEngine`.
-1. Định nghĩa thuần: `CropDef` (id, growSeconds, buyPrice, sellPrice), `ZoneDef` (id, width, height, startOpenCount, unlockPrices).
+1. Định nghĩa thuần: `CropDef` (id, growSeconds, buyPrice, sellPrice), `ZoneDef` (id, danh sách luống (width, height), startOpenCount, unlockPrices). `ZoneDef` không biết tọa độ tile.
 2. Trạng thái: `FarmState` (coins, seeds, inventory, zones → plots), `PlotState` (Locked / Empty / Growing; "chín" suy ra từ timestamp).
 3. `IClock` (để test giả lập thời gian, chống chỉnh giờ ở bước sau).
-4. Luật: gieo, thu hoạch, mua hạt, bán nông sản, mở ô kế tiếp, khu sau mở khi khu trước hết ô.
-5. Test EditMode cho từng luật, chạy với vài kích thước khu khác nhau (3×4, 4×5, 5×6).
+4. Luật: gieo, thu hoạch, mua hạt, bán nông sản, mở ô kế tiếp (hết luống này mới sang luống sau), khu sau mở khi khu trước hết ô.
+5. Test EditMode cho từng luật, chạy với nhiều cấu hình khu (1 luống 4×5, 2 luống 6×2, 3 luống 5×2).
 
 **Kiểm tra:** toàn bộ test xanh; chưa cần scene.
 
 ## Phần 2 – Data (ScriptableObject)
 Lưu ý: asmdef "No Engine References" không chứa được ScriptableObject → SO nằm ở `VeQue.View`, lúc khởi động chuyển sang `CropDef`/`ZoneDef` thuần.
 1. `CropDefinition`: id, tên hiển thị, thời gian lớn, giá mua/bán, sprite hạt, 3 sprite giai đoạn, icon nông sản.
-2. `ZoneDefinition`: id, width, height, startOpenCount, giá mở từng ô.
+2. `ZoneDefinition`: zoneId, `beds` (mỗi luống: origin `Vector3Int` + width + height), startOpenCount, giá mở từng ô. Bounding box khu tính từ các luống.
 3. `FarmDefinition`: danh sách khu theo thứ tự mở khóa + danh sách cây.
 4. Tạo 4 cây và 3 khu.
 
@@ -44,15 +44,35 @@ Lưu ý: asmdef "No Engine References" không chứa được ScriptableObject �
 ## Phần 3 – Map & art
 1. Cắt tileset cỏ và bộ cây (PPU 16, Slice 16×16, sửa tay sprite cây cao 32 px, pivot Bottom). Chỉ giữ các hàng cây dùng cho MVP.
 2. Sprite Atlas (padding 2, Point, không nén).
-3. Grid (cell 1) với Tilemap: `Ground` → `Decor` → `Plots`; vẽ map theo phương án đã chốt, hàng rào bao quanh, cổng, ao, chuồng, kho (art tĩnh).
-4. Mỗi khu có 1 GameObject `ZoneAnchor` (tham chiếu `ZoneDefinition`, origin trên Tilemap) + collider vùng chạm không cần — dùng `WorldToCell`.
+3. Grid (cell 1) với Tilemap: `Ground` (cỏ + sân đất) → `Decor` (hàng hoa, viền cỏ quanh luống, cây, rơm) → `Plots` (ô đất); vẽ theo Map D bên dưới. Map rộng hơn không làm tăng dung lượng build đáng kể; vẫn dùng chung atlas.
+4. Mỗi khu có 1 GameObject `ZoneAnchor` giữ tham chiếu `ZoneDefinition` (origin từng luống nằm trong data); không cần collider vùng chạm — dùng `WorldToCell`.
+
+**Map D** – 44×26 tile, hàng rào bao quanh. Tọa độ [x, y, rộng, cao], gốc trái-trên; khi nhập `origin` cho Unity (trục Y hướng lên, góc dưới-trái của map tại (0, 0)): `originY = 26 − y − cao`.
+
+| Thành phần | Tọa độ |
+|---|---|
+| Cổng (cạnh trái) | [0, 16, 1, 2] |
+| Sân đất | [1, 8, 42, 16] |
+| Hàng hoa viền | [1, 7, 42, 1], [1, 23, 42, 1] |
+| Chuồng (sân có rào, lối vào cạnh dưới) | [3, 9, 8, 7] |
+| Khu 1 | [13, 10, 6, 2], [13, 13, 6, 2] |
+| Khu 2 | [21, 10, 6, 2], [21, 13, 6, 2] |
+| Khu 3 | [13, 18, 6, 2], [13, 21, 6, 2] |
+| Đất mở rộng (sau MVP) | [21, 18, 6, 5] |
+| Ao cá | [35, 9, 7, 11] |
+| Nhà kho | [14, 1, 6, 6] |
+| Cây | (4,2) (9,3) (25,2) (31,3) (38,2) |
+| Đống rơm | (23,5) |
+
+Ao, chuồng, nhà kho, đất mở rộng chỉ là art, chạm vào hiện "sắp có".
+Tọa độ trên là bố cục tham chiếu; người dùng tự đặt vị trí cuối cùng trong scene. Background trời làm sau, che khoảng trống trên/dưới map ở màn hình dài.
 
 **Kiểm tra:** Game view scale 1x nhìn sắc nét, không có đường kẻ giữa tile; Build Report không tăng bất thường.
 
 ## Phần 4 – Camera 🔍
-1. Pixel Perfect Camera: Assets PPU 16, Ref 208×370, Pixel Snapping bật, Crop Frame None.
-2. Kéo 1 ngón để di chuyển, giới hạn trong mép map; ngưỡng 10 px để tách kéo và chạm.
-3. Chạm khu → camera tới tâm khu rồi đổi Ref sang ~90×160; chạm bãi cỏ → về 208×370.
+1. Pixel Perfect Camera: Assets PPU 16, Ref ~208×370 (≈13 tile ngang, zoom 5x trên màn 1080–1170 px), Pixel Snapping bật, Crop Frame None.
+2. Kéo 1 ngón để di chuyển, giới hạn trong mép map 44×26; ngưỡng 10 px để tách kéo và chạm.
+3. Chạm khu → camera tới tâm bounding box của khu rồi mới đổi bậc zoom, Ref tính để bounding box (6×5 tile) chiếm ~85% bề ngang (~10x); chạm bãi cỏ → về 208×370.
 4. Template WebGL tối giản: `touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`.
 
 **Kiểm tra:** build lên iPhone (Safari) và Android qua Wi-Fi: kéo mượt, không bị trình duyệt cuộn hay tải lại trang, zoom không làm méo pixel.
@@ -68,12 +88,12 @@ Lưu ý: asmdef "No Engine References" không chứa được ScriptableObject �
 ## Phần 6 – UI (uGUI) 🔍
 1. Canvas Scaler (Scale With Screen Size, ref 390×844, match 0.5) + `SafeArea` cho iPhone.
 2. Font pixel tiếng Việt (VT323 hoặc font khác): TMP font asset tĩnh, đủ ký tự có dấu, Atlas Render Mode Raster, Point.
-3. HUD (xu, nút sao lưu), thanh điều hướng, bảng chọn hạt, xác nhận mở ô, Kho, Cửa hàng — theo canvas "Về Quê – GUI Layouts".
+3. HUD (xu, nút sao lưu), thanh điều hướng, bảng chọn hạt, xác nhận mở ô, Kho, Cửa hàng — theo canvas "Về Quê – GUI Layouts". Chạm ao, chuồng, nhà kho, đất mở rộng → hiện thông báo "sắp có".
 
 **Kiểm tra:** chữ có dấu hiển thị đúng trên iPhone; nút ≥ 44 pt; không bị thanh home đè.
 
 ## Phần 7 – Lưu tiến trình 🔍
-1. Save JSON có `version`; lưu ô theo `(zoneId, col, row)`.
+1. Save JSON có `version`; lưu ô theo `(zoneId, bedIndex, col, row)`.
 2. Lưu khi có thay đổi + khi tab bị ẩn (`visibilitychange`), không chỉ khi thoát.
 3. Cây lớn khi offline (tính theo timestamp lúc mở lại); chống chỉnh giờ cơ bản.
 4. Xuất / nhập mã sao lưu.
