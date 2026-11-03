@@ -8,6 +8,7 @@ namespace VeQue.View.CameraControl
     // Zoom mượt: tạm tắt PixelPerfectCamera và nội suy orthographicSize, tới nơi bật lại ở bậc zoom nguyên.
     // Zoom theo nấc: đi qua từng bậc zoom nguyên, luôn sắc nét.
     // Toàn cảnh: giới hạn trong mép map. Đang zoom: giới hạn trong khu đang xem (và mép map).
+    // Zoom vào khu: di chuyển trước, tâm khu ngoài giới hạn ở bậc zoom hiện tại thì đi hết mức, phần còn lại đi trong lúc zoom.
     [RequireComponent(typeof(UnityEngine.Camera), typeof(PixelPerfectCamera))]
     public sealed class CameraController : MonoBehaviour
     {
@@ -18,6 +19,8 @@ namespace VeQue.View.CameraControl
         [SerializeField] private Tilemap _mapTilemap;
         [Tooltip("Nới (dương) hoặc thu (âm) mép map theo từng cạnh, tính bằng ô.")]
         [SerializeField] private EdgePadding _mapPadding;
+        [Tooltip("Thời gian di chuyển trước khi zoom vào khu.")]
+        [SerializeField] private float _moveDuration = 0.25f;
         [SerializeField] private float _transitionDuration = 0.35f;
         [Tooltip("Bật: zoom mượt (pixel hơi lệch nét trong lúc chuyển). Tắt: zoom theo từng bậc nguyên.")]
         [SerializeField] private bool _smoothZoom = true;
@@ -35,6 +38,10 @@ namespace VeQue.View.CameraControl
         private float _fromOrthoSize;
         private float _toOrthoSize;
         private int _toZoom;
+        private bool _isMoving;
+        private float _moveElapsed;
+        private Vector2 _moveFrom;
+        private Vector2 _moveTo;
 
         public Mode CurrentMode { get; private set; }
         public FocusArea Current { get; private set; }
@@ -47,7 +54,7 @@ namespace VeQue.View.CameraControl
             _hasMapRect = TryGetMapRect(out _mapRect);
             CurrentMode = Mode.Overview;
             ApplyZoom(GetZoom(_overviewRef));
-            SetPosition(transform.position);
+            SetPosition(_hasMapRect ? GetMapCenter() : (Vector2)transform.position);
         }
 
         private void OnDisable()
@@ -89,7 +96,7 @@ namespace VeQue.View.CameraControl
             CurrentMode = Mode.Focused;
             Current = area;
             int focusZoom = GetZoom(_focusRef);
-            BeginTransition(Clamp(area.Center, OrthoSizeFor(focusZoom), true), focusZoom);
+            BeginMoveThenZoom(Clamp(area.Center, OrthoSizeFor(focusZoom), true), focusZoom);
         }
 
         public void ShowOverview()
@@ -98,6 +105,41 @@ namespace VeQue.View.CameraControl
             Current = null;
             int overviewZoom = GetZoom(_overviewRef);
             BeginTransition(Clamp(transform.position, OrthoSizeFor(overviewZoom), false), overviewZoom);
+        }
+
+        private void BeginMoveThenZoom(Vector2 toPosition, int toZoom)
+        {
+            _toPosition = toPosition;
+            _toZoom = toZoom;
+            _moveFrom = transform.position;
+            _moveTo = Clamp(toPosition, _orthoSize, false);
+            _moveElapsed = 0f;
+            _isMoving = true;
+            _isTransitioning = true;
+
+            if (_moveFrom == _moveTo)
+                FinishMove();
+        }
+
+        private void StepMove()
+        {
+            _moveElapsed += Time.unscaledDeltaTime;
+            float t = _moveDuration > 0f ? Mathf.Clamp01(_moveElapsed / _moveDuration) : 1f;
+
+            Vector2 position = Vector2.Lerp(_moveFrom, _moveTo, Ease(t));
+            transform.position = new Vector3(position.x, position.y, transform.position.z);
+
+            if (t >= 1f)
+                FinishMove();
+        }
+
+        private void FinishMove()
+        {
+            _isMoving = false;
+            if (_toZoom == _zoom)
+                EndTransition();
+            else
+                BeginTransition(_toPosition, _toZoom);
         }
 
         private void BeginTransition(Vector2 toPosition, int toZoom)
@@ -120,9 +162,15 @@ namespace VeQue.View.CameraControl
 
         private void StepTransition()
         {
+            if (_isMoving)
+            {
+                StepMove();
+                return;
+            }
+
             _transitionElapsed += Time.unscaledDeltaTime;
             float t = _transitionDuration > 0f ? Mathf.Clamp01(_transitionElapsed / _transitionDuration) : 1f;
-            float eased = t * t * (3f - 2f * t);
+            float eased = Ease(t);
 
             if (t >= 1f)
             {
@@ -147,8 +195,11 @@ namespace VeQue.View.CameraControl
             transform.position = new Vector3(position.x, position.y, transform.position.z);
         }
 
+        private static float Ease(float t) => t * t * (3f - 2f * t);
+
         private void EndTransition()
         {
+            _isMoving = false;
             _isTransitioning = false;
             ApplyZoom(_toZoom);
             _pixelPerfect.enabled = true;
@@ -233,6 +284,13 @@ namespace VeQue.View.CameraControl
             Vector3 max = _mapTilemap.CellToWorld(cells.max);
             rect = _mapPadding.Apply(Rect.MinMaxRect(min.x, min.y, max.x, max.y));
             return true;
+        }
+
+        // Tâm map thật, không tính _mapPadding (padding có thể lệch giữa các cạnh).
+        private Vector2 GetMapCenter()
+        {
+            BoundsInt cells = _mapTilemap.cellBounds;
+            return (_mapTilemap.CellToWorld(cells.min) + _mapTilemap.CellToWorld(cells.max)) * 0.5f;
         }
 
         private void OnDrawGizmosSelected()

@@ -52,7 +52,7 @@ Mở **Window → 2D → Tile Palette**, dùng palette trong `Assets/Art/Tile Pa
 | `Decor` | Hàng rào, cổng, hàng hoa, viền cỏ quanh luống, ao, chuồng, nhà kho, cây, rơm |
 | `Plots` | Ô đất của các luống |
 
-Kiểm tra `CameraController` → **Map Padding**: đặt 0 nếu muốn camera dừng đúng mép map. Scene đang để 5/5/5/2,5 nên camera đi ra ngoài map; chỉ nới cạnh nào cần lộ background trời (làm sau).
+`CameraController` → **Map Padding** giữ 5/5/5/2,5: camera đi ra ngoài map là hiệu ứng mong muốn, không đổi về 0.
 
 ## C. 3 khu trồng
 Làm cho từng khu:
@@ -63,6 +63,7 @@ Làm cho từng khu:
 5. `CameraTouchInput` → kéo 3 khu vào mảng **Areas**, xóa phần tử rỗng đang có.
 6. `CameraController` → **Focus Ref** = (113, 200) để nhìn đủ khu rộng 6 tile.
 7. Ghi lại Position góc dưới-trái của từng luống để nhập vào data ở mục E.
+8. Gắn `ZoneAnchor` cùng GameObject với `FocusArea`, gán **Zone** = `khu1`, `khu2`, `khu3` tương ứng. Console cảnh báo khi Play nghĩa là chưa gán Zone, hoặc khung `FocusArea` lệch so với các luống.
 
 Giá trị tham chiếu nếu đặt đúng Map D và góc dưới-trái map tại (0, 0):
 
@@ -78,8 +79,7 @@ Giá trị tham chiếu nếu đặt đúng Map D và góc dưới-trái map t�
 - [ ] Khe 1 tile giữa 2 luống vẫn tính là trong khu (không về toàn cảnh).
 - [ ] Game view scale 1x sắc nét, không có đường kẻ giữa tile.
 
-Lưu ý: code camera hiện vẫn vừa di chuyển vừa zoom; "tới tâm rồi mới đổi bậc zoom" sẽ sửa sau.
+- [ ] Chạm khu: camera tới tâm rồi mới zoom. Tâm khu nằm ngoài giới hạn ở toàn cảnh (Khu 3) thì đi hết mức rồi đi nốt trong lúc zoom.
 
 ## E. Làm sau khi code xong (chưa làm được)
 - **Nhập origin luống:** sau khi `ZoneDefinition` có danh sách `Beds`, nhập origin đã ghi ở bước C7 vào `Assets/_Game/Data/Zones/*.asset`.
-- **Gắn `ZoneAnchor`:** code chưa viết. Gắn cùng GameObject với `FocusArea`, không phải làm lại phần A–C.

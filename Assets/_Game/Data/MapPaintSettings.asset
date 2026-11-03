@@ -94,4 +94,4 @@ MonoBehaviour:
   _gateStart: 8
   _gateSize: 2
   _farm: {fileID: 11400000, guid: 22da0b7b25c3b6548bea2bbf72b457f0, type: 2}
-  _plotTile: {fileID: 0}
+  _plotTile: {fileID: 11400000, guid: e1275ec178172ef459c1c3124cf17b26, type: 2}

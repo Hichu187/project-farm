@@ -58,8 +58,11 @@
 ### Đã làm
 - `Assets/_Game/View/CameraControl/`: `CameraController`, `CameraTouchInput`, `FocusArea` (namespace `VeQue.View.CameraControl` — không dùng `...Camera` vì trùng tên `UnityEngine.Camera`).
 - `VeQue.View.asmdef` thêm reference `Unity.2D.PixelPerfect`, `Unity.InputSystem`, `UnityEngine.UI` (cho `EventSystem`).
+- 03/11/2026: lúc start, camera về tâm map (`CameraController.GetMapCenter()`); map 46×26 → (23, 13). Người dùng đã thử trong Editor, xác nhận ổn.
+- 03/11/2026: chạm khu thì camera di chuyển trước (`_moveDuration` 0,25 giây) rồi mới zoom; `_focusRef` đổi sang 113×200. Người dùng xác nhận ổn trong Editor.
 
 ### Quyết định
+- Tâm map tính từ `cellBounds` của Tilemap, không tính `_mapPadding` (padding có thể lệch giữa các cạnh). Chưa gán Tilemap thì giữ vị trí camera trong scene.
 - Zoom có thời gian chuyển (`_transitionDuration`), 2 chế độ chọn bằng `_smoothZoom`:
   - Bật (mặc định): tạm tắt PixelPerfectCamera, nội suy `orthographicSize` theo 1/size; tới nơi bật lại ở bậc zoom nguyên. Mượt, pixel hơi lệch nét trong lúc chuyển.
   - Tắt: đi qua từng bậc zoom nguyên (Ref = màn hình / zoom). Luôn sắc nét, nhìn theo nấc.
@@ -72,7 +75,8 @@
 - Người dùng setup scene + thử trong Editor.
 - Template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) — chưa làm.
 - Kiểm tra trên iPhone Safari + Android; cân nhắc ngưỡng kéo theo `Screen.dpi`.
-- Theo Map D: bỏ `_focusRef` 90×160 (chỉ rộng 5,6 tile, không đủ khu 6 tile), tới tâm bounding box rồi mới đổi bậc zoom, giới hạn trong mép map (`_mapPadding` trong scene đang là 5/5/5/2,5).
+- Chốt 03/11/2026: tâm khu ngoài giới hạn ở toàn cảnh (Khu 3) thì đi hết mức, phần còn lại đi trong lúc zoom, để không lộ khoảng trống.
+- Chốt 03/11/2026: giữ `_mapPadding` = 5/5/5/2,5, camera đi ra ngoài map là hiệu ứng người dùng muốn; không đổi về 0.
 
 ## Phần 2 – Data (ScriptableObject) (XONG – 29/10/2026; sửa theo mô hình luống 02/11/2026, xem mục Map D)
 
@@ -120,16 +124,18 @@
 - `Docs/huong-dan-setup-khu-trong.md` đã viết lại theo Map D.
 - Tool Editor **Về Quê → Tạo map** (`MapPaintSettings`, `MapPainter`, `MapPaintWindow`): nhập kích thước rồi vẽ từng lớp: Ground (cỏ random theo Weight + seed, sân), Decor (hàng rào có **Fence Offset**, giữ phần vẽ tay), Plots (ô đất theo `Beds`). Có nút thêm nhiều tile cỏ cùng lúc.
 - Người dùng đã vẽ Ground và hàng rào bằng tool, xác nhận tạm ổn (03/11/2026): map 46×26, bên trong rào 42×23 = 966 ô.
+- 03/11/2026: `ZoneAnchor` (`Assets/_Game/View/Map/`, gắn cùng GameObject với `FocusArea`), người dùng xác nhận ổn trong Editor.
+- 03/11/2026: đã vẽ `Plots` bằng tool: 72 ô, khớp `Beds` trong data; `Plots` về `x = 0`. Plot Tile tạm là `ground_dirt_orange_dark_34`.
+- 03/11/2026: đã tạo 3 khu (`Zone`, `Zone (1)`, `Zone (2)`) + `FocusArea` 6×5 tại (13, 11), (21, 11), (13, 3); đã gán **Areas**, **Focus Ref** = (113, 200). Scene khớp; người dùng xác nhận ổn trong Editor.
 
 ### Còn lại
-- Người dùng setup 3 zone theo hướng dẫn: gán **Plot Tile**, vẽ `Plots`, tạo `Zone1`–`Zone3` + `FocusArea`, gán **Areas**, đổi **Focus Ref** = (113, 200), **Map Padding** = 0 (scene đã lưu chưa có các mục này).
+- Ô đất: người dùng sẽ setup sau. Sheet `ground_dirt_orange_dark.png` đang Bilinear + Normal Quality, cần đổi Point + None nếu giữ tile này.
 - Vẽ tay phần còn lại trên `Decor`: ao, chuồng, kho, viền cỏ, cây, rơm.
-- Các mục kiểm tra còn lại của tool: Plots, Ctrl+Z.
+- Mục kiểm tra còn lại của tool: Ctrl+Z.
 - Kiểm tra Sprout Lands có sprite cho 4 cây MVP; cắt tileset/cây, Sprite Atlas, gán sprite vào `CropDefinition`.
-- `ZoneAnchor` (gắn cùng GameObject với `FocusArea`).
 
 ## Tiếp theo (khi quay lại)
-1. Phần 3 – setup 3 zone theo `Docs/huong-dan-setup-khu-trong.md`; kế hoạch `ZoneAnchor` + camera đang chờ duyệt; sau đó art.
+1. Phần 3 – art (gồm setup ô đất), vẽ tay phần còn lại trên `Decor`.
 2. Phần 4 – sửa camera theo Map D, template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) + thử trên iPhone Safari / Android.
 3. Phần 5 – thêm sự kiện `Changed` trên `Farm` (TODO trong `Farm.cs`).
 4. Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation); giảm build < 10 MB (Phần 6/8).
