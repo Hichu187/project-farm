@@ -15,6 +15,8 @@ namespace VeQue.View.CameraControl
 
         // Chạm vào bên trong khu đang zoom (toạ độ world) — Phần 5 dùng để gieo / thu hoạch / mở ô.
         public event Action<Vector2> TappedInFocus;
+        // Chạm ngoài mọi khu (toạ độ world) — dùng cho ao, chuồng, nhà kho "sắp có".
+        public event Action<Vector2> TappedOutsideAreas;
 
         private bool _isPressing;
         private bool _isDragging;
@@ -87,6 +89,8 @@ namespace VeQue.View.CameraControl
 
             Vector2 world = _camera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, 0f));
             FocusArea hit = FindArea(world);
+            if (hit == null)
+                TappedOutsideAreas?.Invoke(world);
 
             if (_controller.CurrentMode == CameraController.Mode.Focused)
             {

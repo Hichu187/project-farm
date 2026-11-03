@@ -5,15 +5,17 @@ namespace VeQue.Logic
     // Định nghĩa một loại cây. Lớn qua StageCount giai đoạn đều nhau, chín khi đủ GrowSeconds.
     public sealed class CropDef
     {
-        public const int StageCount = 3;
+        public const int DefaultStageCount = 3;
 
         public string Id { get; }
         public long GrowSeconds { get; }
         public int BuyPrice { get; }
         public int SellPrice { get; }
         public int HarvestYield { get; }
+        public int StageCount { get; }
 
-        public CropDef(string id, long growSeconds, int buyPrice, int sellPrice, int harvestYield)
+        public CropDef(string id, long growSeconds, int buyPrice, int sellPrice, int harvestYield,
+            int stageCount = DefaultStageCount)
         {
             if (string.IsNullOrEmpty(id))
                 throw new ArgumentException("Crop id rỗng.", nameof(id));
@@ -25,12 +27,15 @@ namespace VeQue.Logic
                 throw new ArgumentOutOfRangeException(nameof(sellPrice));
             if (harvestYield < 1)
                 throw new ArgumentOutOfRangeException(nameof(harvestYield), "Sản lượng phải ≥ 1.");
+            if (stageCount < 1)
+                throw new ArgumentOutOfRangeException(nameof(stageCount), "Số giai đoạn phải ≥ 1.");
 
             Id = id;
             GrowSeconds = growSeconds;
             BuyPrice = buyPrice;
             SellPrice = sellPrice;
             HarvestYield = harvestYield;
+            StageCount = stageCount;
         }
     }
 }

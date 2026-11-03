@@ -14,6 +14,10 @@ namespace VeQue.Tests
         private const string CaiXanh = "cai_xanh";
         private const long RauMuongSeconds = 120;
         private const int RauMuongYield = 2;
+        private const string FiveStageCrop = "bi_do";
+        private const long FiveStageSeconds = 500;
+        private const int WaterReducePercent = 20;
+        private const long WaterReducedSeconds = RauMuongSeconds * WaterReducePercent / 100;
         private const int StartSeeds = 3;
         private const long StartCoins = 100;
         private const int Zone1StartOpen = 2;
@@ -213,7 +217,7 @@ namespace VeQue.Tests
             Farm farm = CreateFarm(1, 4, 5);
             PlotId plot = new PlotId(Zone1, 0, 0, 0);
             farm.Plant(plot, RauMuong);
-            long third = RauMuongSeconds / CropDef.StageCount;
+            long third = RauMuongSeconds / CropDef.DefaultStageCount;
 
             Assert.AreEqual(0, farm.GetStage(plot));
             _clock.Advance(third);
@@ -224,6 +228,54 @@ namespace VeQue.Tests
             _clock.Advance(third);
             Assert.AreEqual(2, farm.GetStage(plot));
             Assert.IsTrue(farm.IsRipe(plot));
+        }
+
+        [Test]
+        public void GetStage_CropWithFiveStages_AdvancesThroughAllThenRipe()
+        {
+            Farm farm = CreateFarm(1, 4, 5);
+            PlotId plot = new PlotId(Zone1, 0, 0, 0);
+            Assert.AreEqual(FarmResult.Ok, farm.BuySeeds(FiveStageCrop, 1));
+            farm.Plant(plot, FiveStageCrop);
+
+            for (int stage = 0; stage < 5; stage++)
+            {
+                Assert.AreEqual(stage, farm.GetStage(plot));
+                _clock.Advance(FiveStageSeconds / 5);
+            }
+
+            Assert.AreEqual(4, farm.GetStage(plot));
+            Assert.IsTrue(farm.IsRipe(plot));
+        }
+
+        [Test]
+        public void CropDef_ZeroStages_Throws()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => new CropDef(RauMuong, RauMuongSeconds, 5, 12, 1, 0));
+        }
+
+        [Test]
+        public void GetRemainingSeconds_OverTime_CountsDownToZero()
+        {
+            Farm farm = CreateFarm(1, 4, 5);
+            PlotId plot = new PlotId(Zone1, 0, 0, 0);
+            farm.Plant(plot, RauMuong);
+
+            Assert.AreEqual(RauMuongSeconds, farm.GetRemainingSeconds(plot));
+            _clock.Advance(20);
+            Assert.AreEqual(RauMuongSeconds - 20, farm.GetRemainingSeconds(plot));
+            farm.Water(plot);
+            Assert.AreEqual(RauMuongSeconds - 20 - WaterReducedSeconds, farm.GetRemainingSeconds(plot));
+            _clock.Advance(RauMuongSeconds);
+            Assert.AreEqual(0, farm.GetRemainingSeconds(plot));
+        }
+
+        [Test]
+        public void GetRemainingSeconds_EmptyPlot_ReturnsMinusOne()
+        {
+            Farm farm = CreateFarm(1, 4, 5);
+
+            Assert.AreEqual(-1, farm.GetRemainingSeconds(new PlotId(Zone1, 0, 0, 0)));
         }
 
         [Test]
@@ -465,6 +517,161 @@ namespace VeQue.Tests
             Assert.AreEqual(FarmResult.ZoneFull, farm.UnlockNextPlot(Zone3));
         }
 
+        // ---------- Tưới ----------
+
+        [Test]
+        public void Water_GrowingPlot_ReducesGrowTime()
+        {
+            Farm farm = CreateFarm(1, 4, 5);
+            PlotId plot = new PlotId(Zone1, 0, 0, 0);
+            farm.Plant(plot, RauMuong);
+
+            Assert.AreEqual(FarmResult.Ok, farm.Water(plot));
+
+            farm.TryGetPlotState(plot, out PlotState state);
+            Assert.IsTrue(state.Watered);
+            _clock.Advance(RauMuongSeconds - WaterReducedSeconds - 1);
+            Assert.IsFalse(farm.IsRipe(plot));
+            _clock.Advance(1);
+            Assert.IsTrue(farm.IsRipe(plot));
+        }
+
+        [Test]
+        public void Water_MidGrowth_AdvancesStage()
+        {
+            Farm farm = CreateFarm(1, 4, 5);
+            PlotId plot = new PlotId(Zone1, 0, 0, 0);
+            farm.Plant(plot, RauMuong);
+            _clock.Advance(20);
+            Assert.AreEqual(0, farm.GetStage(plot));
+
+            farm.Water(plot);
+
+            Assert.AreEqual(1, farm.GetStage(plot));
+        }
+
+        [Test]
+        public void Water_Twice_ReturnsAlreadyWateredAndKeepsTime()
+        {
+            Farm farm = CreateFarm(1, 4, 5);
+            PlotId plot = new PlotId(Zone1, 0, 0, 0);
+            farm.Plant(plot, RauMuong);
+            farm.Water(plot);
+            farm.TryGetPlotState(plot, out PlotState state);
+            long plantedAt = state.PlantedAt;
+
+            Assert.AreEqual(FarmResult.AlreadyWatered, farm.Water(plot));
+            Assert.AreEqual(plantedAt, state.PlantedAt);
+        }
+
+        [Test]
+        public void Water_RipePlot_ReturnsAlreadyRipe()
+        {
+            Farm farm = CreateFarm(1, 4, 5);
+            PlotId plot = new PlotId(Zone1, 0, 0, 0);
+            farm.Plant(plot, RauMuong);
+            _clock.Advance(RauMuongSeconds);
+
+            Assert.AreEqual(FarmResult.AlreadyRipe, farm.Water(plot));
+
+            farm.TryGetPlotState(plot, out PlotState state);
+            Assert.IsFalse(state.Watered);
+        }
+
+        [Test]
+        public void Water_EmptyPlot_ReturnsNothingToWater()
+        {
+            Farm farm = CreateFarm(1, 4, 5);
+
+            Assert.AreEqual(FarmResult.NothingToWater, farm.Water(new PlotId(Zone1, 0, 0, 0)));
+        }
+
+        [Test]
+        public void Water_LockedPlot_ReturnsPlotLocked()
+        {
+            Farm farm = CreateFarm(1, 4, 5);
+
+            Assert.AreEqual(FarmResult.PlotLocked, farm.Water(new PlotId(Zone1, 0, 3, 4)));
+        }
+
+        [Test]
+        public void Water_UnknownPlot_ReturnsUnknownPlot()
+        {
+            Farm farm = CreateFarm(1, 4, 5);
+
+            Assert.AreEqual(FarmResult.UnknownPlot, farm.Water(new PlotId(Zone1, 0, 99, 0)));
+        }
+
+        [Test]
+        public void Harvest_WateredPlot_ClearsWateredForNextPlanting()
+        {
+            Farm farm = CreateFarm(1, 4, 5);
+            PlotId plot = new PlotId(Zone1, 0, 0, 0);
+            farm.Plant(plot, RauMuong);
+            farm.Water(plot);
+            _clock.Advance(RauMuongSeconds);
+            farm.Harvest(plot);
+
+            farm.TryGetPlotState(plot, out PlotState state);
+            Assert.IsFalse(state.Watered);
+
+            farm.Plant(plot, RauMuong);
+            Assert.AreEqual(FarmResult.Ok, farm.Water(plot));
+        }
+
+        [TestCase(-1)]
+        [TestCase(101)]
+        public void FarmDef_InvalidWaterPercent_Throws(int percent)
+        {
+            var zones = new[] { CreateZone(Zone1, 1, 4, 5, Zone1StartOpen) };
+            var crops = new[] { new CropDef(RauMuong, RauMuongSeconds, 5, 12, RauMuongYield) };
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => new FarmDef(zones, crops, StartCoins, null, percent));
+        }
+
+        // ---------- Sự kiện ----------
+
+        [Test]
+        public void Changed_SuccessfulCommands_RaisedOnceEach()
+        {
+            Farm farm = CreateRichFarm(1, 4, 5);
+            PlotId plot = new PlotId(Zone1, 0, 0, 0);
+            int count = 0;
+            farm.Changed += () => count++;
+
+            farm.BuySeeds(RauMuong, 1);
+            Assert.AreEqual(1, count);
+            farm.Plant(plot, RauMuong);
+            Assert.AreEqual(2, count);
+            farm.Water(plot);
+            Assert.AreEqual(3, count);
+            _clock.Advance(RauMuongSeconds);
+            farm.Harvest(plot);
+            Assert.AreEqual(4, count);
+            farm.Sell(RauMuong, 1);
+            Assert.AreEqual(5, count);
+            farm.UnlockNextPlot(Zone1);
+            Assert.AreEqual(6, count);
+        }
+
+        [Test]
+        public void Changed_FailedCommands_NotRaised()
+        {
+            Farm farm = CreateFarm(1, 4, 5);
+            PlotId plot = new PlotId(Zone1, 0, 0, 0);
+            int count = 0;
+            farm.Changed += () => count++;
+
+            farm.Plant(plot, CaiXanh);
+            farm.Water(plot);
+            farm.Harvest(plot);
+            farm.Sell(RauMuong, 1);
+            farm.BuySeeds(RauMuong, 0);
+            farm.UnlockNextPlot(Zone2);
+
+            Assert.AreEqual(0, count);
+        }
+
         // ---------- Helpers ----------
 
         private static int PriceAt(int index) => 10 * (index + 1);
@@ -502,8 +709,9 @@ namespace VeQue.Tests
             {
                 new CropDef(RauMuong, RauMuongSeconds, 5, 12, RauMuongYield),
                 new CropDef(CaiXanh, 900, 10, 30, 1),
+                new CropDef(FiveStageCrop, FiveStageSeconds, 1, 1, 1, 5),
             };
-            return new FarmDef(zones, crops, StartCoins, new Dictionary<string, int> { { RauMuong, StartSeeds } });
+            return new FarmDef(zones, crops, StartCoins, new Dictionary<string, int> { { RauMuong, StartSeeds } }, WaterReducePercent);
         }
 
         private Farm CreateFarm(int bedCount, int width, int height)

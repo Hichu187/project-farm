@@ -3,12 +3,14 @@ using System.Collections.Generic;
 
 namespace VeQue.Logic
 {
-    // Luật chơi: gieo, thu hoạch, mua hạt, bán nông sản, mở ô. Mọi thay đổi FarmState đi qua đây.
+    // Luật chơi: gieo, tưới, thu hoạch, mua hạt, bán nông sản, mở ô. Mọi thay đổi FarmState đi qua đây.
     // Thời gian chỉ lấy từ IClock; không đếm giờ theo frame.
-    // TODO(Phần 5): thêm sự kiện Changed để View cập nhật theo sự kiện.
     public sealed class Farm
     {
         private readonly IClock _clock;
+
+        // Báo sau mỗi lệnh thành công. Cây lớn theo thời gian không phát sự kiện, View tự làm mới định kỳ.
+        public event Action Changed;
 
         public FarmDef Definition { get; }
         public FarmState State { get; }
@@ -40,6 +42,29 @@ namespace VeQue.Logic
             plot.Status = PlotStatus.Growing;
             plot.CropId = crop.Id;
             plot.PlantedAt = _clock.UtcNowSeconds;
+            Changed?.Invoke();
+            return FarmResult.Ok;
+        }
+
+        // Tùy chọn, mỗi lần trồng tưới được 1 lần. Lùi PlantedAt nên không cần bộ đếm giờ riêng.
+        public FarmResult Water(PlotId id)
+        {
+            if (!TryGetPlot(id, out PlotState plot))
+                return FarmResult.UnknownPlot;
+            if (plot.Status == PlotStatus.Locked)
+                return FarmResult.PlotLocked;
+            if (plot.Status != PlotStatus.Growing)
+                return FarmResult.NothingToWater;
+            if (!Definition.TryGetCrop(plot.CropId, out CropDef crop))
+                return FarmResult.UnknownCrop;
+            if (plot.Watered)
+                return FarmResult.AlreadyWatered;
+            if (GetElapsed(plot) >= crop.GrowSeconds)
+                return FarmResult.AlreadyRipe;
+
+            plot.PlantedAt -= crop.GrowSeconds * Definition.WaterReducePercent / 100;
+            plot.Watered = true;
+            Changed?.Invoke();
             return FarmResult.Ok;
         }
 
@@ -58,6 +83,7 @@ namespace VeQue.Logic
 
             FarmState.AddCount(State.Inventory, crop.Id, crop.HarvestYield);
             plot.Clear();
+            Changed?.Invoke();
             return FarmResult.Ok;
         }
 
@@ -74,6 +100,7 @@ namespace VeQue.Logic
 
             State.Coins -= cost;
             FarmState.AddCount(State.Seeds, crop.Id, amount);
+            Changed?.Invoke();
             return FarmResult.Ok;
         }
 
@@ -88,6 +115,7 @@ namespace VeQue.Logic
 
             FarmState.AddCount(State.Inventory, crop.Id, -amount);
             State.Coins += (long)crop.SellPrice * amount;
+            Changed?.Invoke();
             return FarmResult.Ok;
         }
 
@@ -111,6 +139,7 @@ namespace VeQue.Logic
             zone.OpenNext();
             if (zone.IsFull)
                 State.GrantAvailableStartPlots(Definition);
+            Changed?.Invoke();
             return FarmResult.Ok;
         }
 
@@ -145,8 +174,16 @@ namespace VeQue.Logic
 
             long elapsed = GetElapsed(plot);
             if (elapsed >= crop.GrowSeconds)
-                return CropDef.StageCount - 1;
-            return (int)(elapsed * CropDef.StageCount / crop.GrowSeconds);
+                return crop.StageCount - 1;
+            return (int)(elapsed * crop.StageCount / crop.GrowSeconds);
+        }
+
+        // Số giây còn lại tới khi chín, 0 nếu đã chín; -1 nếu ô không có cây.
+        public long GetRemainingSeconds(PlotId id)
+        {
+            if (!TryGetGrowing(id, out PlotState plot, out CropDef crop))
+                return -1;
+            return Math.Max(0L, crop.GrowSeconds - GetElapsed(plot));
         }
 
         public bool IsRipe(PlotId id)

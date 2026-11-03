@@ -17,7 +17,10 @@ namespace VeQue.View.Data
 
         [Header("Art")]
         [SerializeField] private Sprite _seedSprite;
-        [SerializeField] private Sprite[] _stageSprites = new Sprite[CropDef.StageCount];
+        [Tooltip("Số phần tử = số giai đoạn của cây.")]
+        [SerializeField] private Sprite[] _stageSprites = new Sprite[CropDef.DefaultStageCount];
+        [Tooltip("Bản đất ướt, dùng khi cây đã tưới. Để trống thì dùng Stage Sprites.")]
+        [SerializeField] private Sprite[] _wateredStageSprites = new Sprite[CropDef.DefaultStageCount];
         [SerializeField] private Sprite _produceIcon;
 
         public string Id => _id;
@@ -26,19 +29,28 @@ namespace VeQue.View.Data
         public Sprite SeedSprite => _seedSprite;
         public Sprite ProduceIcon => _produceIcon;
 
-        public Sprite GetStageSprite(int stage)
+        public Sprite GetStageSprite(int stage, bool watered = false)
         {
+            if (watered && _wateredStageSprites != null && stage >= 0 && stage < _wateredStageSprites.Length
+                && _wateredStageSprites[stage] != null)
+                return _wateredStageSprites[stage];
+
             if (_stageSprites == null || stage < 0 || stage >= _stageSprites.Length)
                 return null;
             return _stageSprites[stage];
         }
 
-        public CropDef ToDef() => new CropDef(_id, _growMinutes * 60L, _buyPrice, _sellPrice, _harvestYield);
+        public CropDef ToDef()
+        {
+            int stageCount = _stageSprites == null ? 1 : Mathf.Max(1, _stageSprites.Length);
+            return new CropDef(_id, _growMinutes * 60L, _buyPrice, _sellPrice, _harvestYield, stageCount);
+        }
 
         private void OnValidate()
         {
-            if (_stageSprites == null || _stageSprites.Length != CropDef.StageCount)
-                System.Array.Resize(ref _stageSprites, CropDef.StageCount);
+            int stageCount = _stageSprites == null ? 0 : _stageSprites.Length;
+            if (_wateredStageSprites == null || _wateredStageSprites.Length != stageCount)
+                System.Array.Resize(ref _wateredStageSprites, stageCount);
         }
     }
 }

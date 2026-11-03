@@ -5,7 +5,8 @@
         "VeQue.Logic",
         "Unity.2D.PixelPerfect",
         "Unity.InputSystem",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

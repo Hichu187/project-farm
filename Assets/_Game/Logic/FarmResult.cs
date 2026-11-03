@@ -16,5 +16,8 @@ namespace VeQue.Logic
         NotRipe,
         ZoneLocked,
         ZoneFull,
+        NothingToWater,
+        AlreadyWatered,
+        AlreadyRipe,
     }
 }

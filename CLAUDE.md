@@ -24,7 +24,8 @@ Kế hoạch đầy đủ: `Docs/MVP-Plan.md` (Phần 0 → 8). Tiến độ: `D
 
 ## Gameplay MVP (chỉ đúng phạm vi này)
 - 3 khu trồng; mỗi khu = 2 luống 6×2 xếp chồng, cách nhau 1 tile → 24 ô/khu; luống có viền cỏ. Mở từng ô bằng tiền, lần lượt (hết luống này mới sang luống sau); khu sau khóa toàn bộ cho tới khi khu trước mở hết. Khu 1 mở sẵn 6 ô; Khu 2, 3 mở miễn phí 1 ô khi mở khóa.
-- Gieo → lớn qua 3 giai đoạn theo thời gian thực → thu hoạch → Kho → bán. Cửa hàng bán hạt.
+- Gieo → lớn qua các giai đoạn theo thời gian thực (mỗi cây có số giai đoạn theo số sprite, mặc định dùng 5) → thu hoạch → Kho → bán. Cửa hàng bán hạt.
+- Tưới: tùy chọn, mỗi lần trồng tưới được 1 lần, giảm 20% tổng thời gian lớn (lùi `PlantedAt`); không tưới cây vẫn lớn.
 - 4 cây: rau muống 2 phút, cải xanh 15 phút, cà chua 1 giờ, bí đỏ 4 giờ. Data có 25 cây với cờ `enabled`; chỉ 4 cây này bật trong MVP.
 - Cây vẫn lớn khi thoát game. Lưu tiến trình + xuất/nhập mã sao lưu.
 - Ao, chuồng, nhà kho, đất mở rộng: chỉ là art, chạm vào hiện "sắp có".

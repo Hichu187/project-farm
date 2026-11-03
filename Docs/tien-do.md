@@ -50,7 +50,6 @@
 - [x] Test Runner EditMode: 45/45 xanh (`FarmTests` 44, `SmokeTests` 1).
 
 ### Còn lại
-- TODO(Phần 5): sự kiện `Changed` trên `Farm`.
 - TODO(Phần 7): `FarmState` dùng `Dictionary` — `JsonUtility` không serialize được, cần chuyển đổi khi lưu.
 
 ## Phần 4 – Camera (TẠM ỔN trong Editor – làm trước Phần 1–3 theo yêu cầu; còn template WebGL + test máy thật)
@@ -134,8 +133,44 @@
 - Mục kiểm tra còn lại của tool: Ctrl+Z.
 - Kiểm tra Sprout Lands có sprite cho 4 cây MVP; cắt tileset/cây, Sprite Atlas, gán sprite vào `CropDefinition`.
 
+## Phần 5 + 6 – Trồng cây, tưới, GUI (ĐANG LÀM, chia 3 đợt theo yêu cầu 03/11/2026)
+
+### Quyết định
+- Tưới: tùy chọn, mỗi lần trồng 1 lần, giảm 20% tổng thời gian lớn (`FarmDefinition._waterReducePercent`), chỉnh được trong data. Ô được tưới thu nhập cao hơn 25%, có thể cần chỉnh giá mở ô khi chơi thử.
+- Chạm ô: khóa kế tiếp → xác nhận mở; trống → chọn hạt; chưa tưới → tưới; chín → thu hoạch.
+- Font: tạm dùng LiberationSans mặc định của TMP (đủ 134 ký tự có dấu). Font pixel Sprout Lands thiếu toàn bộ ký tự có dấu.
+- Layout GUI đã duyệt tạm: HUD (xu, sao lưu) trên cùng; tab Nông trại / Kho / Cửa hàng dưới cùng; Kho, Cửa hàng, chọn hạt là bảng trượt từ dưới lên; xác nhận mở ô ở giữa màn hình. Canvas "Về Quê – GUI Layouts" không có trong repo.
+- Gieo nhiều ô: nhớ hạt vừa chọn, chạm ô trống khác gieo luôn; thanh mỏng trên tab hiện `Đang gieo: <cây> x<số> [Đổi]`.
+- Sprite: tool gán cải xanh hàng 7, cà chua hàng 4, bí đỏ hàng 9 của `Farming Plants v2.png`, giai đoạn dùng cột 1–5. Rau muống người dùng tự gán, tool giữ nguyên (đang 3 sprite từ sheet đất ướt, hàng 1).
+- Số giai đoạn theo từng cây = số phần tử `_stageSprites`. Người dùng được giữ cách cắt của mình; tool nhận cả cắt lưới và cắt tự động.
+- Gốc cây nâng 5 pixel khỏi cạnh dưới ô (`FarmView._cropOffsetPixels`) để hạt nằm giữa ô; cây cao nhô lên ô trên.
+- Ô đất khóa hiện bằng màu tối (`FarmView`), chưa cần tile riêng; có sẵn ô gán tile khi setup ô đất.
+
+### Đợt 1 – Logic (XONG)
+- `Farm.Water()`, `PlotState.Watered`, sự kiện `Farm.Changed`, mã `NothingToWater`, `AlreadyWatered`, `AlreadyRipe`; thêm 13 test. Người dùng đã chạy Test Runner, xác nhận ổn.
+
+### Đợt 2 – Trồng cây (đã viết code, chờ setup và kiểm tra)
+- `GameBootstrap`, `FarmView`, `FarmInteraction` (`Assets/_Game/View/Map/`); `ZoneDefinition.GetCell` / `TryGetPlotId`; `CropDefinition._wateredStageSprites`; menu **Về Quê → Gán sprite 4 cây**; `CropDef.StageCount` theo từng cây; thêm 5 test.
+
+Người dùng xác nhận Đợt 2 ổn.
+
+### Đợt 3 – GUI (đã viết code, chờ dựng và kiểm tra)
+- `Assets/_Game/View/UI/`: `GameUI`, `SafeArea`, `Toast`, `BottomSheet`, `CropRow`, `CropListPanel` + `SeedPanel`, `StoragePanel`, `ShopPanel`, `UnlockDialog`, `SeedingBar`, `UiFormat`.
+- `Farm.GetRemainingSeconds`, `CameraTouchInput.TappedOutsideAreas`, `ComingSoonArea`; `FarmInteraction` hỏi qua sự kiện, bỏ `_defaultSeed`. Asmdef `VeQue.View`, `VeQue.Editor` thêm `Unity.TextMeshPro`.
+- Menu **Về Quê → Tạo UI** dựng toàn bộ GUI và nối tham chiếu; thêm 15 test (tổng 93).
+- `CropProgressPopup`: chạm cây chưa chín (chưa tưới thì tưới trước) hiện thanh tiến độ + thời gian ngay trên cây; tự ẩn sau 3 giây, chạm cây khác thì chuyển sang cây đó và ẩn cây trước. Không hiện thời gian trên HUD.
+- Thu hoạch vẫn báo `+2 Rau muống` ở thông báo đầu màn hình. Chưa làm hiệu ứng giọt nước khi tưới.
+
+### Còn lại
+- Để ngỏ (04/11/2026): tưới chưa thấy khác biệt trên hình. Rau muống đang dùng sprite đất ướt cho mọi giai đoạn; 3 cây còn lại chưa có sprite. Người dùng cân nhắc không dùng sprite đất ướt. Chưa sửa; khi quay lại cần chốt cách báo đã tưới và chỉnh `CropSpriteAssigner`.
+- Hiệu ứng GUI mượt hơn: đã đưa vào `MVP-Plan.md` Phần 6 mục 4, người dùng sẽ làm sau, chưa cài DOTween.
+- Chạy lại kiểm tra Đợt 3; thử chữ có dấu, safe-area trên iPhone; build lại và so Build Report (font, sprite mới; mốc 10,8 MB).
+- Sau khi vẽ `Decor`: tạo `ComingSoonArea` cho ao, chuồng, nhà kho, đất mở rộng, gán vào `GameUI`.
+- TODO: thay màu phẳng bằng khung, nút UI Pack (cần đặt Border 9-slice trong Sprite Editor).
+- TODO: xem lại bố cục GUI sau khi chơi thử, người dùng có thể đổi.
+- TODO: có canvas GUI thật hoặc font pixel thì thay vào.
+
 ## Tiếp theo (khi quay lại)
 1. Phần 3 – art (gồm setup ô đất), vẽ tay phần còn lại trên `Decor`.
 2. Phần 4 – sửa camera theo Map D, template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) + thử trên iPhone Safari / Android.
-3. Phần 5 – thêm sự kiện `Changed` trên `Farm` (TODO trong `Farm.cs`).
 4. Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation); giảm build < 10 MB (Phần 6/8).

@@ -19,9 +19,15 @@ MonoBehaviour:
   _buyPrice: 12
   _sellPrice: 25
   _harvestYield: 1
-  _seedSprite: {fileID: 0}
+  _seedSprite: {fileID: -3760858136471710070, guid: 2b14b476cb186dc40be0333032322aa0,
+    type: 3}
   _stageSprites:
+  - {fileID: 3109228984140855217, guid: c38df66d4e6f3f7438966976d2a436e7, type: 3}
+  - {fileID: -174140209199612513, guid: c38df66d4e6f3f7438966976d2a436e7, type: 3}
+  - {fileID: -1804152763886716717, guid: c38df66d4e6f3f7438966976d2a436e7, type: 3}
+  _wateredStageSprites:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  _produceIcon: {fileID: 0}
+  _produceIcon: {fileID: -7071159708141278945, guid: 2b14b476cb186dc40be0333032322aa0,
+    type: 3}

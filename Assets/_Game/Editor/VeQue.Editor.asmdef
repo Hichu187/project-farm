@@ -3,7 +3,9 @@
     "rootNamespace": "VeQue.EditorTools",
     "references": [
         "VeQue.Logic",
-        "VeQue.View"
+        "VeQue.View",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"

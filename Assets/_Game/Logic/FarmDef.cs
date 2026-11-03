@@ -13,9 +13,11 @@ namespace VeQue.Logic
         public IReadOnlyList<CropDef> Crops { get; }
         public long StartCoins { get; }
         public IReadOnlyDictionary<string, int> StartSeeds { get; }
+        // Tưới giảm bao nhiêu % tổng thời gian lớn của cây.
+        public int WaterReducePercent { get; }
 
         public FarmDef(IEnumerable<ZoneDef> zones, IEnumerable<CropDef> crops, long startCoins,
-            IReadOnlyDictionary<string, int> startSeeds = null)
+            IReadOnlyDictionary<string, int> startSeeds = null, int waterReducePercent = 0)
         {
             if (zones == null)
                 throw new ArgumentNullException(nameof(zones));
@@ -23,6 +25,8 @@ namespace VeQue.Logic
                 throw new ArgumentNullException(nameof(crops));
             if (startCoins < 0)
                 throw new ArgumentOutOfRangeException(nameof(startCoins));
+            if (waterReducePercent < 0 || waterReducePercent > 100)
+                throw new ArgumentOutOfRangeException(nameof(waterReducePercent));
 
             var zoneList = new List<ZoneDef>(zones);
             if (zoneList.Count == 0)
@@ -63,6 +67,7 @@ namespace VeQue.Logic
             Crops = cropList.AsReadOnly();
             StartCoins = startCoins;
             StartSeeds = seeds;
+            WaterReducePercent = waterReducePercent;
         }
 
         public bool TryGetCrop(string id, out CropDef crop)

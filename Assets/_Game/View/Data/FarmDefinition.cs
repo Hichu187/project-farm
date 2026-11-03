@@ -22,6 +22,8 @@ namespace VeQue.View.Data
         [SerializeField] private CropDefinition[] _crops = Array.Empty<CropDefinition>();
         [SerializeField] private long _startCoins = 60;
         [SerializeField] private StartSeed[] _startSeeds = Array.Empty<StartSeed>();
+        [Tooltip("Tưới giảm bao nhiêu % tổng thời gian lớn của cây.")]
+        [Range(0, 100)] [SerializeField] private int _waterReducePercent = 20;
 
         public IReadOnlyList<ZoneDefinition> Zones => _zones;
         public IReadOnlyList<CropDefinition> Crops => _crops;
@@ -54,7 +56,7 @@ namespace VeQue.View.Data
                 seeds[seed.Crop.Id] = current + seed.Count;
             }
 
-            return new FarmDef(zones, crops, _startCoins, seeds);
+            return new FarmDef(zones, crops, _startCoins, seeds, _waterReducePercent);
         }
     }
 }

@@ -52,6 +52,32 @@ namespace VeQue.View.Data
             }
         }
 
+        // Logic tính row từ trên xuống, còn trục Y của cell hướng lên.
+        public Vector3Int GetCell(PlotId id)
+        {
+            BedDefinition bed = _beds[id.BedIndex];
+            return bed.Origin + new Vector3Int(id.Col, bed.Height - 1 - id.Row, 0);
+        }
+
+        // False nếu cell không thuộc luống nào, gồm cả khe giữa các luống.
+        public bool TryGetPlotId(Vector3Int cell, out PlotId id)
+        {
+            for (int i = 0; i < _beds.Length; i++)
+            {
+                BedDefinition bed = _beds[i];
+                int col = cell.x - bed.Origin.x;
+                int fromBottom = cell.y - bed.Origin.y;
+                if (col >= 0 && col < bed.Width && fromBottom >= 0 && fromBottom < bed.Height)
+                {
+                    id = new PlotId(_id, i, col, bed.Height - 1 - fromBottom);
+                    return true;
+                }
+            }
+
+            id = default;
+            return false;
+        }
+
         public ZoneDef ToDef()
         {
             var beds = new BedDef[_beds.Length];

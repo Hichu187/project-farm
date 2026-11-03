@@ -16,12 +16,14 @@ namespace VeQue.Logic
         public PlotStatus Status;
         public string CropId;
         public long PlantedAt;
+        public bool Watered;
 
         internal void Clear()
         {
             Status = PlotStatus.Empty;
             CropId = null;
             PlantedAt = 0;
+            Watered = false;
         }
     }
 }

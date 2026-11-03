@@ -58,6 +58,48 @@ namespace VeQue.Tests
         }
 
         [Test]
+        public void ZoneDefinition_EveryPlot_CellAndIdRoundTrip()
+        {
+            foreach (ZoneDefinition zone in LoadAsset().Zones)
+            {
+                ZoneDef def = zone.ToDef();
+                for (int i = 0; i < def.PlotCount; i++)
+                {
+                    PlotId id = def.PlotIdAt(i);
+                    Assert.IsTrue(zone.TryGetPlotId(zone.GetCell(id), out PlotId result), id.ToString());
+                    Assert.AreEqual(id, result);
+                }
+            }
+        }
+
+        [Test]
+        public void ZoneDefinition_RowZero_IsTopOfBed()
+        {
+            ZoneDefinition zone = LoadAsset().Zones[0];
+            BedDefinition bed = zone.Beds[0];
+
+            Vector3Int cell = zone.GetCell(new PlotId(zone.Id, 0, 0, 0));
+
+            Assert.AreEqual(bed.Origin + new Vector3Int(0, bed.Height - 1, 0), cell);
+        }
+
+        [Test]
+        public void ZoneDefinition_GapBetweenBeds_IsNotAPlot()
+        {
+            ZoneDefinition zone = LoadAsset().Zones[0];
+            BedDefinition lowerBed = zone.Beds[1];
+            Vector3Int gap = lowerBed.Origin + new Vector3Int(0, lowerBed.Height, 0);
+
+            Assert.IsFalse(zone.TryGetPlotId(gap, out _));
+        }
+
+        [Test]
+        public void ToDef_DefaultData_WaterReducesTwentyPercent()
+        {
+            Assert.AreEqual(20, LoadAsset().ToDef().WaterReducePercent);
+        }
+
+        [Test]
         public void ToDef_DefaultData_OnlyMvpCropsEnabled()
         {
             FarmDefinition asset = LoadAsset();
