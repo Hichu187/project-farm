@@ -7,7 +7,7 @@ Mỗi phần nhỏ, chạy và kiểm tra được trước khi sang phần sau.
 - Camera toàn cảnh KHÔNG thấy hết nông trại: Reference Resolution khoảng 208×370 (≈13 tile bề ngang, zoom 5x trên màn 1080–1170 px). Zoom vào khu theo bounding box (~10x).
 - Bố cục map: Map D (trải ngang, 44×26), xem Phần 3.
 - Số ô mở sẵn: Khu 1 là 6; Khu 2, 3 mở miễn phí 1 ô khi mở khóa. Đặt trong `ZoneDefinition.startOpenCount`.
-- 07/11/2026: đưa câu cá vào MVP (Phần 10); ao không còn là "sắp có".
+- 07/11/2026: đưa câu cá vào MVP (Phần 10) ở vùng câu riêng (cùng scene, ngoài cổng trái); thêm nhân vật (đi lang thang ở nông trại, chạm để đi ở vùng câu, hiển thị nhiều lớp để sau thêm trang phục); ao nhà chỉ để thả cá sưu tầm.
 - 06/11/2026: thêm tiến trình (cấp độ + đơn hàng) vào MVP để người chơi có mục tiêu; cân bằng lại cây theo công thức (Phần 6b). Nhiệm vụ hằng ngày, bộ sưu tập làm sau (Phần 6c).
 
 ---
@@ -61,12 +61,12 @@ Lưu ý: asmdef "No Engine References" không chứa được ScriptableObject �
 | Khu 2 | [21, 10, 6, 2], [21, 13, 6, 2] |
 | Khu 3 | [13, 18, 6, 2], [13, 21, 6, 2] |
 | Đất mở rộng (sau MVP) | [21, 18, 6, 5] |
-| Ao cá | [35, 9, 7, 11] |
+| Ao nhà (thả cá sưu tầm, Phần 10) | [35, 9, 7, 11] |
 | Nhà kho | [14, 1, 6, 6] |
 | Cây | (4,2) (9,3) (25,2) (31,3) (38,2) |
 | Đống rơm | (23,5) |
 
-Ao, chuồng, nhà kho, đất mở rộng chỉ là art, chạm vào hiện "sắp có".
+Chuồng, nhà kho, đất mở rộng chỉ là art, chạm vào hiện "sắp có". Ao nhà dùng cho Phần 10. Vùng câu (Phần 10) đặt ngoài cổng trái, cùng Grid; tọa độ chốt khi làm.
 Tọa độ trên là bố cục tham chiếu; người dùng tự đặt vị trí cuối cùng trong scene. Background trời làm sau, che khoảng trống trên/dưới map ở màn hình dài.
 
 **Kiểm tra:** Game view scale 1x nhìn sắc nét, không có đường kẻ giữa tile; Build Report không tăng bất thường.
@@ -209,13 +209,25 @@ Ngoài phạm vi MVP (theo `CLAUDE.md`): nuôi cá, chuồng, đất mở rộng
 
 **Kiểm tra:** mở link trên điện thoại là chơi được trong vài giây, chơi trọn một vòng gieo → bán → mở ô.
 
-## Phần 10 – Câu cá (trong MVP từ 07/11/2026, chưa làm) 🔍
-Đưa vào MVP 07/11/2026 (`CLAUDE.md` đã sửa phạm vi). Ao cá có sẵn trên Map D [35, 9, 7, 11]; bỏ `ComingSoonArea` của ao khi làm phần này. Thứ tự đề xuất: sau Phần 6c mục 1–2 và sau khi game chạy được trên điện thoại (Phần 4 template WebGL).
+## Phần 10 – Nhân vật, vùng câu, câu cá, ao nhà (trong MVP từ 07/11/2026, chưa làm) 🔍
+Đưa vào MVP 07/11/2026 (`CLAUDE.md` đã sửa phạm vi). Thứ tự đề xuất: sau Phần 6c mục 1–2 và sau khi game chạy được trên điện thoại (Phần 4 template WebGL).
+
+**0. Nhân vật, vùng câu, ao nhà (chốt 07/11/2026)**
+- **Đánh giá:** nhân vật tự nó không làm vòng chơi hấp dẫn hơn (câu cá mới là phần chơi tay bù cho trồng trọt là chờ), nhưng mở ra: nhân vật của riêng người chơi; **chỗ tiêu xu sau khi mở hết đất** (Khu 3 hết khoảng ngày 12, cấp 15 khoảng ngày 9) bằng trang phục / phụ kiện / cần rank cao mà không lệch cân bằng; dễ thêm vùng chơi mới. Điều kiện: đoạn đi bộ ngắn, bỏ qua được; chế độ đang ở luôn rõ ràng.
+- **Nông trại (nhìn từ trên xuống, như hiện tại):** mọi thao tác giữ nguyên. Thêm nhân vật đi lang thang làm cảnh: chọn ngẫu nhiên điểm đi được trong sân → đi tới → đứng 2–5 giây → lặp; tránh hàng rào, ao, nhà kho, luống; vẽ theo trục Y cùng cây. Có thể thêm sau: đi tới ô vừa thu hoạch, đứng tưới.
+- **Sang vùng câu:** bấm **Đi câu** → nhân vật **tự đi ra cổng** (cổng trái Map D) → chuyển sang vùng câu đặt ngoài cổng trái (cùng scene, cùng Grid). Chạm thêm lần nữa thì đi nhanh / bỏ qua đoạn đi ra cổng. **Về nhà** thì ngược lại.
+- **Ở vùng câu (điều khiển nhân vật):** chạm đất trống → tìm đường và đi tới (có dấu điểm đến); **chạm chỗ câu** (bến / mép nước có biểu tượng) → đi tới điểm đứng, quay mặt ra nước, **tới nơi mới bắt đầu câu**; đang đi chạm chỗ khác thì đổi điểm đến. Câu nhiều lần tại chỗ không phải đi lại; nhớ chỗ câu lần trước. Không joystick.
+- **Camera ở vùng câu:** đi theo nhân vật (mượt, trong mép vùng); **kéo để xem xung quanh**, thả tay một lúc (vd. 2 giây) thì tự quay về nhân vật. Đang câu thì cố định khung quanh nhân vật + phao.
+- **Chế độ rõ ràng:** HUD đổi khi ở vùng câu (tên vùng, nút **Về nhà**, ẩn thanh hạt và các tab chỉ dùng ở nông trại).
+- **Vùng câu MVP:** 1 vùng nhỏ, vài chỗ câu gần lối vào. Thêm vùng (rừng, chợ, sông khác – mỗi vùng bộ cá riêng) sau MVP.
+- **Ao nhà** (Map D [35, 9, 7, 11]): chỉ thả cá sưu tầm – chọn giữ cá thay vì bán; cá không lớn, không đẻ, không cho ăn, không tạo thu nhập. Cá hiện bằng **bóng màu theo độ hiếm** bơi lang thang; sức chứa ban đầu 6 (nâng cấp sau); **chạm ao → bảng danh sách cá trong ao** (loài, cân nặng, ngày bắt, khung giờ), thả / bắt lại. Làm **sau cùng**. Bỏ `ComingSoonArea` của ao khi làm.
+- **Trang phục (chuẩn bị từ đầu, cửa hàng sau MVP):** nhân vật vẽ bằng nhiều lớp đồng bộ khung (thân, mũ, phụ kiện). Thân đổi cả bộ + biến thể màu bằng thay bảng màu (gần như không tốn art); mũ / phụ kiện là lớp riêng bám điểm neo đầu theo từng khung (chỉ vẽ 4 hướng mỗi món). Sau có thể chuyển sang phối đồ đầy đủ (mỗi món vẽ đủ khung) mà không viết lại hệ hiển thị. MVP chỉ có 1 trang phục mặc định.
+- **Art có sẵn:** nhân vật `Basic Charakter Spritesheet.png`, `Basic Charakter Actions.png` (Sprout Lands Basic); câu cá `fishing animation front/back/side.png`, `fishing_rod*.png`, `fishing water splash frames and rod.png`, `Fish Sprites.png`, `small fish.png`, `mediuml fish.png`, `big fish 2 swimming in cirkels.png` (Ocean Pack). Cần kiểm tra đủ khung khi làm. Cần thêm: tile vùng câu (nước, bờ, bến), biểu tượng chỗ câu.
 Vòng chơi: **chọn mồi → ném cần (canh perfect) → chờ cá cắn, giật đúng lúc → kéo cá bằng chuỗi mũi tên 4 hướng → được cá (loài, độ hiếm, cân nặng, giá) hoặc sổng / đứt dây / gãy cần.**
 Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt khi ném, báo hiệu cắn câu + khung phản xạ ngắn, rồi một mini game kéo cá (Stardew Valley, Fish Quest, WebFishing, Tiny Fishing). Kéo cá dùng kiểu nhập chuỗi mũi tên theo nhịp (kiểu game nhảy theo nhịp) – chỉ mượn cơ chế, art và tên riêng.
 
 **1. Ném cần – canh perfect**
-- Đứng ở bờ ao (zoom vào ao như zoom khu). Nhấn giữ nút Ném: thanh lực chạy lên xuống liên tục (0 → 100% → 0, chu kỳ ~1,2 giây); thả tay để ném.
+- Nhân vật đã đứng ở chỗ câu trong vùng câu. Nhấn giữ nút Ném: thanh lực chạy lên xuống liên tục (0 → 100% → 0, chu kỳ ~1,2 giây); thả tay để ném.
 - Vùng trên thanh: **Perfect** (hẹp, ở gần đỉnh), **Tốt**, **Thường**. Cần câu rank cao thì vùng Perfect rộng hơn, thanh chạy chậm hơn.
 - Lực quyết định phao rơi gần hay xa bờ: xa = nước sâu = cá to, cá hiếm hơn.
 - Perfect: tăng tỉ lệ cá hiếm, chờ cắn ngắn hơn, vòng kéo đầu dễ hơn; có hiệu ứng + chữ "Perfect!". Ném hỏng (quá yếu): phao rơi sát bờ, chỉ có cá thường.
@@ -230,7 +242,7 @@ Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt k
 - Cá có **thể lực**, dây có **độ căng**. Mỗi **vòng**: hiện chuỗi mũi tên (↑ ↓ ← →), người chơi nhập đúng thứ tự trong thời gian giới hạn, rồi chạm **Chốt** đúng lúc con trỏ chạy qua vạch nhịp (Perfect / Tốt / Trượt).
 - Nhập đúng + chốt tốt → trừ thể lực cá (Perfect trừ nhiều, có chuỗi combo). Sai mũi tên hoặc hết giờ → độ căng tăng. Độ căng đầy → **đứt dây**: cá thoát, mất mồi, cần mất độ bền nhiều hơn, có xác suất **gãy cần**.
 - Cá càng hiếm: nhiều vòng hơn, chuỗi dài hơn (4 → 10 mũi tên), ít thời gian hơn, vạch nhịp hẹp hơn; cá huyền thoại có **mũi tên đỏ** (bấm hướng ngược lại) và chuỗi đổi giữa chừng.
-- Nhập trên điện thoại: **4 nút mũi tên lớn** (≥ 56 pt) + nút **Chốt**, đặt ở nửa dưới màn hình (ổn định hơn vuốt khi nhập nhanh); có thể thêm tùy chọn vuốt. Cần thử cảm giác trên máy thật.
+- Nhập trên điện thoại (chốt): **4 nút mũi tên lớn** (≥ 56 pt) + nút **Chốt**, đặt ở nửa dưới màn hình. Cần thử cảm giác trên máy thật.
 
 **4. Cá**
 - Mỗi loài: độ hiếm (Thường / Khá / Hiếm / Quý / Huyền thoại), khoảng cân nặng (kg, lệch về nhẹ; cá nặng hiếm hơn), giá = giá gốc × hệ số cân nặng, khung giờ xuất hiện (mục 4b), độ sâu, mồi ưa thích, độ khó (số vòng, độ dài chuỗi, thời gian, khung giật, tỉ lệ trượt).
@@ -242,7 +254,7 @@ Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt k
 - Mỗi loài có hệ số theo từng khung: 0 = không có, 1 = bình thường, > 1 = ăn mạnh. Khung tính lúc ném cần (đang kéo cá mà qua khung mới thì không đổi).
 - Gợi ý: cá rô, cá diếc cả ngày; cá chép mạnh buổi sáng; cá lóc mạnh lúc bình minh và hoàng hôn; cá trê, lươn chỉ tối và khuya; tôm càng tối; cá bống tượng chiều tối; **cá chép vàng chỉ lúc bình minh**; **cá trắm đen khổng lồ chỉ lúc khuya**.
 - Công bằng với người chỉ chơi vài giờ cố định: cá Hiếm trở xuống có ít nhất 2 khung; chỉ cá Quý / Huyền thoại mới có 1 khung, và có mồi đặc biệt tăng tỉ lệ để bù.
-- UI khi zoom vào ao: "Khung giờ: Hoàng hôn (17–19h) · còn 1:24", danh sách cá đang ăn mạnh (loài chưa bắt được hiện "?" – khám phá dần qua album); album ghi khung giờ của mỗi loài đã bắt.
+- UI khi ở vùng câu: "Khung giờ: Hoàng hôn (17–19h) · còn 1:24", danh sách cá đang ăn mạnh (loài chưa bắt được hiện "?" – khám phá dần qua album); album ghi khung giờ của mỗi loài đã bắt.
 - Có thể thêm sau: màu map đổi theo khung giờ (sáng, chiều vàng, tối xanh), đom đóm ban đêm – làm đẹp, không bắt buộc.
 - Chỉnh giờ máy để câu cá theo khung: chấp nhận (không có server), `MonotonicClock` chỉ chặn lùi giờ. Trong Editor thử bằng **Tua thời gian**.
 - Logic: `FishDef` có bảng hệ số 7 khung; hàm khung giờ thuần (giờ UTC + độ lệch múi giờ → khung), có test ranh giới (4:59 / 5:00, qua nửa đêm).
@@ -256,9 +268,22 @@ Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt k
 - Mỗi lần ném tốn 1 mồi; mồi quyết định loài nào dễ cắn: giun → rô, diếc, trê; cám → chép, mè; tép → lóc, bống; mồi giả → lóc, cá quý. Mồi đặc biệt hút cá hiếm.
 - Nguồn: giun có khi đào được lúc thu hoạch (nối câu cá với trồng trọt), mồi khác mua ở Cửa hàng. Hết mồi là nghỉ → giới hạn tự nhiên, không cần thanh năng lượng.
 
-**7. Kỹ thuật & thứ tự làm (khi được đưa vào phạm vi)**
+**7. Kỹ thuật & thứ tự làm**
 - Logic thuần (`VeQue.Logic`): `FishDef`, `RodDef`, `BaitDef`, phiên câu dạng state machine (Chờ ném → Đang ném → Chờ cắn → Cá cắn → Kéo → Kết quả), sinh cá / sinh chuỗi mũi tên bằng `SeededRandom`, thời gian qua `IClock`; test cho tỉ lệ, cân nặng, trượt, đứt dây, độ bền. Save: cần + độ bền, mồi, giỏ cá, kỷ lục.
-- View: zoom vào ao, phao + dây (pixel), thanh lực, nút mũi tên + vạch nhịp, hiệu ứng Perfect / đứt dây / gãy cần, âm thanh (chỉ phát sau lần chạm đầu trên web).
-- Art cần có: phao, cần theo rank, sprite từng loài cá, mồi, nước động. Âm thanh: quăng cần, cá cắn, đứt dây.
-- Đợt: (1) Logic + test; (2) ném + chờ cắn; (3) kéo cá mũi tên; (4) cửa hàng cần / mồi, sửa cần; (5) giỏ cá, bán, album, đơn hàng có cá. Cân bằng: thêm câu cá vào mô phỏng kinh tế (thu nhập / giờ so với trồng cây).
-- Cần chốt khi làm: nút mũi tên hay vuốt; XP câu cá chung hay riêng; cá giữ trong giỏ hay bán ngay.
+- View: khung camera câu cá, phao + dây (pixel), thanh lực, nút mũi tên + vạch nhịp, hiệu ứng Perfect / đứt dây / gãy cần, âm thanh (chỉ phát sau lần chạm đầu trên web).
+- Nhân vật / vùng câu: `GridPath` (A*, C# thuần, có test) trên lưới ô đi được lấy từ Tilemap; `CharacterView` (nhiều lớp đồng bộ khung, 4 hướng, đi / đứng / câu, di chuyển theo pixel, vẽ theo trục Y); bộ điều khiển đi lang thang (nông trại) và chạm để đi (vùng câu); `CameraController` giới hạn + zoom theo vùng, chế độ đi theo nhân vật + kéo xem rồi tự quay về; `CameraTouchInput` thêm chế độ vùng câu. Save: không lưu vị trí nhân vật (luôn vào game ở nông trại); lưu cá trong ao nhà.
+- Art cần có: phao, cần theo rank, sprite từng loài cá, mồi, nước động, tile vùng câu (xem mục 0). Âm thanh: bước chân, quăng cần, cá cắn, đứt dây.
+- Giai đoạn (mỗi giai đoạn duyệt thiết kế chi tiết trước khi làm):
+  1. **Nhân vật đi lang thang ở nông trại**: `GridPath`, lưới ô đi được, `CharacterView` nhiều lớp (1 trang phục), bộ điều khiển đi lang thang.
+  2. **Vùng câu + di chuyển**: vẽ vùng ngoài cổng trái, giới hạn camera theo vùng, **Đi câu** (đi ra cổng) / **Về nhà**, chạm để đi, chạm chỗ câu, camera đi theo + kéo xem rồi tự quay về, HUD theo chế độ.
+  3. **Câu cá – Logic + test**: `FishDef` (gồm khung giờ), `RodDef`, `BaitDef`, phiên câu, sinh cá / chuỗi mũi tên, độ bền.
+  4. **Câu cá – chơi**: ném + chờ cắn + giật; kéo cá mũi tên; cửa hàng cần / mồi, sửa cần.
+  5. **Giỏ cá, bán, album, đơn hàng có cá**.
+  6. **Ao nhà** (sau cùng): thả cá, bóng cá bơi, bảng danh sách cá.
+  - Sau MVP: cửa hàng trang phục / phụ kiện, thêm vùng chơi.
+  - Cân bằng: thêm câu cá vào mô phỏng kinh tế (thu nhập / giờ so với trồng cây). Mỗi giai đoạn thêm art: build lại, so Build Report.
+- Đã chốt 07/11/2026:
+  - Nhập khi kéo cá: **4 nút mũi tên** + nút Chốt (không dùng vuốt).
+  - **XP câu cá cộng vào XP nhân vật** (chung cấp với trồng trọt). XP mỗi con theo độ hiếm + cân nặng; đưa vào mô phỏng cân bằng để nhịp lên cấp không lệch mục tiêu.
+  - **Cá giữ trong giỏ** (loài + cân nặng, có sức chứa); từ giỏ: bán, giao đơn, thả ao nhà. Giỏ đầy thì phải bán / thả bớt mới câu tiếp.
+  - Asset vùng câu (tile nước, bờ, bến), biểu tượng chỗ câu, âm thanh: **người dùng thêm sau**; làm code trước với hình tạm, thay khi có asset.

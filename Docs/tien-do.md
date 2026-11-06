@@ -14,11 +14,11 @@
 | 6 – UI | Ổn trong Editor | Mục 4 hiệu ứng GUI (làm sau); mục 5 chạm/kéo chờ kiểm tra; chữ có dấu + safe-area trên iPhone |
 | 6b – Cấp độ, đơn hàng, cân bằng | Ổn trong Editor | Build + Build Report; công cụ Cân bằng (làm sau) |
 | 6c – Việc làm lúc chờ cây lớn | Chưa làm (kế hoạch 8 mục, 07/11/2026) | Mục 1–6 trong MVP, 7–8 sau MVP; mỗi mục duyệt thiết kế trước |
-| 10 – Câu cá | Trong MVP (07/11/2026), đã có thiết kế, chưa làm | Ném perfect, giật câu, kéo cá mũi tên 4 hướng, cá theo độ hiếm/cân nặng/giá/khung giờ, cần rank/độ bền/trượt/gãy, mồi; cần art cá, phao, cần, nước |
+| 10 – Nhân vật, vùng câu, câu cá, ao nhà | Trong MVP (07/11/2026), đã có thiết kế, chưa làm | Ném perfect, giật câu, kéo cá mũi tên 4 hướng, cá theo độ hiếm/cân nặng/giá/khung giờ, cần rank/độ bền/trượt/gãy, mồi; cần art cá, phao, cần, nước |
 | 7 – Lưu tiến trình | Đã viết code (save `version` 2) | Thử trên máy thật, nhập mã máy khác, trình duyệt nhúng Facebook |
 | 8 – Build & phát hành | Chưa làm | Toàn bộ |
 
-Git: nhánh `setup/phan-0-camera`, commit cuối `e65601e` (gồm Phần 5, 5b, 6 mục 5, 6b, 7). Tài liệu kế hoạch Phần 6c, 10 sau commit đó **chưa commit**.
+Git: nhánh `setup/phan-0-camera`, đã push lên `origin`. Code mới nhất ở `e65601e` (Phần 5, 5b, 6 mục 5, 6b, 7); các commit sau chỉ là tài liệu kế hoạch Phần 6c, 10.
 Test: lần gần nhất người dùng xác nhận trong Unity là 210 (sau Đợt 4 Phần 6b). Hiện có 221 test; ngoài Unity chạy được 164/164 xanh (phần không cần Unity).
 
 ## Phần 0 – Dọn project & khung thư mục (XONG – 29/10/2026)
@@ -326,17 +326,18 @@ Người dùng xác nhận Đợt 2 ổn.
 - Đơn hàng (chốt): chờ 10 phút sau khi giao, giới hạn 15 đơn giao mỗi ngày (chỉ sinh đơn khi đã giao + đang có < 15, bỏ đơn không tốn lượt), đơn gấp 2–3 giờ một lần / hết hạn 30 phút / thưởng ×2 / không tính lượt. Ngày theo giờ địa phương (độ lệch múi giờ lấy từ trình duyệt). Save lên `version` 3. Trước khi code: chạy lại mô phỏng cân bằng.
 - Báo cây chín trên tab: tính thời điểm chín sớm nhất lúc tab ẩn, hẹn giờ bằng JS (Unity dừng khi tab ẩn).
 - Câu cá đưa vào MVP (Phần 10; `CLAUDE.md` đã sửa phạm vi, còn "nuôi cá" ngoài phạm vi): ném cần canh perfect → chờ cắn, giật trong khung phản xạ (có tỉ lệ trượt) → kéo cá bằng chuỗi mũi tên 4 hướng + chốt theo nhịp (độ căng dây, đứt dây, gãy cần) → cá có độ hiếm (5 mức), cân nặng, giá theo cân nặng, khung giờ xuất hiện (7 khung theo giờ địa phương), mồi ưa thích; càng hiếm càng khó. Cần câu 5 rank, độ bền, sửa / mua mới. Mồi hút loài khác nhau, giun có thể đào được khi thu hoạch.
-- Thứ tự đề xuất: Phần 6c mục 1–2 → Phần 4 template WebGL + chạy trên điện thoại → Phần 10 câu cá.
+- Thứ tự đề xuất: Phần 6c mục 1–2 → Phần 4 template WebGL + chạy trên điện thoại → Phần 10.
+- Phần 10 chốt thêm (07/11/2026): câu cá ở **vùng câu riêng** cùng scene, đặt ngoài cổng trái; ao nhà chỉ thả cá sưu tầm (bóng màu, chạm xem danh sách – làm sau cùng). Nhân vật: ở nông trại đi lang thang làm cảnh (thao tác kiểu nhìn từ trên xuống giữ nguyên); bấm **Đi câu** thì nhân vật **tự đi ra cổng** rồi sang vùng câu; ở vùng câu chạm để đi, chạm chỗ câu thì đi tới rồi mới câu; camera đi theo, **kéo để xem xung quanh rồi tự quay về**. Mục đích chính của nhân vật: nhân vật của người chơi, chỗ tiêu xu cuối game (trang phục / phụ kiện), dễ thêm vùng. Trang phục: thân đổi cả bộ + biến thể màu, mũ / phụ kiện là lớp riêng bám điểm neo; hệ hiển thị nhiều lớp dựng sẵn, cửa hàng trang phục sau MVP. 6 giai đoạn trong `MVP-Plan.md` Phần 10 mục 7.
 
 ### Còn lại
 - Người dùng chưa cho bắt đầu Phần 6c mục 1–2 (07/11/2026: "chưa làm").
-- Câu cá cần chốt khi làm: nút mũi tên hay vuốt; XP câu cá chung hay riêng; cá giữ trong giỏ hay bán ngay; nguồn art (cá, phao, cần, nước) và âm thanh.
+- Câu cá đã chốt (07/11/2026): 4 nút mũi tên + Chốt; XP câu cá cộng vào XP nhân vật (đưa vào mô phỏng cân bằng); cá giữ trong giỏ (bán / giao đơn / thả ao, giỏ đầy phải bớt mới câu tiếp); asset vùng câu, biểu tượng chỗ câu, âm thanh người dùng thêm sau – code dùng hình tạm trước. Nhân vật và Ocean Pack có sẵn, cần kiểm tra đủ khung khi làm.
 
 ## Tiếp theo (khi quay lại)
 0. Phần 6 mục 5 – chạy **Tạo UI**, Test Runner (221), chơi thử gieo chạm/kéo, kéo thu hoạch, kéo tưới; thử cảm giác kéo trên điện thoại.
 1. Phần 6c mục 1–2 (khi người dùng cho làm): chạy lại mô phỏng cân bằng với giới hạn đơn → duyệt → code.
 2. Phần 4 – template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) + build, so Build Report (mốc 10,8 MB) + thử trên iPhone Safari / Android; cùng lúc kiểm tra Phần 7 trên máy thật.
-3. Phần 10 – câu cá (trong MVP): chốt các câu hỏi còn lại, chuẩn bị art, rồi làm theo 5 đợt trong `MVP-Plan.md`.
+3. Phần 10 – nhân vật, vùng câu, câu cá, ao nhà (trong MVP): chốt các câu hỏi còn lại, kiểm tra art, làm theo 6 giai đoạn trong `MVP-Plan.md`.
 4. Phần 3 – art (setup ô đất), vẽ phần còn lại trên `Decor`, tạo `ComingSoonArea` (trừ ao), Sprite Atlas.
 5. Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation); giảm build < 10 MB (Phần 8).
 6. Làm sau: Phần 6c mục 3–8, Phần 6 mục 4 (hiệu ứng GUI), công cụ Cân bằng, art 32×32, khung hình cây.
