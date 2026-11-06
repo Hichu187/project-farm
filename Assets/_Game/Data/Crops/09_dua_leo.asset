@@ -16,9 +16,11 @@ MonoBehaviour:
   _displayName: "D\u01B0a leo"
   _enabled: 0
   _growMinutes: 90
-  _buyPrice: 45
-  _sellPrice: 32
+  _buyPrice: 48
+  _sellPrice: 51
   _harvestYield: 3
+  _xp: 12
+  _unlockLevel: 5
   _seedSprite: {fileID: 0}
   _stageSprites:
   - {fileID: 0}

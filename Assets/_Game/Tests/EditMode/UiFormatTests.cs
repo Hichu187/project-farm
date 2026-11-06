@@ -23,6 +23,20 @@ namespace VeQue.Tests
             Assert.AreEqual(expected, UiFormat.Countdown(seconds));
         }
 
+        [TestCase(85L, 16L, "+85 xu · +16 XP")]
+        [TestCase(1250L, 1000L, "+1.250 xu · +1.000 XP")]
+        public void Reward_ShowsCoinsAndXp(long coins, long xp, string expected)
+        {
+            Assert.AreEqual(expected, UiFormat.Reward(coins, xp));
+        }
+
+        [TestCase(0, "Khu 1")]
+        [TestCase(2, "Khu 3")]
+        public void ZoneName_CountsFromOne(int index, string expected)
+        {
+            Assert.AreEqual(expected, UiFormat.ZoneName(index));
+        }
+
         [TestCase(120L, "2 phút")]
         [TestCase(900L, "15 phút")]
         [TestCase(3600L, "1 giờ")]

@@ -17,8 +17,10 @@ MonoBehaviour:
   _enabled: 1
   _growMinutes: 15
   _buyPrice: 15
-  _sellPrice: 16
+  _sellPrice: 20
   _harvestYield: 2
+  _xp: 4
+  _unlockLevel: 2
   _seedSprite: {fileID: 0}
   _stageSprites:
   - {fileID: 0}

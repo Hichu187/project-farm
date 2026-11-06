@@ -46,3 +46,23 @@ MonoBehaviour:
   _startSeeds:
   - Crop: {fileID: 11400000, guid: 0d1f66a878e77a747b0410697096f0b1, type: 2}
     Count: 5
+  _waterReducePercent: 20
+  _xpToNext: 030000001c00000065000000fd000000050200009f030000ef05000018090000420d0000931200003219000049210000012b000083360000
+  _coinsPerLevel: 20
+  _unlockSeedCount: 3
+  _rescueCrop: {fileID: 11400000, guid: 0d1f66a878e77a747b0410697096f0b1, type: 2}
+  _orderSlots: 3
+  _orderUnlockLevel: 2
+  _orderCoinPercent: 160
+  _orderXpPercent: 200
+  _orderDiscardMinutes: 5
+  _orderHarvestCap: 6
+  _customerNames:
+  - "B\xE0 T\u01B0"
+  - "Ch\xFA Ba"
+  - "C\xF4 N\u0103m"
+  - "B\xE1c Hai"
+  - "D\xEC S\xE1u"
+  - "\xD4ng B\u1EA3y"
+  - "Ch\u1ECB \xDAt"
+  - "Anh T\xE1m"

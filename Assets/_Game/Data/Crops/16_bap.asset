@@ -16,9 +16,11 @@ MonoBehaviour:
   _displayName: "B\u1EAFp"
   _enabled: 0
   _growMinutes: 480
-  _buyPrice: 130
-  _sellPrice: 132
+  _buyPrice: 148
+  _sellPrice: 274
   _harvestYield: 2
+  _xp: 35
+  _unlockLevel: 9
   _seedSprite: {fileID: 0}
   _stageSprites:
   - {fileID: 0}

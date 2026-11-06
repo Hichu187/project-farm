@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using VeQue.Logic;
 using VeQue.View.Data;
@@ -11,12 +12,20 @@ namespace VeQue.View.UI
 
         private int _visibleRows;
 
+        public event Action<string> Message;
+
         protected override void SetupRow(CropRow row, CropDefinition crop, CropDef def)
         {
             row.SetCrop(crop.ProduceIcon, crop.DisplayName);
             row.SetLabels("Bán 1", "Bán hết");
-            row.Primary.onClick.AddListener(() => Farm.Sell(def.Id, 1));
-            row.Secondary.onClick.AddListener(() => Farm.Sell(def.Id, Farm.State.GetItems(def.Id)));
+            row.Primary.onClick.AddListener(() => Sell(def, 1));
+            row.Secondary.onClick.AddListener(() => Sell(def, Farm.State.GetItems(def.Id)));
+        }
+
+        private void Sell(CropDef def, int amount)
+        {
+            if (Farm.Sell(def.Id, amount) == FarmResult.Ok)
+                Message?.Invoke($"+{UiFormat.Coins((long)def.SellPrice * amount)} xu");
         }
 
         protected override void RefreshRow(CropRow row, CropDefinition crop, CropDef def)

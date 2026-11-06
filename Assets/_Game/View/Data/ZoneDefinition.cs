@@ -15,10 +15,13 @@ namespace VeQue.View.Data
         [Tooltip("Số ô mở miễn phí khi khu được mở khóa.")]
         [Min(0)] [SerializeField] private int _startOpenCount;
         [SerializeField] private int[] _unlockPrices = Array.Empty<int>();
+        [Tooltip("Cấp cần để khu được mở khóa (ngoài điều kiện khu trước đã mở hết ô).")]
+        [Min(1)] [SerializeField] private int _requiredLevel = 1;
 
         public string Id => _id;
         public IReadOnlyList<BedDefinition> Beds => _beds;
         public int StartOpenCount => _startOpenCount;
+        public int RequiredLevel => _requiredLevel;
         public int ExpectedPriceCount => Mathf.Max(0, PlotCount - _startOpenCount);
 
         public int PlotCount
@@ -83,7 +86,7 @@ namespace VeQue.View.Data
             var beds = new BedDef[_beds.Length];
             for (int i = 0; i < _beds.Length; i++)
                 beds[i] = _beds[i].ToDef();
-            return new ZoneDef(_id, beds, _startOpenCount, _unlockPrices);
+            return new ZoneDef(_id, beds, _startOpenCount, _unlockPrices, _requiredLevel);
         }
 
         private void OnValidate()

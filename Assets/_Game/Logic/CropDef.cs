@@ -13,9 +13,13 @@ namespace VeQue.Logic
         public int SellPrice { get; }
         public int HarvestYield { get; }
         public int StageCount { get; }
+        // XP mỗi lần thu hoạch.
+        public int Xp { get; }
+        // Cấp cần để gieo và mua hạt.
+        public int UnlockLevel { get; }
 
         public CropDef(string id, long growSeconds, int buyPrice, int sellPrice, int harvestYield,
-            int stageCount = DefaultStageCount)
+            int stageCount = DefaultStageCount, int xp = 0, int unlockLevel = 1)
         {
             if (string.IsNullOrEmpty(id))
                 throw new ArgumentException("Crop id rỗng.", nameof(id));
@@ -29,6 +33,10 @@ namespace VeQue.Logic
                 throw new ArgumentOutOfRangeException(nameof(harvestYield), "Sản lượng phải ≥ 1.");
             if (stageCount < 1)
                 throw new ArgumentOutOfRangeException(nameof(stageCount), "Số giai đoạn phải ≥ 1.");
+            if (xp < 0)
+                throw new ArgumentOutOfRangeException(nameof(xp));
+            if (unlockLevel < 1)
+                throw new ArgumentOutOfRangeException(nameof(unlockLevel), "Cấp mở phải ≥ 1.");
 
             Id = id;
             GrowSeconds = growSeconds;
@@ -36,6 +44,8 @@ namespace VeQue.Logic
             SellPrice = sellPrice;
             HarvestYield = harvestYield;
             StageCount = stageCount;
+            Xp = xp;
+            UnlockLevel = unlockLevel;
         }
     }
 }

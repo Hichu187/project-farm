@@ -5,6 +5,15 @@ using UnityEngine.InputSystem;
 
 namespace VeQue.View.CameraControl
 {
+    // Thao tác kéo trên map không phải di chuyển camera (vd. quét thu hoạch, tưới).
+    public interface IWorldDragHandler
+    {
+        // Gọi khi vừa vượt ngưỡng kéo trong lúc đang zoom vào khu; true = nhận cử chỉ này, camera không di chuyển.
+        bool TryBeginDrag(Vector2 screenStart);
+        void DragTo(Vector2 screen);
+        void EndDrag();
+    }
+
     // Kéo 1 ngón để di chuyển; chạm khu để zoom vào, chạm bãi cỏ để về toàn cảnh. Không pinch zoom.
     public sealed class CameraTouchInput : MonoBehaviour
     {
@@ -18,8 +27,11 @@ namespace VeQue.View.CameraControl
         // Chạm ngoài mọi khu (toạ độ world) — dùng cho ao, chuồng, nhà kho "sắp có".
         public event Action<Vector2> TappedOutsideAreas;
 
+        public IWorldDragHandler DragHandler { get; set; }
+
         private bool _isPressing;
         private bool _isDragging;
+        private bool _isWorldDrag;
         private bool _checkUiNextFrame;
         private Vector2 _pressStart;
         private Vector2 _lastPosition;
@@ -44,6 +56,7 @@ namespace VeQue.View.CameraControl
             {
                 _isPressing = !IsOverUi(pointer);
                 _isDragging = false;
+                _isWorldDrag = false;
                 _checkUiNextFrame = _isPressing;
                 _pressStart = position;
                 _lastPosition = position;
@@ -67,19 +80,35 @@ namespace VeQue.View.CameraControl
             if (pointer.press.isPressed)
             {
                 if (!_isDragging && (position - _pressStart).sqrMagnitude >= _dragThreshold * _dragThreshold)
+                {
                     _isDragging = true;
+                    _isWorldDrag = DragHandler != null
+                        && _controller.CurrentMode == CameraController.Mode.Focused
+                        && !_controller.IsTransitioning
+                        && DragHandler.TryBeginDrag(_pressStart);
+                }
 
                 if (_isDragging)
                 {
-                    _controller.Pan(position - _lastPosition);
+                    if (_isWorldDrag)
+                        DragHandler.DragTo(position);
+                    else
+                        _controller.Pan(position - _lastPosition);
                     _lastPosition = position;
                 }
                 return;
             }
 
             _isPressing = false;
-            if (!_isDragging)
+            if (_isWorldDrag)
+            {
+                _isWorldDrag = false;
+                DragHandler.EndDrag();
+            }
+            else if (!_isDragging)
+            {
                 HandleTap(_pressStart);
+            }
         }
 
         private void HandleTap(Vector2 screenPosition)

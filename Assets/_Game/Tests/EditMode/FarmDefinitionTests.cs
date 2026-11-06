@@ -135,6 +135,70 @@ namespace VeQue.Tests
             }
         }
 
+        // Bảng XP đã duyệt: 3 × cấp^3,2, cấp 1 → 15.
+        [Test]
+        public void ToDef_DefaultData_LevelTable()
+        {
+            LevelDef levels = LoadAsset().ToDef().Levels;
+
+            CollectionAssert.AreEqual(
+                new[] { 3, 28, 101, 253, 517, 927, 1519, 2328, 3394, 4755, 6450, 8521, 11009, 13955 },
+                levels.XpToNext);
+            Assert.AreEqual(15, levels.MaxLevel);
+            Assert.AreEqual(20, levels.CoinsPerLevel);
+            Assert.AreEqual(3, levels.UnlockSeedCount);
+        }
+
+        // Bảng cây ở MVP-Plan Phần 6b: (id, giá hạt, sản lượng, giá bán, XP, cấp mở).
+        [TestCase("rau_muong", 5, 2, 5, 1, 1)]
+        [TestCase("cai_xanh", 15, 2, 20, 4, 2)]
+        [TestCase("ca_chua", 37, 3, 38, 9, 4)]
+        [TestCase("bi_do", 92, 1, 322, 22, 6)]
+        public void ToDef_DefaultData_MvpCropBalance(string id, int seed, int yield, int sell, int xp, int level)
+        {
+            Assert.IsTrue(LoadAsset().ToDef().TryGetCrop(id, out CropDef crop));
+
+            Assert.AreEqual(seed, crop.BuyPrice, "giá hạt");
+            Assert.AreEqual(yield, crop.HarvestYield, "sản lượng");
+            Assert.AreEqual(sell, crop.SellPrice, "giá bán");
+            Assert.AreEqual(xp, crop.Xp, "XP");
+            Assert.AreEqual(level, crop.UnlockLevel, "cấp mở");
+        }
+
+        [Test]
+        public void ToDef_DefaultData_ZoneLevelsAndZone3Total()
+        {
+            FarmDef def = LoadAsset().ToDef();
+
+            Assert.AreEqual(1, def.Zones[0].RequiredLevel);
+            Assert.AreEqual(5, def.Zones[1].RequiredLevel);
+            Assert.AreEqual(9, def.Zones[2].RequiredLevel);
+            long total = 0;
+            foreach (int price in def.Zones[2].UnlockPrices)
+                total += price;
+            Assert.AreEqual(614075, total);
+        }
+
+        [Test]
+        public void ToDef_DefaultData_RescueCropIsRauMuong()
+        {
+            Assert.AreEqual("rau_muong", LoadAsset().ToDef().RescueCropId);
+        }
+
+        [Test]
+        public void ToDef_DefaultData_Orders()
+        {
+            OrderDef orders = LoadAsset().ToDef().Orders;
+
+            Assert.AreEqual(3, orders.SlotCount);
+            Assert.AreEqual(2, orders.UnlockLevel);
+            Assert.AreEqual(160, orders.CoinPercent);
+            Assert.AreEqual(200, orders.XpPercent);
+            Assert.AreEqual(300, orders.DiscardCooldownSeconds);
+            Assert.AreEqual(6, orders.MaxHarvestsCap);
+            Assert.GreaterOrEqual(orders.CustomerNames.Count, 1);
+        }
+
         [Test]
         public void BoundingBox_DefaultData_IsSixByFive()
         {

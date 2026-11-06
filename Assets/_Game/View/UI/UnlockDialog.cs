@@ -38,7 +38,7 @@ namespace VeQue.View.UI
             Hide();
         }
 
-        private void Hide()
+        public void Hide()
         {
             _root.SetActive(false);
         }

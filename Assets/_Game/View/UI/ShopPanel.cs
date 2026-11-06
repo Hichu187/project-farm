@@ -18,6 +18,14 @@ namespace VeQue.View.UI
 
         protected override void RefreshRow(CropRow row, CropDefinition crop, CropDef def)
         {
+            if (!Farm.IsCropUnlocked(def.Id))
+            {
+                row.SetInfo($"{UiFormat.GrowTime(def.GrowSeconds)} · Mở ở cấp {def.UnlockLevel}");
+                row.Primary.interactable = false;
+                row.Secondary.interactable = false;
+                return;
+            }
+
             long coins = Farm.State.Coins;
             row.SetInfo($"{UiFormat.GrowTime(def.GrowSeconds)} · {UiFormat.Coins(def.BuyPrice)} xu · có {Farm.State.GetSeeds(def.Id)} hạt");
             row.Primary.interactable = coins >= def.BuyPrice;

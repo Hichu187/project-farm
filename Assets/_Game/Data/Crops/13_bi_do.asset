@@ -16,9 +16,11 @@ MonoBehaviour:
   _displayName: "B\xED \u0111\u1ECF"
   _enabled: 1
   _growMinutes: 240
-  _buyPrice: 90
-  _sellPrice: 180
+  _buyPrice: 92
+  _sellPrice: 322
   _harvestYield: 1
+  _xp: 22
+  _unlockLevel: 6
   _seedSprite: {fileID: 0}
   _stageSprites:
   - {fileID: 0}

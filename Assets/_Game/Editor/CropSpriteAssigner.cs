@@ -11,7 +11,6 @@ namespace VeQue.EditorTools
     {
         private const string SheetFolder = "Assets/Art/Sprout Sorry pack/Early Access/Plant update 2/";
         private const string PlantSheet = SheetFolder + "Farming Plants v2.png";
-        private const string WateredSheet = SheetFolder + "Farming Plants v2 watered.png";
         private const string ItemSheet = SheetFolder + "Farming Plants items v2.png";
         private const string CropFolder = DefaultDataGenerator.DataFolder + "/Crops/";
         private const int CellSize = 16;
@@ -66,16 +65,12 @@ namespace VeQue.EditorTools
             }
 
             Dictionary<Vector2Int, Sprite> plants = LoadSheet(PlantSheet, true, errors);
-            Dictionary<Vector2Int, Sprite> watered = LoadSheet(WateredSheet, true, errors);
             Dictionary<Vector2Int, Sprite> items = LoadSheet(ItemSheet, false, errors);
 
             foreach (CropArt art in targets)
             {
                 foreach (int column in StageColumns)
-                {
                     Require(plants, column, art.PlantRow, PlantSheet, errors);
-                    Require(watered, column, art.PlantRow, WateredSheet, errors);
-                }
                 Require(items, art.SeedColumn, art.ItemRow, ItemSheet, errors);
                 Require(items, art.ProduceColumn, art.ItemRow, ItemSheet, errors);
             }
@@ -92,7 +87,6 @@ namespace VeQue.EditorTools
                 so.FindProperty("_seedSprite").objectReferenceValue = items[new Vector2Int(art.SeedColumn, art.ItemRow)];
                 so.FindProperty("_produceIcon").objectReferenceValue = items[new Vector2Int(art.ProduceColumn, art.ItemRow)];
                 AssignStages(so.FindProperty("_stageSprites"), plants, art.PlantRow);
-                AssignStages(so.FindProperty("_wateredStageSprites"), watered, art.PlantRow);
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
 

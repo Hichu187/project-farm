@@ -21,6 +21,11 @@ namespace VeQue.View.UI
             return hours > 0 ? $"{hours}:{minutes:00}:{rest:00}" : $"{minutes}:{rest:00}";
         }
 
+        public static string Reward(long coins, long xp) => $"+{Coins(coins)} xu · +{Coins(xp)} XP";
+
+        // Khu theo thứ tự mở khóa, đếm từ 1.
+        public static string ZoneName(int index) => $"Khu {index + 1}";
+
         public static string GrowTime(long seconds)
         {
             if (seconds >= SecondsPerHour && seconds % SecondsPerHour == 0)

@@ -14,8 +14,11 @@ namespace VeQue.Logic
         public int PlotCount { get; }
         public int StartOpenCount { get; }
         public IReadOnlyList<int> UnlockPrices { get; }
+        // Cấp cần để khu được mở khóa (ngoài điều kiện khu trước đã mở hết ô).
+        public int RequiredLevel { get; }
 
-        public ZoneDef(string id, IReadOnlyList<BedDef> beds, int startOpenCount, IReadOnlyList<int> unlockPrices)
+        public ZoneDef(string id, IReadOnlyList<BedDef> beds, int startOpenCount, IReadOnlyList<int> unlockPrices,
+            int requiredLevel = 1)
         {
             if (string.IsNullOrEmpty(id))
                 throw new ArgumentException("Zone id rỗng.", nameof(id));
@@ -36,6 +39,8 @@ namespace VeQue.Logic
                 throw new ArgumentOutOfRangeException(nameof(startOpenCount));
             if (unlockPrices == null)
                 throw new ArgumentNullException(nameof(unlockPrices));
+            if (requiredLevel < 1)
+                throw new ArgumentOutOfRangeException(nameof(requiredLevel), "Cấp yêu cầu phải ≥ 1.");
 
             int expected = plotCount - startOpenCount;
             if (unlockPrices.Count != expected)
@@ -54,6 +59,7 @@ namespace VeQue.Logic
             PlotCount = plotCount;
             StartOpenCount = startOpenCount;
             UnlockPrices = Array.AsReadOnly(prices);
+            RequiredLevel = requiredLevel;
         }
 
         // Đổi (bedIndex, col, row) sang chỉ số phẳng; false nếu ngoài khu.

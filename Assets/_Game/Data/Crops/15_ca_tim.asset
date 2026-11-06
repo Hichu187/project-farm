@@ -16,9 +16,11 @@ MonoBehaviour:
   _displayName: "C\xE0 t\xEDm"
   _enabled: 0
   _growMinutes: 360
-  _buyPrice: 110
-  _sellPrice: 75
+  _buyPrice: 121
+  _sellPrice: 147
   _harvestYield: 3
+  _xp: 29
+  _unlockLevel: 8
   _seedSprite: {fileID: 0}
   _stageSprites:
   - {fileID: 0}

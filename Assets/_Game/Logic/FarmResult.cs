@@ -19,5 +19,10 @@ namespace VeQue.Logic
         NothingToWater,
         AlreadyWatered,
         AlreadyRipe,
+        CropLocked,
+        LevelTooLow,
+        OrdersLocked,
+        UnknownOrder,
+        OrderNotReady,
     }
 }

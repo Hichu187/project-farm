@@ -27,6 +27,9 @@ Kế hoạch đầy đủ: `Docs/MVP-Plan.md` (Phần 0 → 8). Tiến độ: `D
 - Gieo → lớn qua các giai đoạn theo thời gian thực (mỗi cây có số giai đoạn theo số sprite, mặc định dùng 5) → thu hoạch → Kho → bán. Cửa hàng bán hạt.
 - Tưới: tùy chọn, mỗi lần trồng tưới được 1 lần, giảm 20% tổng thời gian lớn (lùi `PlantedAt`); không tưới cây vẫn lớn.
 - 4 cây: rau muống 2 phút, cải xanh 15 phút, cà chua 1 giờ, bí đỏ 4 giờ. Data có 25 cây với cờ `enabled`; chỉ 4 cây này bật trong MVP.
+- Giá hạt, sản lượng, giá bán, XP theo công thức cân bằng ở `Docs/MVP-Plan.md` Phần 6b; không chỉnh tay từng cây.
+- Tiến trình (Phần 6b): cấp độ (XP từ thu hoạch + đơn hàng; lên cấp mở cây mới, khu sau cần đủ cấp) và đơn hàng làng quê (3 đơn cùng lúc, thưởng cao hơn bán thẳng). Chống kẹt: hết xu, hạt, nông sản, cây thì tặng 1 hạt rau muống.
+- Làm sau A + B (Phần 6c): nhiệm vụ hằng ngày + điểm danh, bộ sưu tập/mốc thành tích.
 - Cây vẫn lớn khi thoát game. Lưu tiến trình + xuất/nhập mã sao lưu.
 - Ao, chuồng, nhà kho, đất mở rộng: chỉ là art, chạm vào hiện "sắp có".
 - Ngoài phạm vi: nuôi cá/câu cá, chuồng, đất mở rộng, nhân vật/joystick, trộm nông sản, hai ví xu, thuốc trừ sâu/phân bón.

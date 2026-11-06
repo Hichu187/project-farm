@@ -16,9 +16,11 @@ MonoBehaviour:
   _displayName: "Ngh\u1EC7"
   _enabled: 0
   _growMinutes: 2160
-  _buyPrice: 330
-  _sellPrice: 220
+  _buyPrice: 419
+  _sellPrice: 585
   _harvestYield: 3
+  _xp: 94
+  _unlockLevel: 16
   _seedSprite: {fileID: 0}
   _stageSprites:
   - {fileID: 0}

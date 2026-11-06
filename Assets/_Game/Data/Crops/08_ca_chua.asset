@@ -16,9 +16,11 @@ MonoBehaviour:
   _displayName: "C\xE0 chua"
   _enabled: 1
   _growMinutes: 60
-  _buyPrice: 35
-  _sellPrice: 25
+  _buyPrice: 37
+  _sellPrice: 38
   _harvestYield: 3
+  _xp: 9
+  _unlockLevel: 4
   _seedSprite: {fileID: 0}
   _stageSprites:
   - {fileID: 0}

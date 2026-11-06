@@ -17,7 +17,6 @@ namespace VeQue.EditorTools
         private const string RootName = "GameUI";
         private const float HudHeight = 52f;
         private const float NavHeight = 64f;
-        private const float BarHeight = 48f;
         private const float SheetHeight = 440f;
         private const float RowHeight = 72f;
         private const float ButtonHeight = 44f;
@@ -62,24 +61,27 @@ namespace VeQue.EditorTools
             safe.gameObject.AddComponent<SafeArea>();
 
             // Dựng trước để nằm dưới HUD và các bảng.
+            FarmGesture gesture = EnsureGesture(game, interaction, view, touch, camera);
             CropProgressPopup popup = BuildCropProgress(safe, game, interaction, view, camera);
-            BuildHud(safe, out TMP_Text coins, out Button backup);
-            SeedingBar bar = BuildSeedingBar(safe);
-            SeedPanel seedPanel = BuildPanel<SeedPanel>(safe, "SeedPanel", "Chọn hạt", game);
+            SeedPicker seedPicker = BuildSeedPicker(safe, game, interaction, gesture, view, camera);
+            BuildHud(safe, game, out TMP_Text coins, out Button backup);
+            OrderPanel orderPanel = BuildOrderPanel(safe, game);
             StoragePanel storagePanel = BuildPanel<StoragePanel>(safe, "StoragePanel", "Kho", game);
             ShopPanel shopPanel = BuildPanel<ShopPanel>(safe, "ShopPanel", "Cửa hàng", game);
-            BuildNav(safe, out Button farmTab, out Button storageTab, out Button shopTab);
+            BuildNav(safe, out Button farmTab, out Button ordersTab, out TMP_Text ordersTabLabel, out Button storageTab, out Button shopTab);
+            BuildHarvestFlyer(safe, game, interaction, view, camera.GetComponent<Camera>(), (RectTransform)storageTab.transform);
             Toast toast = BuildToast(safe);
             UnlockDialog dialog = BuildDialog(safe, game, interaction);
+            BuildLevelUpDialog(safe, game);
 
-            Wire(seedPanel, ("_interaction", interaction));
             Wire(storagePanel, ("_emptyLabel", BuildEmptyLabel(storagePanel)));
-            Wire(bar, ("_game", game), ("_interaction", interaction), ("_camera", camera), ("_seedPanel", seedPanel));
             Wire(ui,
                 ("_game", game), ("_interaction", interaction), ("_touch", touch),
                 ("_coins", coins), ("_backup", backup),
-                ("_farmTab", farmTab), ("_storageTab", storageTab), ("_shopTab", shopTab),
-                ("_toast", toast), ("_seedPanel", seedPanel), ("_storagePanel", storagePanel), ("_shopPanel", shopPanel),
+                ("_farmTab", farmTab), ("_ordersTab", ordersTab), ("_ordersTabLabel", ordersTabLabel),
+                ("_storageTab", storageTab), ("_shopTab", shopTab),
+                ("_toast", toast), ("_seedPicker", seedPicker), ("_gesture", gesture), ("_orderPanel", orderPanel),
+                ("_storagePanel", storagePanel), ("_shopPanel", shopPanel),
                 ("_unlockDialog", dialog), ("_progressPopup", popup));
 
             Undo.RegisterCreatedObjectUndo(root.gameObject, "Tạo UI");
@@ -132,41 +134,189 @@ namespace VeQue.EditorTools
             return popup;
         }
 
-        private static void BuildHud(RectTransform parent, out TMP_Text coins, out Button backup)
+        // FarmGesture nằm cùng GameObject với FarmInteraction; chưa có thì thêm và nối tham chiếu.
+        private static FarmGesture EnsureGesture(GameBootstrap game, FarmInteraction interaction, FarmView view,
+            CameraTouchInput touch, CameraController camera)
+        {
+            var gesture = Object.FindFirstObjectByType<FarmGesture>();
+            if (gesture == null)
+                gesture = Undo.AddComponent<FarmGesture>(interaction.gameObject);
+            Undo.RecordObject(gesture, "Tạo UI");
+            Wire(gesture, ("_game", game), ("_interaction", interaction), ("_view", view), ("_touch", touch),
+                ("_camera", camera.GetComponent<UnityEngine.Camera>()));
+            return gesture;
+        }
+
+        private const float SeedItemWidth = 54f;
+        private const float SeedItemHeight = 62f;
+
+        // Thanh nhỏ bám trên ô (pivot giữa cạnh dưới), tự co theo số icon; icon hạt đi theo ngón tay khi kéo.
+        private static SeedPicker BuildSeedPicker(RectTransform parent, GameBootstrap game, FarmInteraction interaction,
+            FarmGesture gesture, FarmView view, CameraController camera)
+        {
+            RectTransform area = Stretch("SeedPicker", parent);
+            var picker = area.gameObject.AddComponent<SeedPicker>();
+
+            RectTransform box = Node("Box", area, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(SeedItemWidth, SeedItemHeight + 8f));
+            AddImage(box, new Color(0.15f, 0.10f, 0.06f, 0.85f), true);
+            CanvasGroup boxGroup = box.gameObject.AddComponent<CanvasGroup>();
+            var layout = box.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.padding = new RectOffset(4, 4, 4, 4);
+            layout.spacing = 4f;
+            layout.childControlWidth = false;
+            layout.childControlHeight = false;
+            var fitter = box.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            RectTransform item = Create("ItemTemplate", box);
+            item.sizeDelta = new Vector2(SeedItemWidth, SeedItemHeight);
+            AddImage(item, Cream, true);
+            CanvasGroup itemGroup = item.gameObject.AddComponent<CanvasGroup>();
+            var itemScript = item.gameObject.AddComponent<SeedPickerItem>();
+            RectTransform iconNode = Node("Icon", item, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -4f), new Vector2(36f, 36f));
+            Image icon = AddImage(iconNode, Color.white, false);
+            icon.preserveAspect = true;
+            TMP_Text count = AddLabel(item, "Count", "x0", 14f, TextAlignmentOptions.Bottom, TextDark);
+            Inset(count.rectTransform, 2f, 3f, 2f, 40f);
+            Wire(itemScript, ("_icon", icon), ("_count", count), ("_group", itemGroup));
+            item.gameObject.SetActive(false);
+
+            RectTransform dragNode = Node("DragIcon", area, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(44f, 44f));
+            Image dragIcon = AddImage(dragNode, Color.white, false);
+            dragIcon.preserveAspect = true;
+            dragNode.gameObject.SetActive(false);
+
+            box.gameObject.SetActive(false);
+            Wire(picker, ("_game", game), ("_interaction", interaction), ("_gesture", gesture), ("_view", view),
+                ("_cameraController", camera), ("_camera", camera.GetComponent<UnityEngine.Camera>()),
+                ("_area", area), ("_box", box), ("_boxGroup", boxGroup), ("_content", box),
+                ("_itemTemplate", itemScript), ("_dragIcon", dragIcon));
+            return picker;
+        }
+
+        private static void BuildHud(RectTransform parent, GameBootstrap game, out TMP_Text coins, out Button backup)
         {
             RectTransform hud = TopBand("Hud", parent, 0f, HudHeight);
 
-            RectTransform coinBox = Node("Coins", hud, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(12f, 0f), new Vector2(160f, ButtonHeight));
+            RectTransform coinBox = Node("Coins", hud, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(12f, 0f), new Vector2(130f, ButtonHeight));
             AddImage(coinBox, Cream, false);
             coins = AddLabel(coinBox, "Text", "Xu 0", 18f, TextAlignmentOptions.Center, TextDark);
 
-            RectTransform backupNode = Node("Backup", hud, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-12f, 0f), new Vector2(100f, ButtonHeight));
+            // Cấp + thanh XP giữa xu và nút sao lưu.
+            RectTransform levelBox = Node("Level", hud, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(150f, 0f), new Vector2(130f, ButtonHeight));
+            AddImage(levelBox, Cream, false);
+            var levelHud = levelBox.gameObject.AddComponent<LevelHud>();
+            TMP_Text level = AddLabel(levelBox, "Text", "Cấp 1", 15f, TextAlignmentOptions.Center, TextDark);
+            Inset(level.rectTransform, 4f, ButtonHeight * 0.45f, 4f, 2f);
+            RectTransform barBack = Stretch("Bar", levelBox);
+            Inset(barBack, 8f, 5f, 8f, ButtonHeight * 0.58f);
+            AddImage(barBack, CreamDark, false);
+            RectTransform fill = Stretch("Fill", barBack);
+            fill.anchorMax = new Vector2(0f, 1f);
+            AddImage(fill, Green, false);
+            TMP_Text xp = AddLabel(barBack, "Xp", "0/3", 11f, TextAlignmentOptions.Center, TextDark);
+            Wire(levelHud, ("_game", game), ("_level", level), ("_fill", fill), ("_xp", xp));
+
+            RectTransform backupNode = Node("Backup", hud, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-12f, 0f), new Vector2(90f, ButtonHeight));
             backup = MakeButton(backupNode, "Sao lưu", 16f, Wood, Color.white, out _);
-        }
-
-        private static SeedingBar BuildSeedingBar(RectTransform parent)
-        {
-            RectTransform holder = Node("SeedingBar", parent, Vector2.zero, new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, NavHeight), new Vector2(0f, BarHeight));
-            var bar = holder.gameObject.AddComponent<SeedingBar>();
-
-            RectTransform box = Stretch("Box", holder);
-            AddImage(box, Cream, true);
-            TMP_Text text = AddLabel(box, "Text", "", 16f, TextAlignmentOptions.MidlineLeft, TextDark);
-            Inset(text.rectTransform, 12f, 0f, 88f, 0f);
-
-            RectTransform changeNode = Node("Change", box, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-8f, 0f), new Vector2(72f, ButtonHeight - 4f));
-            Button change = MakeButton(changeNode, "Đổi", 16f, Wood, Color.white, out _);
-
-            box.gameObject.SetActive(false);
-            Wire(bar, ("_bar", box.gameObject), ("_text", text), ("_change", change));
-            return bar;
         }
 
         private static T BuildPanel<T>(RectTransform parent, string name, string title, GameBootstrap game) where T : CropListPanel
         {
             RectTransform root = Stretch(name, parent);
-            var sheetScript = root.gameObject.AddComponent<BottomSheet>();
+            BottomSheet sheetScript = BuildSheet(root, title, out RectTransform sheet);
             var panel = root.gameObject.AddComponent<T>();
+
+            BuildList(sheet, out RectTransform content);
+            CropRow template = BuildRowTemplate(content);
+
+            Wire(panel, ("_game", game), ("_sheet", sheetScript), ("_rowTemplate", template), ("_content", content));
+            return panel;
+        }
+
+        private const int OrderCards = 3;
+        private const int OrderItemSlots = 3;
+        private const float OrderCardHeight = 116f;
+
+        private static OrderPanel BuildOrderPanel(RectTransform parent, GameBootstrap game)
+        {
+            RectTransform root = Stretch("OrderPanel", parent);
+            BottomSheet sheetScript = BuildSheet(root, "Đơn hàng", out RectTransform sheet);
+            var panel = root.gameObject.AddComponent<OrderPanel>();
+
+            BuildList(sheet, out RectTransform content);
+            var cards = new OrderCard[OrderCards];
+            for (int i = 0; i < OrderCards; i++)
+                cards[i] = BuildOrderCard(content, i);
+
+            var so = new SerializedObject(panel);
+            so.FindProperty("_game").objectReferenceValue = game;
+            so.FindProperty("_sheet").objectReferenceValue = sheetScript;
+            SetArray(so.FindProperty("_cards"), cards);
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return panel;
+        }
+
+        // Hàng trên: người đặt (trái). Hàng giữa: tối đa 3 món. Hàng dưới: thưởng (trái), Bỏ + Giao (phải).
+        private static OrderCard BuildOrderCard(RectTransform content, int index)
+        {
+            RectTransform card = Stretch($"Order{index + 1}", content);
+            AddImage(card, CreamDark, true);
+            card.gameObject.AddComponent<LayoutElement>().preferredHeight = OrderCardHeight;
+            var script = card.gameObject.AddComponent<OrderCard>();
+
+            RectTransform body = Stretch("Content", card);
+            TMP_Text customer = AddLabel(body, "Customer", "", 17f, TextAlignmentOptions.MidlineLeft, TextDark);
+            customer.rectTransform.anchorMin = new Vector2(0f, 1f);
+            customer.rectTransform.anchorMax = Vector2.one;
+            customer.rectTransform.pivot = new Vector2(0.5f, 1f);
+            customer.rectTransform.anchoredPosition = new Vector2(0f, -4f);
+            customer.rectTransform.sizeDelta = new Vector2(-20f, 26f);
+
+            var roots = new GameObject[OrderItemSlots];
+            var icons = new Image[OrderItemSlots];
+            var labels = new TMP_Text[OrderItemSlots];
+            for (int i = 0; i < OrderItemSlots; i++)
+            {
+                RectTransform item = Node($"Item{i + 1}", body, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(10f + i * 116f, -32f), new Vector2(112f, 30f));
+                RectTransform iconNode = Node("Icon", item, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(28f, 28f));
+                icons[i] = AddImage(iconNode, Color.white, false);
+                icons[i].preserveAspect = true;
+                labels[i] = AddLabel(item, "Label", "", 13f, TextAlignmentOptions.MidlineLeft, TextDark);
+                Inset(labels[i].rectTransform, 32f, 0f, 0f, 0f);
+                roots[i] = item.gameObject;
+            }
+
+            TMP_Text reward = AddLabel(body, "Reward", "", 14f, TextAlignmentOptions.MidlineLeft, TextDark);
+            Inset(reward.rectTransform, 10f, 6f, 160f, OrderCardHeight - 50f);
+
+            RectTransform deliverNode = Node("Deliver", body, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-6f, 6f), new Vector2(70f, ButtonHeight));
+            Button deliver = MakeButton(deliverNode, "Giao", 15f, Green, Color.white, out _);
+            RectTransform discardNode = Node("Discard", body, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-80f, 6f), new Vector2(70f, ButtonHeight));
+            Button discard = MakeButton(discardNode, "Bỏ", 15f, Wood, Color.white, out _);
+
+            TMP_Text waiting = AddLabel(card, "Waiting", "", 15f, TextAlignmentOptions.Center, TextDark);
+            waiting.gameObject.SetActive(false);
+
+            var so = new SerializedObject(script);
+            so.FindProperty("_content").objectReferenceValue = body.gameObject;
+            so.FindProperty("_customer").objectReferenceValue = customer;
+            so.FindProperty("_reward").objectReferenceValue = reward;
+            SetArray(so.FindProperty("_itemRoots"), roots);
+            SetArray(so.FindProperty("_itemIcons"), icons);
+            SetArray(so.FindProperty("_itemLabels"), labels);
+            so.FindProperty("_deliver").objectReferenceValue = deliver;
+            so.FindProperty("_discard").objectReferenceValue = discard;
+            so.FindProperty("_waiting").objectReferenceValue = waiting;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return script;
+        }
+
+        // Nền tối chặn chạm + tấm trượt có tiêu đề, nút X. Trả về BottomSheet đã nối tham chiếu.
+        private static BottomSheet BuildSheet(RectTransform root, string title, out RectTransform sheet)
+        {
+            var sheetScript = root.gameObject.AddComponent<BottomSheet>();
 
             RectTransform backdrop = Stretch("Backdrop", root);
             backdrop.offsetMin = new Vector2(-400f, -400f);
@@ -175,7 +325,7 @@ namespace VeQue.EditorTools
             Button backdropButton = backdrop.gameObject.AddComponent<Button>();
             backdropButton.transition = Selectable.Transition.None;
 
-            RectTransform sheet = Node("Sheet", root, Vector2.zero, new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, NavHeight), new Vector2(0f, SheetHeight));
+            sheet = Node("Sheet", root, Vector2.zero, new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, NavHeight), new Vector2(0f, SheetHeight));
             AddImage(sheet, Cream, true);
 
             TMP_Text titleText = AddLabel(sheet, "Title", title, 22f, TextAlignmentOptions.MidlineLeft, TextDark);
@@ -188,15 +338,11 @@ namespace VeQue.EditorTools
             RectTransform closeNode = Node("Close", sheet, Vector2.one, Vector2.one, Vector2.one, new Vector2(-6f, -4f), new Vector2(ButtonHeight, ButtonHeight));
             Button close = MakeButton(closeNode, "X", 18f, Wood, Color.white, out _);
 
-            BuildList(sheet, out RectTransform content);
-            CropRow template = BuildRowTemplate(content);
-
             backdrop.gameObject.SetActive(false);
             sheet.gameObject.SetActive(false);
 
             Wire(sheetScript, ("_backdrop", backdrop.gameObject), ("_sheet", sheet), ("_backdropButton", backdropButton), ("_closeButton", close));
-            Wire(panel, ("_game", game), ("_sheet", sheetScript), ("_rowTemplate", template), ("_content", content));
-            return panel;
+            return sheetScript;
         }
 
         private static void BuildList(RectTransform sheet, out RectTransform content)
@@ -259,7 +405,8 @@ namespace VeQue.EditorTools
             return label.gameObject;
         }
 
-        private static void BuildNav(RectTransform parent, out Button farm, out Button storage, out Button shop)
+        private static void BuildNav(RectTransform parent, out Button farm, out Button orders, out TMP_Text ordersLabel,
+            out Button storage, out Button shop)
         {
             RectTransform nav = Node("Nav", parent, Vector2.zero, new Vector2(1f, 0f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(0f, NavHeight));
             AddImage(nav, Wood, true);
@@ -269,15 +416,21 @@ namespace VeQue.EditorTools
             layout.childControlWidth = true;
             layout.childControlHeight = true;
 
-            farm = MakeTab(nav, "Nông trại");
-            storage = MakeTab(nav, "Kho");
-            shop = MakeTab(nav, "Cửa hàng");
+            farm = MakeTab(nav, "Nông trại", out _);
+            orders = MakeTab(nav, "Đơn hàng", out ordersLabel);
+            storage = MakeTab(nav, "Kho", out _);
+            shop = MakeTab(nav, "Cửa hàng", out _);
         }
 
-        private static Button MakeTab(RectTransform nav, string label)
+        // 4 tab trên bề ngang 390: chữ 15 để "Đơn hàng (3)" vừa một dòng.
+        private static Button MakeTab(RectTransform nav, string label, out TMP_Text text)
         {
             RectTransform node = Stretch(label, nav);
-            return MakeButton(node, label, 16f, Cream, TextDark, out _);
+            Button button = MakeButton(node, label, 15f, Cream, TextDark, out text);
+            text.enableAutoSizing = true;
+            text.fontSizeMin = 11f;
+            text.fontSizeMax = 15f;
+            return button;
         }
 
         private static Toast BuildToast(RectTransform parent)
@@ -323,7 +476,84 @@ namespace VeQue.EditorTools
             return dialog;
         }
 
+        private const int FlyingIcons = 9;
+        private const float FlyingIconSize = 36f;
+
+        // Lớp phủ không chặn chạm chứa icon bay; nhãn "+N [icon]" gắn trên tab Kho để nảy cùng tab.
+        private static HarvestFlyer BuildHarvestFlyer(RectTransform parent, GameBootstrap game, FarmInteraction interaction,
+            FarmView view, Camera mapCamera, RectTransform storageTab)
+        {
+            RectTransform layer = Stretch("HarvestFly", parent);
+            var flyer = layer.gameObject.AddComponent<HarvestFlyer>();
+
+            var icons = new Image[FlyingIcons];
+            for (int i = 0; i < FlyingIcons; i++)
+            {
+                RectTransform node = Node($"Icon{i + 1}", layer, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(FlyingIconSize, FlyingIconSize));
+                icons[i] = AddImage(node, Color.white, false);
+                icons[i].preserveAspect = true;
+                node.gameObject.SetActive(false);
+            }
+
+            RectTransform badge = Node("HarvestBadge", storageTab, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0f), new Vector2(0f, 4f), new Vector2(76f, 30f));
+            AddImage(badge, new Color(0.15f, 0.10f, 0.06f, 0.85f), false);
+            badge.gameObject.AddComponent<CanvasGroup>().blocksRaycasts = false;
+            TMP_Text text = AddLabel(badge, "Text", "+0", 16f, TextAlignmentOptions.MidlineRight, Color.white);
+            Inset(text.rectTransform, 4f, 0f, 36f, 0f);
+            RectTransform iconNode = Node("Icon", badge, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-6f, 0f), new Vector2(24f, 24f));
+            Image badgeIcon = AddImage(iconNode, Color.white, false);
+            badgeIcon.preserveAspect = true;
+            badge.gameObject.SetActive(false);
+
+            var so = new SerializedObject(flyer);
+            so.FindProperty("_interaction").objectReferenceValue = interaction;
+            so.FindProperty("_game").objectReferenceValue = game;
+            so.FindProperty("_view").objectReferenceValue = view;
+            so.FindProperty("_camera").objectReferenceValue = mapCamera;
+            so.FindProperty("_layer").objectReferenceValue = layer;
+            SetArray(so.FindProperty("_icons"), icons);
+            so.FindProperty("_target").objectReferenceValue = storageTab;
+            so.FindProperty("_badge").objectReferenceValue = badge.gameObject;
+            so.FindProperty("_badgeIcon").objectReferenceValue = badgeIcon;
+            so.FindProperty("_badgeText").objectReferenceValue = text;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return flyer;
+        }
+
+        private static LevelUpDialog BuildLevelUpDialog(RectTransform parent, GameBootstrap game)
+        {
+            RectTransform holder = Stretch("LevelUpDialog", parent);
+            var dialog = holder.gameObject.AddComponent<LevelUpDialog>();
+
+            RectTransform dim = Stretch("Root", holder);
+            dim.offsetMin = new Vector2(-400f, -400f);
+            dim.offsetMax = new Vector2(400f, 400f);
+            AddImage(dim, Dim, true);
+
+            RectTransform box = Node("Box", dim, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(300f, 260f));
+            AddImage(box, Cream, true);
+
+            TMP_Text title = AddLabel(box, "Title", "Lên cấp!", 24f, TextAlignmentOptions.Center, TextDark);
+            Inset(title.rectTransform, 12f, 200f, 12f, 12f);
+            TMP_Text body = AddLabel(box, "Body", "", 16f, TextAlignmentOptions.Center, TextDark);
+            Inset(body.rectTransform, 16f, 70f, 16f, 64f);
+
+            RectTransform okNode = Node("Ok", box, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 14f), new Vector2(160f, ButtonHeight));
+            Button ok = MakeButton(okNode, "Tuyệt", 18f, Green, Color.white, out _);
+
+            dim.gameObject.SetActive(false);
+            Wire(dialog, ("_game", game), ("_root", dim.gameObject), ("_title", title), ("_body", body), ("_ok", ok));
+            return dialog;
+        }
+
         // ---------- Helpers ----------
+
+        private static void SetArray(SerializedProperty property, Object[] values)
+        {
+            property.arraySize = values.Length;
+            for (int i = 0; i < values.Length; i++)
+                property.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
+        }
 
         private static RectTransform Stretch(string name, Transform parent)
         {

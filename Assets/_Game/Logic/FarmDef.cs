@@ -15,9 +15,14 @@ namespace VeQue.Logic
         public IReadOnlyDictionary<string, int> StartSeeds { get; }
         // Tưới giảm bao nhiêu % tổng thời gian lớn của cây.
         public int WaterReducePercent { get; }
+        public LevelDef Levels { get; }
+        // Cây tặng 1 hạt khi người chơi bị kẹt (hết xu, hạt, nông sản, cây); null = không cứu.
+        public string RescueCropId { get; }
+        public OrderDef Orders { get; }
 
         public FarmDef(IEnumerable<ZoneDef> zones, IEnumerable<CropDef> crops, long startCoins,
-            IReadOnlyDictionary<string, int> startSeeds = null, int waterReducePercent = 0)
+            IReadOnlyDictionary<string, int> startSeeds = null, int waterReducePercent = 0,
+            LevelDef levels = null, string rescueCropId = null, OrderDef orders = null)
         {
             if (zones == null)
                 throw new ArgumentNullException(nameof(zones));
@@ -63,11 +68,22 @@ namespace VeQue.Logic
                 }
             }
 
+            if (rescueCropId != null)
+            {
+                if (!_crops.TryGetValue(rescueCropId, out CropDef rescue))
+                    throw new ArgumentException($"Cây cứu kẹt không tồn tại '{rescueCropId}'.", nameof(rescueCropId));
+                if (rescue.UnlockLevel != 1)
+                    throw new ArgumentException($"Cây cứu kẹt '{rescueCropId}' phải mở từ cấp 1.", nameof(rescueCropId));
+            }
+
             Zones = zoneList.AsReadOnly();
             Crops = cropList.AsReadOnly();
             StartCoins = startCoins;
             StartSeeds = seeds;
             WaterReducePercent = waterReducePercent;
+            Levels = levels ?? LevelDef.None;
+            RescueCropId = rescueCropId;
+            Orders = orders ?? OrderDef.None;
         }
 
         public bool TryGetCrop(string id, out CropDef crop)
