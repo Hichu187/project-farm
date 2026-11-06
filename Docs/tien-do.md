@@ -13,11 +13,12 @@
 | 5b – Hoạt ảnh cây | Ổn trong Editor (Đợt A + B) | Khung hình: chờ art |
 | 6 – UI | Ổn trong Editor | Mục 4 hiệu ứng GUI (làm sau); mục 5 chạm/kéo chờ kiểm tra; chữ có dấu + safe-area trên iPhone |
 | 6b – Cấp độ, đơn hàng, cân bằng | Ổn trong Editor | Build + Build Report; công cụ Cân bằng (làm sau) |
-| 6c – Nhiệm vụ ngày, bộ sưu tập | Chưa làm | Làm sau 6b |
+| 6c – Việc làm lúc chờ cây lớn | Chưa làm (kế hoạch 8 mục, 07/11/2026) | Mục 1–6 trong MVP, 7–8 sau MVP; mỗi mục duyệt thiết kế trước |
+| 10 – Câu cá | Trong MVP (07/11/2026), đã có thiết kế, chưa làm | Ném perfect, giật câu, kéo cá mũi tên 4 hướng, cá theo độ hiếm/cân nặng/giá/khung giờ, cần rank/độ bền/trượt/gãy, mồi; cần art cá, phao, cần, nước |
 | 7 – Lưu tiến trình | Đã viết code (save `version` 2) | Thử trên máy thật, nhập mã máy khác, trình duyệt nhúng Facebook |
 | 8 – Build & phát hành | Chưa làm | Toàn bộ |
 
-Git: nhánh `setup/phan-0-camera`, commit cuối `f0b837e`. Phần 5 (đất ướt), 5b, 6 mục 5, 6b, 7 **chưa commit**.
+Git: nhánh `setup/phan-0-camera`, commit cuối `e65601e` (gồm Phần 5, 5b, 6 mục 5, 6b, 7). Tài liệu kế hoạch Phần 6c, 10 sau commit đó **chưa commit**.
 Test: lần gần nhất người dùng xác nhận trong Unity là 210 (sau Đợt 4 Phần 6b). Hiện có 221 test; ngoài Unity chạy được 164/164 xanh (phần không cần Unity).
 
 ## Phần 0 – Dọn project & khung thư mục (XONG – 29/10/2026)
@@ -318,10 +319,24 @@ Người dùng xác nhận Đợt 2 ổn.
 ### Còn lại
 - Người dùng: **Tạo UI** (Ctrl+S), Test Runner (221 xanh), chơi thử gieo chạm/kéo, kéo thu hoạch, kéo tưới, kéo di chuyển camera vẫn được; thử trên điện thoại.
 
+## Kế hoạch Phần 6c và Phần 10 (CHƯA LÀM – 07/11/2026)
+
+### Quyết định
+- Thời gian chờ cây lớn là cố ý; thêm việc nhỏ mỗi lần vào game và lý do quay lại. 8 mục Phần 6c sắp theo độ phức tạp trong `MVP-Plan.md`: 1 báo cây chín trên tab, 2 đơn hàng (chờ / giới hạn ngày / đơn gấp), 3 chuyện bất ngờ trên ruộng, 4 nông sản hiếm + album, 5 nhiệm vụ ngày + điểm danh, 6 khách vãng lai, 7 chế biến (sau MVP), 8 trang trí (sau MVP).
+- Đơn hàng (chốt): chờ 10 phút sau khi giao, giới hạn 15 đơn giao mỗi ngày (chỉ sinh đơn khi đã giao + đang có < 15, bỏ đơn không tốn lượt), đơn gấp 2–3 giờ một lần / hết hạn 30 phút / thưởng ×2 / không tính lượt. Ngày theo giờ địa phương (độ lệch múi giờ lấy từ trình duyệt). Save lên `version` 3. Trước khi code: chạy lại mô phỏng cân bằng.
+- Báo cây chín trên tab: tính thời điểm chín sớm nhất lúc tab ẩn, hẹn giờ bằng JS (Unity dừng khi tab ẩn).
+- Câu cá đưa vào MVP (Phần 10; `CLAUDE.md` đã sửa phạm vi, còn "nuôi cá" ngoài phạm vi): ném cần canh perfect → chờ cắn, giật trong khung phản xạ (có tỉ lệ trượt) → kéo cá bằng chuỗi mũi tên 4 hướng + chốt theo nhịp (độ căng dây, đứt dây, gãy cần) → cá có độ hiếm (5 mức), cân nặng, giá theo cân nặng, khung giờ xuất hiện (7 khung theo giờ địa phương), mồi ưa thích; càng hiếm càng khó. Cần câu 5 rank, độ bền, sửa / mua mới. Mồi hút loài khác nhau, giun có thể đào được khi thu hoạch.
+- Thứ tự đề xuất: Phần 6c mục 1–2 → Phần 4 template WebGL + chạy trên điện thoại → Phần 10 câu cá.
+
+### Còn lại
+- Người dùng chưa cho bắt đầu Phần 6c mục 1–2 (07/11/2026: "chưa làm").
+- Câu cá cần chốt khi làm: nút mũi tên hay vuốt; XP câu cá chung hay riêng; cá giữ trong giỏ hay bán ngay; nguồn art (cá, phao, cần, nước) và âm thanh.
+
 ## Tiếp theo (khi quay lại)
 0. Phần 6 mục 5 – chạy **Tạo UI**, Test Runner (221), chơi thử gieo chạm/kéo, kéo thu hoạch, kéo tưới; thử cảm giác kéo trên điện thoại.
-1. Commit phần việc chưa commit (khi người dùng yêu cầu).
+1. Phần 6c mục 1–2 (khi người dùng cho làm): chạy lại mô phỏng cân bằng với giới hạn đơn → duyệt → code.
 2. Phần 4 – template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) + build, so Build Report (mốc 10,8 MB) + thử trên iPhone Safari / Android; cùng lúc kiểm tra Phần 7 trên máy thật.
-3. Phần 3 – art (setup ô đất), vẽ phần còn lại trên `Decor`, tạo `ComingSoonArea`, Sprite Atlas.
-4. Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation); giảm build < 10 MB (Phần 8).
-5. Làm sau: Phần 6c (nhiệm vụ ngày, bộ sưu tập), Phần 6 mục 4 (hiệu ứng GUI), công cụ Cân bằng, art 32×32, khung hình cây.
+3. Phần 10 – câu cá (trong MVP): chốt các câu hỏi còn lại, chuẩn bị art, rồi làm theo 5 đợt trong `MVP-Plan.md`.
+4. Phần 3 – art (setup ô đất), vẽ phần còn lại trên `Decor`, tạo `ComingSoonArea` (trừ ao), Sprite Atlas.
+5. Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation); giảm build < 10 MB (Phần 8).
+6. Làm sau: Phần 6c mục 3–8, Phần 6 mục 4 (hiệu ứng GUI), công cụ Cân bằng, art 32×32, khung hình cây.

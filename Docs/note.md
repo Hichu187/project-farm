@@ -1,6 +1,6 @@
 # Về Quê – Note tiến độ
 
-Bản chụp lúc lưu: 07/11/2026. Nhánh `setup/phan-0-camera`. Bản chụp này nằm trong commit "Phần 5b, 6b, 6 mục 5, 7: cấp độ, đơn hàng, hoạt ảnh cây, chạm và kéo, lưu tiến trình" (commit ngay sau `f0b837e`). Không commit `.vscode/` và `LiberationSans SDF - Fallback.asset` (Unity tự ghi).
+Bản chụp lúc lưu: 07/11/2026 (sau khi lên kế hoạch Phần 6c và đưa câu cá vào MVP). Nhánh `setup/phan-0-camera`, commit cuối `e65601e`. Thay đổi tài liệu sau commit đó (`CLAUDE.md`, `MVP-Plan.md`, `tien-do.md`, `note.md`) **chưa commit**. Không commit `.vscode/` và `LiberationSans SDF - Fallback.asset` (Unity tự ghi).
 
 ## Tóm tắt
 
@@ -15,32 +15,35 @@ Bản chụp lúc lưu: 07/11/2026. Nhánh `setup/phan-0-camera`. Bản chụp n
 | 5b – Hoạt ảnh cây | Ổn trong Editor (Đợt A + B) | Khung hình: chờ art |
 | 6 – UI | Ổn trong Editor | Mục 4 hiệu ứng GUI (làm sau); mục 5 chạm/kéo chờ kiểm tra; chữ có dấu + safe-area trên iPhone |
 | 6b – Cấp độ, đơn hàng, cân bằng | Ổn trong Editor | Build + Build Report; công cụ Cân bằng (làm sau) |
-| 6c – Nhiệm vụ ngày, bộ sưu tập | Chưa làm | Làm sau 6b |
+| 6c – Việc làm lúc chờ cây lớn | Chưa làm (kế hoạch 8 mục, 07/11/2026) | Mục 1–6 trong MVP, 7–8 sau MVP; mỗi mục duyệt thiết kế trước |
+| 10 – Câu cá | Trong MVP (07/11/2026), đã có thiết kế, chưa làm | Ném perfect, giật câu, kéo cá mũi tên 4 hướng, cá theo độ hiếm/cân nặng/giá/khung giờ, cần rank/độ bền/trượt/gãy, mồi; cần art cá, phao, cần, nước |
 | 7 – Lưu tiến trình | Đã viết code (save `version` 2) | Thử trên máy thật, nhập mã máy khác, trình duyệt nhúng Facebook |
 | 8 – Build & phát hành | Chưa làm | Toàn bộ |
 
-Git: nhánh `setup/phan-0-camera`, commit cuối `f0b837e`. Phần 5 (đất ướt), 5b, 6 mục 5, 6b, 7 **chưa commit**.
+Git: nhánh `setup/phan-0-camera`, commit cuối `e65601e` (gồm Phần 5, 5b, 6 mục 5, 6b, 7). Tài liệu kế hoạch Phần 6c, 10 sau commit đó **chưa commit**.
 Test: lần gần nhất người dùng xác nhận trong Unity là 210 (sau Đợt 4 Phần 6b). Hiện có 221 test; ngoài Unity chạy được 164/164 xanh (phần không cần Unity).
 
 ## Việc đang chờ người dùng
 
-1. Phần 6 mục 5 (chạm và kéo): chạy **Về Quê → Tạo UI** (Ctrl+S), **Test Runner → EditMode → Run All** (mong đợi 221 xanh), chơi thử:
-   - Chạm ô trống → thanh hạt trên ô; chạm icon gieo 1 ô; kéo icon gieo nhiều ô; kéo tới hết hạt thì dừng + "Hết hạt".
-   - Kéo từ ô chín = thu hoạch hàng loạt; kéo từ cây chưa tưới = tưới hàng loạt; kéo chỗ khác vẫn di chuyển camera.
-2. Thử cảm giác kéo trên điện thoại (cần build).
+1. Phần 6 mục 5 (chạm và kéo): chạy **Về Quê → Tạo UI** (Ctrl+S), **Test Runner → EditMode → Run All** (mong đợi 221 xanh), chơi thử gieo bằng chạm/kéo, kéo thu hoạch, kéo tưới, kéo vẫn di chuyển camera.
+2. Cho phép bắt đầu Phần 6c mục 1–2 (đang để "chưa làm").
+3. Câu cá: chốt nút mũi tên hay vuốt, XP chung hay riêng, cá giữ trong giỏ hay bán ngay, nguồn art và âm thanh.
 
 ## Việc tiếp theo
 
-1. Phần 4 – template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`), build WebGL, so Build Report (mốc 10,8 MB), thử trên iPhone Safari / Android; cùng lúc kiểm tra Phần 7 trên máy thật.
-2. Phần 3 – art: setup ô đất, `Decor` còn lại, `ComingSoonArea`, Sprite Atlas.
-3. Phần 8 – giảm build < 10 MB (Brotli, Managed Stripping, tắt splash, gỡ package không dùng).
+0. Phần 6 mục 5 – chạy **Tạo UI**, Test Runner (221), chơi thử gieo chạm/kéo, kéo thu hoạch, kéo tưới; thử cảm giác kéo trên điện thoại.
+1. Phần 6c mục 1–2 (khi người dùng cho làm): chạy lại mô phỏng cân bằng với giới hạn đơn → duyệt → code.
+2. Phần 4 – template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) + build, so Build Report (mốc 10,8 MB) + thử trên iPhone Safari / Android; cùng lúc kiểm tra Phần 7 trên máy thật.
+3. Phần 10 – câu cá (trong MVP): chốt các câu hỏi còn lại, chuẩn bị art, rồi làm theo 5 đợt trong `MVP-Plan.md`.
+4. Phần 3 – art (setup ô đất), vẽ phần còn lại trên `Decor`, tạo `ComingSoonArea` (trừ ao), Sprite Atlas.
+5. Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation); giảm build < 10 MB (Phần 8).
+6. Làm sau: Phần 6c mục 3–8, Phần 6 mục 4 (hiệu ứng GUI), công cụ Cân bằng, art 32×32, khung hình cây.
 
-## Chưa quyết / làm sau
+## Chưa quyết / ghi chú
 
 - Gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation).
 - Tài liệu lệch thực tế: map ghi 44×26 nhưng scene 46×26; camera có `_mapPadding` 5/5/5/2,5 (đi ra ngoài map là cố ý); hướng giảm dung lượng ghi bỏ LiberationSans trong khi UI đang dùng; Phần 5 ghi `PlotView` nhưng code là `FarmView`.
 - `02_hanh_la`, `03_xa_lach` đang tắt nhưng có sprite: cần xem lại.
-- Làm sau: Phần 6c (nhiệm vụ ngày, bộ sưu tập), Phần 6 mục 4 (hiệu ứng GUI), công cụ **Về Quê → Cân bằng**, art 32×32, khung hình cây (Phần 5b).
 
 ---
 
@@ -55,6 +58,7 @@ Mỗi phần nhỏ, chạy và kiểm tra được trước khi sang phần sau.
 - Camera toàn cảnh KHÔNG thấy hết nông trại: Reference Resolution khoảng 208×370 (≈13 tile bề ngang, zoom 5x trên màn 1080–1170 px). Zoom vào khu theo bounding box (~10x).
 - Bố cục map: Map D (trải ngang, 44×26), xem Phần 3.
 - Số ô mở sẵn: Khu 1 là 6; Khu 2, 3 mở miễn phí 1 ô khi mở khóa. Đặt trong `ZoneDefinition.startOpenCount`.
+- 07/11/2026: đưa câu cá vào MVP (Phần 10); ao không còn là "sắp có".
 - 06/11/2026: thêm tiến trình (cấp độ + đơn hàng) vào MVP để người chơi có mục tiêu; cân bằng lại cây theo công thức (Phần 6b). Nhiệm vụ hằng ngày, bộ sưu tập làm sau (Phần 6c).
 
 ---
@@ -212,11 +216,34 @@ Vòng chơi: trồng → thu hoạch → giao đơn (hoặc bán) → xu + XP �
 
 **Kiểm tra:** test xanh; chơi thử trong Editor từ save mới: lên cấp 2 có đơn hàng, giao đơn được, lên cấp mở cây mới, Khu 2 khóa tới khi đủ cấp; save cũ nạp được.
 
-## Phần 6c – Nhiệm vụ hằng ngày, bộ sưu tập (làm sau 6b)
-1. Nhiệm vụ hằng ngày (3 nhiệm vụ/ngày theo ngày địa phương) + thưởng điểm danh. Lưu ý chỉnh giờ máy: dùng `MonotonicClock`, chấp nhận gian lận chỉnh giờ tới.
-2. Bộ sưu tập / mốc thành tích (ví dụ thu 100 rau muống) có thưởng.
+## Phần 6c – Việc làm trong lúc chờ cây lớn & lý do quay lại (thêm 07/11/2026)
+Nguyên tắc: thời gian chờ là cố ý (cây ngắn cho lúc đang chơi, cây dài cho lúc vắng mặt); không lấp kín, chỉ thêm việc nhỏ mỗi lần vào game và lý do quay lại.
+Làm theo thứ tự dưới đây (từ đơn giản tới phức tạp). Mỗi mục đưa thiết kế chi tiết (luật, con số, file, kiểm tra) để duyệt trước khi làm; xong mục nào chạy lại mô phỏng cân bằng nếu mục đó đổi thu nhập.
 
-Thiết kế chi tiết đưa duyệt khi tới phần này.
+**"Ngày" dùng chung (mục 2, 5):** ngày theo giờ địa phương của máy. Trên WebGL, múi giờ trong C# có thể không đúng → lấy độ lệch múi giờ từ trình duyệt qua jslib (`new Date().getTimezoneOffset()`), lưu cùng save. Chống chỉnh giờ: `MonotonicClock` chặn lùi; chấp nhận gian lận chỉnh giờ tới (không có server).
+
+1. **Báo cây chín trên tab trình duyệt** (rất thấp) – thiết kế:
+   - Tab bị ẩn thì trình duyệt làm chậm hoặc dừng vòng lặp của Unity → không đếm giờ trong C# lúc ẩn. Lúc tab vừa ẩn (sự kiện `PageHidden` đã có), C# tính **thời điểm cây chín sớm nhất** và **tên cây**, gửi sang jslib; jslib đặt hẹn giờ JS (`setTimeout`, vẫn chạy khi tab ẩn, có thể trễ vài giây) để đổi tiêu đề.
+   - Tiêu đề: 1 ô chín → "🌱 Rau muống đã chín · Về Quê"; đã có cây chín ngay lúc ẩn thì đổi luôn. Tab hiện lại → hủy hẹn giờ, trả tiêu đề gốc.
+   - File: `VeQueSave.jslib` (`VeQue_SetRipeTitle(giây, tên)`, `VeQue_RestoreTitle`), `WebBridge`, `Farm.TryGetNextRipe` (Logic, có test). Trong Editor không làm gì.
+   - Kiểm tra: build, gieo rau muống, chuyển tab, sau ~2 phút tiêu đề đổi; quay lại tab thì trả tiêu đề cũ.
+2. **Đơn hàng: thời gian xuất hiện, giới hạn mỗi ngày, đơn gấp** (thấp) – số đã chốt 07/11/2026, thiết kế:
+   - **Có đơn mới sau khi giao: 10 phút** (`_orderRefillMinutes`). Bỏ đơn vẫn 5 phút.
+   - **Giới hạn 15 đơn giao mỗi ngày** (`_orderDailyLimit`). Chỉ sinh đơn mới khi (đã giao hôm nay + đơn đang có trên bảng) < 15, nên trên bảng không bao giờ có đơn không giao được. Bỏ đơn không tốn lượt. Hết lượt: ô trống hiện "Hết đơn hôm nay, có đơn mới sau 0 giờ"; bảng Đơn hàng hiện "Còn N đơn hôm nay".
+   - **Đơn gấp** (ô riêng, nằm trên cùng bảng Đơn hàng): xuất hiện ngẫu nhiên mỗi 2–3 giờ, tối đa 1 đơn, hết hạn sau 30 phút (đếm ngược trên thẻ), thưởng xu và XP ×2 so với đơn thường cùng món; không tính vào giới hạn ngày; hết hạn thì mất và hẹn đơn gấp kế tiếp. Chỉ có từ cấp mở đơn hàng.
+   - **Ngày** = theo giờ địa phương: chỉ số ngày = `floor((giờ UTC + độ lệch múi giờ) / 86400)`. Độ lệch lấy từ trình duyệt mỗi lần mở game (jslib `getTimezoneOffset`), trong Editor lấy từ máy. Sang ngày mới thì đếm lại lượt.
+   - Logic: `OrderDef` thêm các số trên; `FarmState` thêm số đơn đã giao hôm nay, chỉ số ngày, đơn gấp + hạn, thời điểm đơn gấp kế tiếp; `Farm.SetUtcOffset`. Save lên `version` 3 (save 2 nạp được: lượt hôm nay = 0, chưa có đơn gấp).
+   - UI: thẻ đơn gấp (màu khác, đếm ngược), dòng "Còn N đơn hôm nay", ô trống hết lượt; số trên tab Đơn hàng tính cả đơn gấp giao được.
+   - Cân bằng: chạy lại mô phỏng (giới hạn 15 đơn/ngày, chờ 10 phút, đơn gấp) và so mục tiêu nhịp; lệch nhiều thì đề xuất chỉnh giới hạn hoặc % thưởng trước khi làm.
+   - Kiểm tra: test Logic (chờ 10 phút, đủ 15 thì ngừng, sang ngày mới đếm lại, đơn gấp hết hạn, save 2 → 3); trong Editor dùng **Tua thời gian** thử qua ngày, đơn gấp.
+3. **Chuyện bất ngờ trên ruộng** (thấp – trung bình): chim sà xuống / sâu bò trên cây đang lớn → chạm để đuổi; hộp quà, trứng, bó rơm rơi ngẫu nhiên trên map → kéo camera tìm và chạm nhặt. Thưởng ít xu / XP / hạt; giới hạn số lần mỗi giờ. Không có thuốc trừ sâu, không làm hại cây. Cần vài sprite nhỏ.
+4. **Bộ sưu tập: nông sản hiếm** (thấp – trung bình): mỗi lần thu hoạch có xác suất nhỏ (đề xuất 3%) ra nông sản vàng; album theo cây, đủ bộ / mốc (vd. thu 100 rau muống) nhận thưởng. Sprite đổi màu, thêm bảng Album.
+5. **Nhiệm vụ hằng ngày + điểm danh** (trung bình): 3 nhiệm vụ/ngày (thu N cây, giao N đơn, tưới N lần…), sinh theo cấp; điểm danh 7 ngày nhận quà tăng dần, lỡ ngày thì về ngày 1.
+6. **Khách vãng lai** (trung bình): người dân đi qua cổng, hỏi mua một loại nông sản đang có trong Kho với giá cao hơn bán thẳng; đồng ý / từ chối. Không phải nhân vật điều khiển. Cần sprite người + đường đi.
+7. **Chế biến** (cao, sau MVP): nồi / cối biến nông sản thành món (có thời gian chờ), bán giá cao hoặc giao đơn đặc biệt. Logic chuỗi sản xuất, art, cân bằng lại kinh tế.
+8. **Trang trí nông trại** (cao, sau MVP): mua hàng rào, chậu hoa, bù nhìn rồi đặt lên map; chế độ đặt vật, lưu vị trí, art.
+
+Ngoài phạm vi MVP (theo `CLAUDE.md`): nuôi cá, chuồng, đất mở rộng, trộm nông sản. Câu cá ở Phần 10 (trong MVP).
 
 ## Phần 7 – Lưu tiến trình 🔍
 1. Save JSON có `version`; lưu ô theo `(zoneId, bedIndex, col, row)`.
@@ -232,6 +259,60 @@ Thiết kế chi tiết đưa duyệt khi tới phần này.
 3. Test trên Safari iOS, Chrome Android, trình duyệt nhúng Facebook/TikTok (cần tên miền riêng thay `*.workers.dev`).
 
 **Kiểm tra:** mở link trên điện thoại là chơi được trong vài giây, chơi trọn một vòng gieo → bán → mở ô.
+
+## Phần 10 – Câu cá (trong MVP từ 07/11/2026, chưa làm) 🔍
+Đưa vào MVP 07/11/2026 (`CLAUDE.md` đã sửa phạm vi). Ao cá có sẵn trên Map D [35, 9, 7, 11]; bỏ `ComingSoonArea` của ao khi làm phần này. Thứ tự đề xuất: sau Phần 6c mục 1–2 và sau khi game chạy được trên điện thoại (Phần 4 template WebGL).
+Vòng chơi: **chọn mồi → ném cần (canh perfect) → chờ cá cắn, giật đúng lúc → kéo cá bằng chuỗi mũi tên 4 hướng → được cá (loài, độ hiếm, cân nặng, giá) hoặc sổng / đứt dây / gãy cần.**
+Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt khi ném, báo hiệu cắn câu + khung phản xạ ngắn, rồi một mini game kéo cá (Stardew Valley, Fish Quest, WebFishing, Tiny Fishing). Kéo cá dùng kiểu nhập chuỗi mũi tên theo nhịp (kiểu game nhảy theo nhịp) – chỉ mượn cơ chế, art và tên riêng.
+
+**1. Ném cần – canh perfect**
+- Đứng ở bờ ao (zoom vào ao như zoom khu). Nhấn giữ nút Ném: thanh lực chạy lên xuống liên tục (0 → 100% → 0, chu kỳ ~1,2 giây); thả tay để ném.
+- Vùng trên thanh: **Perfect** (hẹp, ở gần đỉnh), **Tốt**, **Thường**. Cần câu rank cao thì vùng Perfect rộng hơn, thanh chạy chậm hơn.
+- Lực quyết định phao rơi gần hay xa bờ: xa = nước sâu = cá to, cá hiếm hơn.
+- Perfect: tăng tỉ lệ cá hiếm, chờ cắn ngắn hơn, vòng kéo đầu dễ hơn; có hiệu ứng + chữ "Perfect!". Ném hỏng (quá yếu): phao rơi sát bờ, chỉ có cá thường.
+
+**2. Chờ cá cắn – giật câu**
+- Chờ ngẫu nhiên (vd. 3–15 giây; mồi hợp loài, ném perfect thì ngắn hơn). Phao **rỉa nhẹ** vài lần (mồi nhử) rồi mới **chìm hẳn + dấu "!"**.
+- Chạm "Giật" trong khung phản xạ (vd. 0,9 giây với cá thường, 0,4 giây với cá huyền thoại). Giật lúc phao chỉ rỉa → cá sợ bỏ đi, mất mồi. Trễ → cá ăn mất mồi.
+- **Tỉ lệ trượt**: giật đúng lúc vẫn có xác suất trượt lưỡi (cá sổng ngay), giảm theo rank cần, tăng theo độ hiếm cá.
+- Android có thể rung máy khi cá cắn (`navigator.vibrate`); iPhone trên web không rung được → dựa vào hình + âm thanh.
+
+**3. Kéo cá – chuỗi mũi tên 4 hướng (kiểu game nhảy theo nhịp)**
+- Cá có **thể lực**, dây có **độ căng**. Mỗi **vòng**: hiện chuỗi mũi tên (↑ ↓ ← →), người chơi nhập đúng thứ tự trong thời gian giới hạn, rồi chạm **Chốt** đúng lúc con trỏ chạy qua vạch nhịp (Perfect / Tốt / Trượt).
+- Nhập đúng + chốt tốt → trừ thể lực cá (Perfect trừ nhiều, có chuỗi combo). Sai mũi tên hoặc hết giờ → độ căng tăng. Độ căng đầy → **đứt dây**: cá thoát, mất mồi, cần mất độ bền nhiều hơn, có xác suất **gãy cần**.
+- Cá càng hiếm: nhiều vòng hơn, chuỗi dài hơn (4 → 10 mũi tên), ít thời gian hơn, vạch nhịp hẹp hơn; cá huyền thoại có **mũi tên đỏ** (bấm hướng ngược lại) và chuỗi đổi giữa chừng.
+- Nhập trên điện thoại: **4 nút mũi tên lớn** (≥ 56 pt) + nút **Chốt**, đặt ở nửa dưới màn hình (ổn định hơn vuốt khi nhập nhanh); có thể thêm tùy chọn vuốt. Cần thử cảm giác trên máy thật.
+
+**4. Cá**
+- Mỗi loài: độ hiếm (Thường / Khá / Hiếm / Quý / Huyền thoại), khoảng cân nặng (kg, lệch về nhẹ; cá nặng hiếm hơn), giá = giá gốc × hệ số cân nặng, khung giờ xuất hiện (mục 4b), độ sâu, mồi ưa thích, độ khó (số vòng, độ dài chuỗi, thời gian, khung giật, tỉ lệ trượt).
+- Loài gợi ý: Thường – cá rô, cá diếc, tép; Khá – cá chép, cá trê, cá mè; Hiếm – cá lóc, lươn, tôm càng xanh; Quý – cá bống tượng, cá chép đỏ; Huyền thoại – cá chép vàng, cá trắm đen khổng lồ.
+- Kỷ lục cân nặng mỗi loài vào album (nối với Phần 6c mục 4). Cá vào **giỏ cá** (giữ loài + cân nặng, có sức chứa) → bán, giao đơn, chế biến (Phần 6c mục 7).
+
+**4b. Cá xuất hiện theo khung giờ (yêu cầu 07/11/2026)**
+- Một ngày chia 7 khung theo giờ địa phương của máy (dùng chung cách tính ngày/giờ với đơn hàng, Phần 6c mục 2): Bình minh 5–7h, Sáng 7–11h, Trưa 11–14h, Chiều 14–17h, Hoàng hôn 17–19h, Tối 19–23h, Khuya 23–5h.
+- Mỗi loài có hệ số theo từng khung: 0 = không có, 1 = bình thường, > 1 = ăn mạnh. Khung tính lúc ném cần (đang kéo cá mà qua khung mới thì không đổi).
+- Gợi ý: cá rô, cá diếc cả ngày; cá chép mạnh buổi sáng; cá lóc mạnh lúc bình minh và hoàng hôn; cá trê, lươn chỉ tối và khuya; tôm càng tối; cá bống tượng chiều tối; **cá chép vàng chỉ lúc bình minh**; **cá trắm đen khổng lồ chỉ lúc khuya**.
+- Công bằng với người chỉ chơi vài giờ cố định: cá Hiếm trở xuống có ít nhất 2 khung; chỉ cá Quý / Huyền thoại mới có 1 khung, và có mồi đặc biệt tăng tỉ lệ để bù.
+- UI khi zoom vào ao: "Khung giờ: Hoàng hôn (17–19h) · còn 1:24", danh sách cá đang ăn mạnh (loài chưa bắt được hiện "?" – khám phá dần qua album); album ghi khung giờ của mỗi loài đã bắt.
+- Có thể thêm sau: màu map đổi theo khung giờ (sáng, chiều vàng, tối xanh), đom đóm ban đêm – làm đẹp, không bắt buộc.
+- Chỉnh giờ máy để câu cá theo khung: chấp nhận (không có server), `MonotonicClock` chỉ chặn lùi giờ. Trong Editor thử bằng **Tua thời gian**.
+- Logic: `FishDef` có bảng hệ số 7 khung; hàm khung giờ thuần (giờ UTC + độ lệch múi giờ → khung), có test ranh giới (4:59 / 5:00, qua nửa đêm).
+
+**5. Cần câu – rank, độ bền, sửa / mua mới**
+- Rank gợi ý: Cần tre → Cần trúc → Cần sợi thủy tinh → Cần carbon → Cần vàng. Mua ở Cửa hàng, mở theo cấp.
+- Chỉ số: độ rộng vùng Perfect, tốc độ thanh lực, sức bền dây (độ căng tối đa), tỉ lệ trượt, thưởng tỉ lệ cá hiếm, **độ bền**.
+- Mỗi lần câu trừ độ bền (đứt dây trừ nhiều hơn). Độ bền về 0 hoặc gãy khi đứt dây → **cần gãy**: sửa (tốn xu, rẻ hơn mua) hoặc mua mới. Có thể giữ nhiều cần, chọn cần trước khi câu.
+
+**6. Mồi câu**
+- Mỗi lần ném tốn 1 mồi; mồi quyết định loài nào dễ cắn: giun → rô, diếc, trê; cám → chép, mè; tép → lóc, bống; mồi giả → lóc, cá quý. Mồi đặc biệt hút cá hiếm.
+- Nguồn: giun có khi đào được lúc thu hoạch (nối câu cá với trồng trọt), mồi khác mua ở Cửa hàng. Hết mồi là nghỉ → giới hạn tự nhiên, không cần thanh năng lượng.
+
+**7. Kỹ thuật & thứ tự làm (khi được đưa vào phạm vi)**
+- Logic thuần (`VeQue.Logic`): `FishDef`, `RodDef`, `BaitDef`, phiên câu dạng state machine (Chờ ném → Đang ném → Chờ cắn → Cá cắn → Kéo → Kết quả), sinh cá / sinh chuỗi mũi tên bằng `SeededRandom`, thời gian qua `IClock`; test cho tỉ lệ, cân nặng, trượt, đứt dây, độ bền. Save: cần + độ bền, mồi, giỏ cá, kỷ lục.
+- View: zoom vào ao, phao + dây (pixel), thanh lực, nút mũi tên + vạch nhịp, hiệu ứng Perfect / đứt dây / gãy cần, âm thanh (chỉ phát sau lần chạm đầu trên web).
+- Art cần có: phao, cần theo rank, sprite từng loài cá, mồi, nước động. Âm thanh: quăng cần, cá cắn, đứt dây.
+- Đợt: (1) Logic + test; (2) ném + chờ cắn; (3) kéo cá mũi tên; (4) cửa hàng cần / mồi, sửa cần; (5) giỏ cá, bán, album, đơn hàng có cá. Cân bằng: thêm câu cá vào mô phỏng kinh tế (thu nhập / giờ so với trồng cây).
+- Cần chốt khi làm: nút mũi tên hay vuốt; XP câu cá chung hay riêng; cá giữ trong giỏ hay bán ngay.
 
 ---
 
@@ -252,11 +333,12 @@ Thiết kế chi tiết đưa duyệt khi tới phần này.
 | 5b – Hoạt ảnh cây | Ổn trong Editor (Đợt A + B) | Khung hình: chờ art |
 | 6 – UI | Ổn trong Editor | Mục 4 hiệu ứng GUI (làm sau); mục 5 chạm/kéo chờ kiểm tra; chữ có dấu + safe-area trên iPhone |
 | 6b – Cấp độ, đơn hàng, cân bằng | Ổn trong Editor | Build + Build Report; công cụ Cân bằng (làm sau) |
-| 6c – Nhiệm vụ ngày, bộ sưu tập | Chưa làm | Làm sau 6b |
+| 6c – Việc làm lúc chờ cây lớn | Chưa làm (kế hoạch 8 mục, 07/11/2026) | Mục 1–6 trong MVP, 7–8 sau MVP; mỗi mục duyệt thiết kế trước |
+| 10 – Câu cá | Trong MVP (07/11/2026), đã có thiết kế, chưa làm | Ném perfect, giật câu, kéo cá mũi tên 4 hướng, cá theo độ hiếm/cân nặng/giá/khung giờ, cần rank/độ bền/trượt/gãy, mồi; cần art cá, phao, cần, nước |
 | 7 – Lưu tiến trình | Đã viết code (save `version` 2) | Thử trên máy thật, nhập mã máy khác, trình duyệt nhúng Facebook |
 | 8 – Build & phát hành | Chưa làm | Toàn bộ |
 
-Git: nhánh `setup/phan-0-camera`, commit cuối `f0b837e`. Phần 5 (đất ướt), 5b, 6 mục 5, 6b, 7 **chưa commit**.
+Git: nhánh `setup/phan-0-camera`, commit cuối `e65601e` (gồm Phần 5, 5b, 6 mục 5, 6b, 7). Tài liệu kế hoạch Phần 6c, 10 sau commit đó **chưa commit**.
 Test: lần gần nhất người dùng xác nhận trong Unity là 210 (sau Đợt 4 Phần 6b). Hiện có 221 test; ngoài Unity chạy được 164/164 xanh (phần không cần Unity).
 
 ## Phần 0 – Dọn project & khung thư mục (XONG – 29/10/2026)
@@ -557,10 +639,24 @@ Người dùng xác nhận Đợt 2 ổn.
 ### Còn lại
 - Người dùng: **Tạo UI** (Ctrl+S), Test Runner (221 xanh), chơi thử gieo chạm/kéo, kéo thu hoạch, kéo tưới, kéo di chuyển camera vẫn được; thử trên điện thoại.
 
+## Kế hoạch Phần 6c và Phần 10 (CHƯA LÀM – 07/11/2026)
+
+### Quyết định
+- Thời gian chờ cây lớn là cố ý; thêm việc nhỏ mỗi lần vào game và lý do quay lại. 8 mục Phần 6c sắp theo độ phức tạp trong `MVP-Plan.md`: 1 báo cây chín trên tab, 2 đơn hàng (chờ / giới hạn ngày / đơn gấp), 3 chuyện bất ngờ trên ruộng, 4 nông sản hiếm + album, 5 nhiệm vụ ngày + điểm danh, 6 khách vãng lai, 7 chế biến (sau MVP), 8 trang trí (sau MVP).
+- Đơn hàng (chốt): chờ 10 phút sau khi giao, giới hạn 15 đơn giao mỗi ngày (chỉ sinh đơn khi đã giao + đang có < 15, bỏ đơn không tốn lượt), đơn gấp 2–3 giờ một lần / hết hạn 30 phút / thưởng ×2 / không tính lượt. Ngày theo giờ địa phương (độ lệch múi giờ lấy từ trình duyệt). Save lên `version` 3. Trước khi code: chạy lại mô phỏng cân bằng.
+- Báo cây chín trên tab: tính thời điểm chín sớm nhất lúc tab ẩn, hẹn giờ bằng JS (Unity dừng khi tab ẩn).
+- Câu cá đưa vào MVP (Phần 10; `CLAUDE.md` đã sửa phạm vi, còn "nuôi cá" ngoài phạm vi): ném cần canh perfect → chờ cắn, giật trong khung phản xạ (có tỉ lệ trượt) → kéo cá bằng chuỗi mũi tên 4 hướng + chốt theo nhịp (độ căng dây, đứt dây, gãy cần) → cá có độ hiếm (5 mức), cân nặng, giá theo cân nặng, khung giờ xuất hiện (7 khung theo giờ địa phương), mồi ưa thích; càng hiếm càng khó. Cần câu 5 rank, độ bền, sửa / mua mới. Mồi hút loài khác nhau, giun có thể đào được khi thu hoạch.
+- Thứ tự đề xuất: Phần 6c mục 1–2 → Phần 4 template WebGL + chạy trên điện thoại → Phần 10 câu cá.
+
+### Còn lại
+- Người dùng chưa cho bắt đầu Phần 6c mục 1–2 (07/11/2026: "chưa làm").
+- Câu cá cần chốt khi làm: nút mũi tên hay vuốt; XP câu cá chung hay riêng; cá giữ trong giỏ hay bán ngay; nguồn art (cá, phao, cần, nước) và âm thanh.
+
 ## Tiếp theo (khi quay lại)
 0. Phần 6 mục 5 – chạy **Tạo UI**, Test Runner (221), chơi thử gieo chạm/kéo, kéo thu hoạch, kéo tưới; thử cảm giác kéo trên điện thoại.
-1. Commit phần việc chưa commit (khi người dùng yêu cầu).
+1. Phần 6c mục 1–2 (khi người dùng cho làm): chạy lại mô phỏng cân bằng với giới hạn đơn → duyệt → code.
 2. Phần 4 – template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) + build, so Build Report (mốc 10,8 MB) + thử trên iPhone Safari / Android; cùng lúc kiểm tra Phần 7 trên máy thật.
-3. Phần 3 – art (setup ô đất), vẽ phần còn lại trên `Decor`, tạo `ComingSoonArea`, Sprite Atlas.
-4. Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation); giảm build < 10 MB (Phần 8).
-5. Làm sau: Phần 6c (nhiệm vụ ngày, bộ sưu tập), Phần 6 mục 4 (hiệu ứng GUI), công cụ Cân bằng, art 32×32, khung hình cây.
+3. Phần 10 – câu cá (trong MVP): chốt các câu hỏi còn lại, chuẩn bị art, rồi làm theo 5 đợt trong `MVP-Plan.md`.
+4. Phần 3 – art (setup ô đất), vẽ phần còn lại trên `Decor`, tạo `ComingSoonArea` (trừ ao), Sprite Atlas.
+5. Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation); giảm build < 10 MB (Phần 8).
+6. Làm sau: Phần 6c mục 3–8, Phần 6 mục 4 (hiệu ứng GUI), công cụ Cân bằng, art 32×32, khung hình cây.

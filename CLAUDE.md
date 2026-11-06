@@ -29,10 +29,11 @@ Kế hoạch đầy đủ: `Docs/MVP-Plan.md` (Phần 0 → 8). Tiến độ: `D
 - 4 cây: rau muống 2 phút, cải xanh 15 phút, cà chua 1 giờ, bí đỏ 4 giờ. Data có 25 cây với cờ `enabled`; chỉ 4 cây này bật trong MVP.
 - Giá hạt, sản lượng, giá bán, XP theo công thức cân bằng ở `Docs/MVP-Plan.md` Phần 6b; không chỉnh tay từng cây.
 - Tiến trình (Phần 6b): cấp độ (XP từ thu hoạch + đơn hàng; lên cấp mở cây mới, khu sau cần đủ cấp) và đơn hàng làng quê (3 đơn cùng lúc, thưởng cao hơn bán thẳng). Chống kẹt: hết xu, hạt, nông sản, cây thì tặng 1 hạt rau muống.
-- Làm sau A + B (Phần 6c): nhiệm vụ hằng ngày + điểm danh, bộ sưu tập/mốc thành tích.
+- Phần 6c (làm sau 6b, theo thứ tự trong `Docs/MVP-Plan.md`): báo cây chín trên tab; đơn hàng có thời gian xuất hiện, giới hạn mỗi ngày, đơn gấp; chuyện bất ngờ trên ruộng; nông sản hiếm + album; nhiệm vụ ngày + điểm danh; khách vãng lai. Chế biến, trang trí: sau MVP.
 - Cây vẫn lớn khi thoát game. Lưu tiến trình + xuất/nhập mã sao lưu.
-- Ao, chuồng, nhà kho, đất mở rộng: chỉ là art, chạm vào hiện "sắp có".
-- Ngoài phạm vi: nuôi cá/câu cá, chuồng, đất mở rộng, nhân vật/joystick, trộm nông sản, hai ví xu, thuốc trừ sâu/phân bón.
+- Câu cá ở ao (Phần 10, đưa vào MVP 07/11/2026): ném cần canh perfect, giật câu, kéo cá bằng chuỗi mũi tên 4 hướng; cá có độ hiếm, cân nặng, giá, khung giờ xuất hiện; cần câu có rank, độ bền, tỉ lệ trượt, gãy phải sửa / mua mới; mồi hút loài khác nhau.
+- Chuồng, nhà kho, đất mở rộng: chỉ là art, chạm vào hiện "sắp có".
+- Ngoài phạm vi: nuôi cá (thả nuôi trong ao), chuồng, đất mở rộng, nhân vật/joystick, trộm nông sản, hai ví xu, thuốc trừ sâu/phân bón.
 
 ## Map & camera
 - Tilemap, Grid cell 1. Ground: cỏ + sân đất. Decor: hàng hoa, viền cỏ quanh luống, cây, rơm. Plots: ô đất. Không dùng `TilemapCollider2D`; xác định ô bằng `Grid.WorldToCell`.
