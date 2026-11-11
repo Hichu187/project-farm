@@ -8,6 +8,7 @@ Mỗi phần nhỏ, chạy và kiểm tra được trước khi sang phần sau.
 - Bố cục map: Map D (trải ngang, 44×26), xem Phần 3.
 - Số ô mở sẵn: Khu 1 là 6; Khu 2, 3 mở miễn phí 1 ô khi mở khóa. Đặt trong `ZoneDefinition.startOpenCount`.
 - 07/11/2026: đưa câu cá vào MVP (Phần 10) ở vùng câu riêng (cùng scene, ngoài cổng trái); thêm nhân vật (đi lang thang ở nông trại, chạm để đi ở vùng câu, hiển thị nhiều lớp để sau thêm trang phục); ao nhà chỉ để thả cá sưu tầm.
+- 11/11/2026: bỏ nhân vật đi lang thang; ở nông trại cũng chạm để đi, gieo / tưới / thu hoạch xếp vào hàng việc, nhân vật đi tới làm lần lượt đúng thứ tự chọn (Phần 10 mục 0b); zoom giữ nguyên.
 - 06/11/2026: thêm tiến trình (cấp độ + đơn hàng) vào MVP để người chơi có mục tiêu; cân bằng lại cây theo công thức (Phần 6b). Nhiệm vụ hằng ngày, bộ sưu tập làm sau (Phần 6c).
 
 ---
