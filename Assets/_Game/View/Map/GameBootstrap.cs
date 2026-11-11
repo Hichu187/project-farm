@@ -28,6 +28,11 @@ namespace VeQue.View.Map
 
         public FarmDefinition Definition => _definition;
         public Farm Farm { get; private set; }
+        // Hàng việc của nhân vật (gieo / tưới / thu hoạch). Không lưu vào save.
+        public FarmTaskQueue Tasks { get; } = new FarmTaskQueue();
+
+        // Báo ngay trước khi lưu lúc tab bị ẩn / app tạm dừng / thoát: nhân vật làm hết việc còn lại ở đây.
+        public event System.Action PageHiding;
         public bool SavingBlocked => _save.SavingBlocked;
 
         public long TimeOffsetSeconds => _clock.OffsetSeconds;
@@ -63,7 +68,7 @@ namespace VeQue.View.Map
                     _crops[crop.Id] = crop;
             }
 
-            WebBridge.PageHidden += FlushSave;
+            WebBridge.PageHidden += HandlePageHidden;
             WebBridge.ImportHandler = HandleImport;
             WebBridge.RegisterPageEvents();
         }
@@ -98,10 +103,16 @@ namespace VeQue.View.Map
         private void OnApplicationPause(bool paused)
         {
             if (paused)
-                FlushSave();
+                HandlePageHidden();
         }
 
-        private void OnApplicationQuit() => FlushSave();
+        private void OnApplicationQuit() => HandlePageHidden();
+
+        private void HandlePageHidden()
+        {
+            PageHiding?.Invoke();
+            FlushSave();
+        }
 
         private void OnDestroy()
         {
@@ -112,7 +123,7 @@ namespace VeQue.View.Map
                 Farm.Rescued -= LogRescued;
             }
 
-            WebBridge.PageHidden -= FlushSave;
+            WebBridge.PageHidden -= HandlePageHidden;
             // Scene mới có thể đã gán handler của nó trước khi bản cũ bị hủy.
             if (WebBridge.ImportHandler == (System.Func<string, int>)HandleImport)
                 WebBridge.ImportHandler = null;

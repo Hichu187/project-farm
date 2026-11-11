@@ -12,13 +12,15 @@ namespace VeQue.View.Map
     // thu hoạch bật lên rồi mờ, tưới có giọt nước. Di chuyển làm tròn theo pixel; phóng/thu chỉ dùng thoáng qua.
     public sealed class FarmView : MonoBehaviour
     {
-        private const int CropBaseOrder = 100;
+        private const int CropBaseOrder = SortingOrders.ByYBase;
         private const float SpritePixelsPerUnit = 16f;
         private const int GhostPoolSize = 8;
         private const int DropPoolSize = 36;
         private const int FlashPoolSize = 16;
         // Vẽ trên ô đất, dưới mọi cây (cây dùng CropBaseOrder - cell.y).
         private const int FlashSortingOrder = 50;
+        // Trên mọi cây và nhân vật (cùng dùng SortingOrders.ByCellY).
+        private const int WaterHintSortingOrder = 300;
 
         private enum CropAnim
         {
@@ -46,6 +48,14 @@ namespace VeQue.View.Map
             public CropAnim Anim;
             public float AnimStart;
             public bool Moved;
+
+            // Phủ màu nhạt khi ô đang có việc chờ nhân vật làm.
+            public SpriteRenderer Queued;
+
+            // Bình tưới trên ngọn cây chưa tưới (tạo lần đầu cần tới).
+            public SpriteRenderer WaterHint;
+            public Vector3 WaterHintBase;
+            public bool WaterHintUp;
         }
 
         // Hiệu ứng tạm từ pool: cây vừa thu hoạch (ô đã trống, bản sao bật lên rồi mờ) hoặc giọt nước.
@@ -119,6 +129,22 @@ namespace VeQue.View.Map
         [SerializeField] private float _flashDuration = 0.25f;
         [SerializeField] private Color _flashColor = new Color(1f, 1f, 0.75f, 0.45f);
 
+        [Header("Gợi ý tưới: bình tưới trên cây chưa tưới")]
+        [Tooltip("Hiện ở cả toàn cảnh và khi zoom khu.")]
+        [SerializeField] private bool _showWaterHint = true;
+        [Tooltip("Sprout Lands: Objects/Basic_tools_and_meterials_0 (PPU 16, cắt 16×16).")]
+        [SerializeField] private Sprite _waterHintSprite;
+        [Tooltip("Khoảng cách từ ngọn cây tới đáy icon (pixel).")]
+        [SerializeField] private int _waterHintGapPixels = 2;
+        [SerializeField] private float _waterHintBobPeriod = 1.2f;
+        [SerializeField] private float _waterHintBobUpTime = 0.3f;
+        [SerializeField] private int _waterHintBobPixels = 1;
+        [SerializeField] private Color _waterHintColor = Color.white;
+
+        [Header("Ô đang chờ nhân vật làm")]
+        [SerializeField] private bool _showQueued = true;
+        [SerializeField] private Color _queuedColor = new Color(0.75f, 0.9f, 1f, 0.3f);
+
         private readonly List<PlotVisual> _visuals = new List<PlotVisual>();
         private readonly List<Effect> _ghosts = new List<Effect>();
         private readonly List<Effect> _drops = new List<Effect>();
@@ -138,6 +164,21 @@ namespace VeQue.View.Map
             }
 
             id = default;
+            return false;
+        }
+
+        // Ô tile của ô đất; false nếu ô không thuộc khu nào đang vẽ.
+        public bool TryGetPlotCell(PlotId id, out Vector3Int cell)
+        {
+            for (int i = 0; i < _visuals.Count; i++)
+            {
+                if (_visuals[i].Id != id)
+                    continue;
+                cell = _visuals[i].Cell;
+                return true;
+            }
+
+            cell = default;
             return false;
         }
 
@@ -200,7 +241,9 @@ namespace VeQue.View.Map
             CreatePools();
 
             _farm.Changed += RefreshAll;
+            _game.Tasks.Changed += RefreshQueued;
             RefreshAll();
+            RefreshQueued();
             _initialized = true;
             InvokeRepeating(nameof(RefreshPeriodic), _refreshInterval, _refreshInterval);
         }
@@ -209,6 +252,8 @@ namespace VeQue.View.Map
         {
             if (_farm != null)
                 _farm.Changed -= RefreshAll;
+            if (_game != null)
+                _game.Tasks.Changed -= RefreshQueued;
             if (_pixelSprite != null)
             {
                 Destroy(_pixelSprite.texture);
@@ -280,6 +325,36 @@ namespace VeQue.View.Map
                 // Sprite 1 pixel → phóng 16 lần cho phủ đúng 1 ô.
                 renderer.transform.localScale = Vector3.one * SpritePixelsPerUnit;
                 _flashes.Add(new Effect { Renderer = renderer });
+            }
+        }
+
+        // Bật / tắt lớp phủ "đang chờ" theo hàng việc. Lớp phủ tạo lần đầu cần tới (tối đa 1 mỗi ô).
+        private void RefreshQueued()
+        {
+            // Xếp / hủy việc tưới làm icon gợi ý tưới ẩn / hiện lại.
+            RefreshWaterHints();
+
+            if (!_showQueued || _pixelSprite == null)
+                return;
+
+            FarmTaskQueue tasks = _game.Tasks;
+            for (int i = 0; i < _visuals.Count; i++)
+            {
+                PlotVisual visual = _visuals[i];
+                bool queued = tasks.IsQueued(visual.Id);
+                if (queued && visual.Queued == null)
+                {
+                    SpriteRenderer renderer = CreatePooledRenderer($"PlotQueued {visual.Id}");
+                    renderer.sprite = _pixelSprite;
+                    renderer.color = _queuedColor;
+                    // Dưới lớp sáng lên (FlashSortingOrder) để vẫn thấy ô sáng khi làm xong.
+                    renderer.sortingOrder = FlashSortingOrder - 1;
+                    renderer.transform.localScale = Vector3.one * SpritePixelsPerUnit;
+                    renderer.transform.position = _plots.GetCellCenterWorld(visual.Cell);
+                    visual.Queued = renderer;
+                }
+                if (visual.Queued != null && visual.Queued.gameObject.activeSelf != queued)
+                    visual.Queued.gameObject.SetActive(queued);
             }
         }
 
@@ -375,6 +450,70 @@ namespace VeQue.View.Map
                 visual.LastStage = stage;
                 visual.LastWatered = state.Watered;
             }
+
+            RefreshWaterHints();
+        }
+
+        // Bình tưới hiện trên cây đang lớn, chưa tưới, chưa chín, chưa có việc tưới đang chờ.
+        // Đặt đáy icon cách ngọn cây _waterHintGapPixels (ngọn đổi theo giai đoạn, nên làm lại mỗi lần làm mới).
+        private void RefreshWaterHints()
+        {
+            if (_farm == null)
+                return;
+
+            FarmTaskQueue tasks = _game.Tasks;
+            for (int i = 0; i < _visuals.Count; i++)
+            {
+                PlotVisual visual = _visuals[i];
+                bool show = _showWaterHint
+                    && _waterHintSprite != null
+                    && visual.HadCrop
+                    && !visual.LastWatered
+                    && !visual.Ripe
+                    && visual.Crop.sprite != null
+                    && !tasks.IsQueued(visual.Id);
+
+                if (!show)
+                {
+                    if (visual.WaterHint != null && visual.WaterHint.gameObject.activeSelf)
+                        visual.WaterHint.gameObject.SetActive(false);
+                    continue;
+                }
+
+                if (visual.WaterHint == null)
+                {
+                    SpriteRenderer renderer = CreatePooledRenderer($"WaterHint {visual.Id}");
+                    renderer.sortingOrder = WaterHintSortingOrder;
+                    visual.WaterHint = renderer;
+                }
+
+                SpriteRenderer hint = visual.WaterHint;
+                hint.sprite = _waterHintSprite;
+                hint.color = _waterHintColor;
+                float top = visual.Crop.sprite.bounds.max.y + _waterHintGapPixels / SpritePixelsPerUnit;
+                visual.WaterHintBase = visual.BasePosition + new Vector3(0f, top - _waterHintSprite.bounds.min.y, 0f);
+                hint.transform.position = visual.WaterHintBase;
+                visual.WaterHintUp = false;
+                if (!hint.gameObject.activeSelf)
+                    hint.gameObject.SetActive(true);
+            }
+        }
+
+        // Nhún 1 pixel theo nhịp, lệch nhịp giữa các ô (dùng chung độ lệch với nhún lúc chín).
+        private void AnimateWaterHint(PlotVisual visual, float now)
+        {
+            SpriteRenderer hint = visual.WaterHint;
+            if (hint == null || !hint.gameObject.activeSelf || _waterHintBobPeriod <= 0f)
+                return;
+
+            float phase = Mathf.Repeat(now / _waterHintBobPeriod + visual.RipePhase, 1f);
+            bool up = phase * _waterHintBobPeriod < _waterHintBobUpTime;
+            if (up == visual.WaterHintUp)
+                return;
+
+            visual.WaterHintUp = up;
+            float offset = up ? _waterHintBobPixels / SpritePixelsPerUnit : 0f;
+            hint.transform.position = visual.WaterHintBase + new Vector3(0f, offset, 0f);
         }
 
         private static void StartAnim(PlotVisual visual, CropAnim anim, float now)
@@ -432,7 +571,10 @@ namespace VeQue.View.Map
         {
             float now = Time.unscaledTime;
             for (int i = 0; i < _visuals.Count; i++)
+            {
                 AnimateCrop(_visuals[i], now);
+                AnimateWaterHint(_visuals[i], now);
+            }
             for (int i = 0; i < _ghosts.Count; i++)
                 AnimateGhost(_ghosts[i], now);
             for (int i = 0; i < _drops.Count; i++)

@@ -9,6 +9,7 @@ namespace VeQue.View.Map
         [SerializeField] private Vector2Int _sizeInCells = new Vector2Int(6, 6);
 
         public string Label => _label;
+        public Vector2Int SizeInCells => _sizeInCells;
 
         public bool Contains(Vector2 worldPoint) => new Rect(transform.position, _sizeInCells).Contains(worldPoint);
 

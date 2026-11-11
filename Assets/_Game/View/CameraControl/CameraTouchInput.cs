@@ -14,7 +14,15 @@ namespace VeQue.View.CameraControl
         void EndDrag();
     }
 
-    // Kéo 1 ngón để di chuyển; chạm khu để zoom vào, chạm bãi cỏ để về toàn cảnh. Không pinch zoom.
+    // Chạm được xử lý trước mọi việc khác (vd. chạm nhân vật để dừng hàng việc).
+    public interface ITapInterceptor
+    {
+        // true = đã xử lý chạm này, không zoom / gieo / đi tới.
+        bool TryHandleTap(Vector2 world);
+    }
+
+    // Kéo 1 ngón để di chuyển; chạm khu để zoom vào; đang zoom chạm ngoài khu để về toàn cảnh;
+    // ở toàn cảnh chạm ngoài khu thì báo TappedGround (nhân vật đi tới). Không pinch zoom.
     public sealed class CameraTouchInput : MonoBehaviour
     {
         [SerializeField] private CameraController _controller;
@@ -26,8 +34,11 @@ namespace VeQue.View.CameraControl
         public event Action<Vector2> TappedInFocus;
         // Chạm ngoài mọi khu (toạ độ world) — dùng cho ao, chuồng, nhà kho "sắp có".
         public event Action<Vector2> TappedOutsideAreas;
+        // Chạm ngoài mọi khu khi đang ở toàn cảnh (toạ độ world) — nhân vật đi tới. Đang zoom thì chạm ngoài khu chỉ về toàn cảnh.
+        public event Action<Vector2> TappedGround;
 
         public IWorldDragHandler DragHandler { get; set; }
+        public ITapInterceptor TapInterceptor { get; set; }
 
         private bool _isPressing;
         private bool _isDragging;
@@ -117,6 +128,9 @@ namespace VeQue.View.CameraControl
                 return;
 
             Vector2 world = _camera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, 0f));
+            if (TapInterceptor != null && TapInterceptor.TryHandleTap(world))
+                return;
+
             FocusArea hit = FindArea(world);
             if (hit == null)
                 TappedOutsideAreas?.Invoke(world);
@@ -134,6 +148,8 @@ namespace VeQue.View.CameraControl
 
             if (hit != null)
                 _controller.FocusOn(hit);
+            else
+                TappedGround?.Invoke(world);
         }
 
         private FocusArea FindArea(Vector2 world)

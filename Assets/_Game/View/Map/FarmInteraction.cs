@@ -6,9 +6,10 @@ using VeQue.View.UI;
 
 namespace VeQue.View.Map
 {
-    // Chạm ô khi đang zoom: ô khóa kế tiếp → hỏi mở; ô trống → hiện thanh chọn hạt trên ô;
-    // chưa tưới → tưới rồi hiện tiến độ; đã tưới, chưa chín → hiện tiến độ; chín → thu hoạch.
-    // Plant / Water / Harvest dùng chung cho chạm và kéo (FarmGesture).
+    // Chạm ô khi đang zoom: ô khóa kế tiếp → hỏi mở (làm ngay khi xác nhận); ô trống → hiện thanh chọn hạt trên ô;
+    // chưa tưới → xếp việc tưới + hiện tiến độ; đã tưới, chưa chín → hiện tiến độ; chín → xếp việc thu hoạch.
+    // Gieo / tưới / thu hoạch không làm ngay mà vào hàng việc (GameBootstrap.Tasks); nhân vật tới nơi thì
+    // FarmCharacterController gọi Execute. Enqueue dùng chung cho chạm và kéo (FarmGesture, SeedPicker).
     public sealed class FarmInteraction : MonoBehaviour
     {
         [SerializeField] private GameBootstrap _game;
@@ -26,6 +27,28 @@ namespace VeQue.View.Map
 
         // Cây gieo gần nhất trong phiên, để thanh chọn hạt đưa lên đầu.
         public string LastCropId { get; private set; }
+
+        // Xếp việc vào hàng việc của nhân vật; lỗi thì báo (trừ ô đã có việc: bỏ qua im lặng).
+        public FarmResult Enqueue(FarmTask task)
+        {
+            FarmResult result = _game.Tasks.TryEnqueue(_game.Farm, task);
+            if (result == FarmResult.Ok && task.Kind == FarmTaskKind.Plant)
+                LastCropId = task.CropId;
+            Report(result);
+            return result;
+        }
+
+        // Làm việc thật khi nhân vật đã tới nơi; Farm tự kiểm tra lại. Không báo lỗi (người gọi quyết định).
+        public FarmResult Execute(FarmTask task)
+        {
+            switch (task.Kind)
+            {
+                case FarmTaskKind.Plant: return Plant(task.Plot, task.CropId);
+                case FarmTaskKind.Water: return Water(task.Plot);
+                case FarmTaskKind.Harvest: return Harvest(task.Plot);
+                default: throw new ArgumentOutOfRangeException(nameof(task), task.Kind, null);
+            }
+        }
 
         public FarmResult Plant(PlotId id, string cropId)
         {
@@ -57,7 +80,7 @@ namespace VeQue.View.Map
 
         public void Report(FarmResult result)
         {
-            if (result == FarmResult.Ok)
+            if (result == FarmResult.Ok || result == FarmResult.AlreadyQueued)
                 return;
 
             switch (result)
@@ -106,7 +129,9 @@ namespace VeQue.View.Map
                     HandleLocked(farm, id);
                     break;
                 case PlotStatus.Empty:
-                    SeedRequested?.Invoke(id);
+                    // Ô đã chờ gieo thì không mở lại thanh chọn hạt.
+                    if (!_game.Tasks.IsQueued(id))
+                        SeedRequested?.Invoke(id);
                     break;
                 case PlotStatus.Growing:
                     HandleGrowing(farm, id, plot);
@@ -138,19 +163,18 @@ namespace VeQue.View.Map
         {
             if (farm.IsRipe(id))
             {
-                Report(Harvest(id));
+                Enqueue(FarmTask.Harvest(id));
                 return;
             }
 
             if (!plot.Watered)
             {
-                FarmResult watered = Water(id);
-                Report(watered);
-                if (watered != FarmResult.Ok)
+                FarmResult watered = Enqueue(FarmTask.Water(id));
+                if (watered != FarmResult.Ok && watered != FarmResult.AlreadyQueued)
                     return;
             }
 
-            // Tưới có thể làm cây chín ngay nếu đã lớn gần hết; khi đó thanh tự ẩn.
+            // Thanh tiến độ hiện ngay; nhân vật tới nơi mới tưới (thanh tự cập nhật, chín thì tự ẩn).
             CropInspected?.Invoke(id);
         }
     }

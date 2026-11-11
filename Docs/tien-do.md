@@ -14,7 +14,7 @@
 | 6 – UI | Ổn trong Editor | Mục 4 hiệu ứng GUI (làm sau); mục 5 chạm/kéo chờ kiểm tra; chữ có dấu + safe-area trên iPhone |
 | 6b – Cấp độ, đơn hàng, cân bằng | Ổn trong Editor | Build + Build Report; công cụ Cân bằng (làm sau) |
 | 6c – Việc làm lúc chờ cây lớn | Chưa làm (kế hoạch 8 mục, 07/11/2026) | Mục 1–6 trong MVP, 7–8 sau MVP; mỗi mục duyệt thiết kế trước |
-| 10 – Nhân vật, vùng câu, câu cá, ao nhà | Trong MVP (07/11/2026), đã có thiết kế, chưa làm | Ném perfect, giật câu, kéo cá mũi tên 4 hướng, cá theo độ hiếm/cân nặng/giá/khung giờ, cần rank/độ bền/trượt/gãy, mồi; cần art cá, phao, cần, nước |
+| 10 – Nhân vật, vùng câu, câu cá, ao nhà | Giai đoạn 1 (nhân vật ở nông trại + hàng việc) xong trong Editor; ẩn tab chờ thử trên web | Ném perfect, giật câu, kéo cá mũi tên 4 hướng, cá theo độ hiếm/cân nặng/giá/khung giờ, cần rank/độ bền/trượt/gãy, mồi; cần art cá, phao, cần, nước |
 | 7 – Lưu tiến trình | Đã viết code (save `version` 2) | Thử trên máy thật, nhập mã máy khác, trình duyệt nhúng Facebook |
 | 8 – Build & phát hành | Chưa làm | Toàn bộ |
 
@@ -343,11 +343,103 @@ Người dùng xác nhận Đợt 2 ổn.
 - Mở ô bằng xu, "sắp có", Cửa hàng, Kho vẫn làm ngay, không đi bộ.
 - Đã sửa `MVP-Plan.md` (Phần 6 mục 5, Phần 10 mục 0, thêm mục 0b, mục 7 giai đoạn 1) và `CLAUDE.md`.
 
+## Phần 10 giai đoạn 1 – Logic nhân vật (XONG – 11/11/2026)
+
+Người dùng cho làm trước thứ tự trong plan (trước Phần 6c mục 1–2 và chạy thử trên điện thoại).
+
+### Đã làm
+- Mới trong `VeQue.Logic`:
+  - `GridCell`: ô `(X, Y)`, cho phép tọa độ âm.
+  - `WalkGrid`: lưới đi được (`IsWalkable`, `SetWalkable`, `SetBlocked`, `SetRect`); ô ngoài lưới coi là bị chặn.
+  - `GridPath`:
+    - A* 4 hướng trên trạng thái (ô, hướng): ra đường ngắn nhất, trong đó chọn đường ít rẽ nhất. Bộ đệm tái dùng.
+    - `FindNearestReachable`: ô đi được, tới được, gần chỗ chạm nhất.
+    - `FindStandCell`: ưu tiên trên/dưới → trái/phải → ô tới được gần nhất; trong nhóm chọn ô đi bộ ít hơn.
+  - `FarmTask` + `FarmTaskKind`.
+  - `FarmTaskQueue`:
+    - thứ tự vào trước ra trước; 1 việc mỗi ô (tính cả việc đang làm);
+    - giữ chỗ hạt khi gieo; `TryBeginNext` / `CompleteCurrent` / `Cancel`;
+    - `GetAvailableSeeds`, `IsQueued`, sự kiện `Changed`.
+  - `FarmResult.AlreadyQueued` (thêm cuối enum).
+- Test mới: `GridPathTests` (23), `FarmTaskQueueTests` (27). Ngoài Unity: 50/50 xanh. Toàn bộ test Logic chạy được ngoài Unity: 186/187; `SmokeTests` lỗi vì ngoài Unity tên assembly khác, không phải lỗi code.
+
+### Quyết định
+- Hàng việc chỉ giữ thứ tự và kiểm tra lúc xếp. View gọi `Farm` khi nhân vật tới nơi (Farm tự kiểm tra lại), rồi luôn gọi `CompleteCurrent` để trả hạt giữ chỗ, kể cả khi việc thất bại.
+- Ô đang có việc (vd. đang chờ thu hoạch) không xếp thêm việc khác cho tới khi việc đó xong.
+
+### Còn lại
+- [x] Người dùng xác nhận Test Runner ổn (11/11/2026).
+- Bước View (duyệt riêng):
+  - lưới đi được lấy từ Tilemap;
+  - `CharacterView` nhiều lớp + kiểm tra khung trong sheet;
+  - chạm để đi; bộ chạy hàng việc;
+  - nối `FarmInteraction` / `FarmGesture` / `SeedPicker` vào hàng việc;
+  - `Report` xử lý `AlreadyQueued`;
+  - nút Dừng; làm hết khi ẩn tab.
+
+## Phần 10 giai đoạn 1 – Đợt A: nhân vật + chạm để đi (XONG – 11/11/2026, người dùng xác nhận ổn)
+
+### Quyết định
+- Nhân vật bản đơn giản: 1 `SpriteRenderer`, art Sprout Lands có sẵn, chưa có hệ trang phục nhiều lớp.
+- Bố cục sheet (đã xem): `Basic Charakter Spritesheet` 4×4 khung 48×48, hàng xuống / lên / trái / phải, cột 0–1 đứng, 2–3 đi. `Basic Charakter Actions` 2×12: hàng 0–3 cuốc, 4–7 rìu, 8–11 bình tưới (cùng thứ tự hướng). Nhân vật 16 px, chân cách đáy khung 16 px → pivot (0.5, 0.333).
+- Thu hoạch dùng hoạt ảnh cuốc (chưa có khung nhặt).
+- Ô đi được = `Ground` có tile, `Plots` và `Blockers` (Tilemap mới) không có, ngoài vùng `ComingSoonArea`.
+
+### Đã làm
+- Mới (`View/Character`): `CharacterSkin` (SO), `CharacterView`, `CharacterMotor`, `WalkGridSource`, `FarmCharacterController`; `View/Map/SortingOrders` (thứ tự vẽ theo Y dùng chung cây + nhân vật).
+- Mới (`Editor`): `CharacterSkinAssigner` (menu **Về Quê → Gán sprite nhân vật**).
+- Sửa: `CameraTouchInput` (sự kiện `TappedGround` chỉ ở toàn cảnh), `ComingSoonArea` (`SizeInCells`), `FarmView` (dùng `SortingOrders`).
+- Biên dịch Logic + View + Editor ngoài Unity: không lỗi.
+
+### Còn lại
+- Người dùng: import 2 sheet, cắt 48×48, chạy Gán sprite nhân vật, tạo Tilemap `Blockers`, đặt nhân vật vào scene, chơi thử (hướng dẫn trong hội thoại 11/11/2026).
+- Đợt B: hàng việc trồng trọt.
+
+## Phần 10 giai đoạn 1 – Đợt B: hàng việc trồng trọt (XONG – 11/11/2026, người dùng xác nhận ổn)
+
+### Đã làm
+- `GameBootstrap`: giữ `Tasks` (`FarmTaskQueue`, không lưu); sự kiện `PageHiding` phát trước khi lưu lúc tab ẩn / app tạm dừng / thoát.
+- `FarmInteraction`: `Enqueue` (báo lỗi, `AlreadyQueued` thì im lặng) và `Execute`. Chạm ô chín → xếp việc thu; cây chưa tưới → xếp việc tưới + thanh tiến độ hiện ngay; ô trống đã chờ gieo thì không mở lại thanh hạt. Mở ô bằng xu vẫn làm ngay.
+- `FarmGesture`: kéo xếp việc theo thứ tự ngón tay đi qua; hạt kiểm tra bằng `GetAvailableSeeds`.
+- `SeedPicker`: số hạt đã trừ phần giữ chỗ; chạm icon xếp việc gieo.
+- `FarmView`: `TryGetPlotCell`; ô đang chờ phủ màu nhạt (`_queuedColor`, tắt được); làm xong thì sáng lên (`Flash`).
+- `CameraTouchInput`: `ITapInterceptor` (chạm nhân vật xử lý trước).
+- `CharacterMotor.SkipToFirstCellInside`: nhân vật ngoài màn hình thì hiện ở ô đầu tiên của đường đi nằm trong khung hình.
+- `FarmCharacterController`:
+  - vòng làm việc: chỗ đứng → đi → quay mặt → cuốc (gieo, thu) / bình tưới (tưới) → `Execute` → sáng ô → việc kế;
+  - tốc độ +10% mỗi việc chờ, tối đa ×2;
+  - hủy khi: chạm nhân vật, bấm Dừng, chạm đất ở toàn cảnh;
+  - ẩn tab thì làm hết việc còn lại;
+  - tự tìm `GameBootstrap` / `FarmInteraction` / `FarmView` nếu chưa gán.
+- Mới: `UI/TaskStopButton` (nút **Dừng (N)**, góc dưới-phải trên thanh tab); `UiBuilder` dựng nút này.
+- Biên dịch Logic + View + Editor ngoài Unity: không lỗi. Test Logic ngoài Unity 186/187 (`SmokeTests` chỉ lỗi ngoài Unity).
+
+### Còn lại
+- [x] Người dùng chạy Tạo UI, chơi thử theo **Kiểm tra** Phần 10 mục 0b: ổn (11/11/2026). Ẩn tab cần thử trên bản build web.
+
+## Icon gợi ý tưới trên cây chưa tưới (XONG – 11/11/2026, người dùng xác nhận ổn)
+
+### Quyết định
+- Hiện ở cả toàn cảnh và khi zoom (công tắc `_showWaterHint`); giữ 16 px (thu nhỏ vỡ pixel).
+- Art: bình tưới `Sprout Lands - Sprites - Basic pack/Objects/Basic_tools_and_meterials.png`, ô trên-trái.
+
+### Đã làm
+- `FarmView`:
+  - hiện icon khi cây đang lớn, chưa tưới, chưa chín, chưa có việc chờ;
+  - icon cách ngọn cây 2 px, đi theo giai đoạn, nhún 1 px (nhịp 1,2 giây, lệch nhịp giữa các ô);
+  - vẽ trên cây và nhân vật (thứ tự 300);
+  - xếp việc tưới thì ẩn, hủy thì hiện lại.
+- Biên dịch ngoài Unity: không lỗi.
+
+### Còn lại
+- [x] Người dùng import sheet, gán **Water Hint Sprite**, chơi thử: ổn.
+
 ## Tiếp theo (khi quay lại)
 0. Phần 6 mục 5 – chạy **Tạo UI**, Test Runner (221), chơi thử gieo chạm/kéo, kéo thu hoạch, kéo tưới; thử cảm giác kéo trên điện thoại.
 1. Phần 6c mục 1–2 (khi người dùng cho làm): chạy lại mô phỏng cân bằng với giới hạn đơn → duyệt → code.
 2. Phần 4 – template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) + build, so Build Report (mốc 10,8 MB) + thử trên iPhone Safari / Android; cùng lúc kiểm tra Phần 7 trên máy thật.
-3. Phần 10 – nhân vật, vùng câu, câu cá, ao nhà (trong MVP): chốt các câu hỏi còn lại, kiểm tra art, làm theo 6 giai đoạn trong `MVP-Plan.md`.
+3. Phần 10 – giai đoạn 1 xong trong Editor (nhân vật ở nông trại + hàng việc; icon gợi ý tưới xong). Tiếp: chốt danh sách art Phần 10 (lập 11/11/2026), rồi giai đoạn 2 (vùng câu + di chuyển). Thử ẩn tab (làm hết việc) khi có bản build web.
+   - Chưa commit: toàn bộ code Phần 10 giai đoạn 1 + icon tưới (từ sau `e6431c9`).
 4. Phần 3 – art (setup ô đất), vẽ phần còn lại trên `Decor`, tạo `ComingSoonArea` (trừ ao), Sprite Atlas.
 5. Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation); giảm build < 10 MB (Phần 8).
 6. Làm sau: Phần 6c mục 3–8, Phần 6 mục 4 (hiệu ứng GUI), công cụ Cân bằng, art 32×32, khung hình cây.

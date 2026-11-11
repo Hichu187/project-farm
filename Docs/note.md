@@ -1,6 +1,6 @@
 # Về Quê – Note tiến độ
 
-Bản chụp lúc lưu: 07/11/2026 (sau khi chốt Phần 10: nhân vật, vùng câu, câu cá, ao nhà). Nhánh `setup/phan-0-camera`. Bản chụp này nằm trong commit "Kế hoạch Phần 10: nhân vật, vùng câu riêng, ao nhà, các quyết định câu cá" (sau `45bf4ca`). `.vscode/` đã bỏ qua trong `.gitignore`; `LiberationSans SDF - Fallback.asset` đánh dấu `skip-worktree` trên máy này.
+Bản chụp lúc lưu: 11/11/2026 tối (sau Phần 10 giai đoạn 1: nhân vật ở nông trại + hàng việc; icon gợi ý tưới; lập danh sách art Phần 10). Nhánh `setup/phan-0-camera`, `origin` mới có tới `b210c55`. Code Phần 10 giai đoạn 1 + icon tưới + tài liệu đã commit ngay sau `e6431c9` (commit "Phần 10 giai đoạn 1…", chưa push). `.vscode/` đã bỏ qua trong `.gitignore`; `LiberationSans SDF - Fallback.asset` đánh dấu `skip-worktree` trên máy này.
 
 ## Tóm tắt
 
@@ -13,45 +13,48 @@ Bản chụp lúc lưu: 07/11/2026 (sau khi chốt Phần 10: nhân vật, vùng
 | 4 – Camera | Ổn trong Editor | Template WebGL, thử trên iPhone / Android |
 | 5 – Ô đất & cây | Ổn trong Editor | Gán sprite đủ 4 cây, tile đất ướt (xác nhận lại) |
 | 5b – Hoạt ảnh cây | Ổn trong Editor (Đợt A + B) | Khung hình: chờ art |
-| 6 – UI | Ổn trong Editor | Mục 4 hiệu ứng GUI (làm sau); mục 5 chạm/kéo chờ kiểm tra; chữ có dấu + safe-area trên iPhone |
+| 6 – UI | Ổn trong Editor | Mục 4 hiệu ứng GUI (làm sau); chữ có dấu + safe-area trên iPhone |
 | 6b – Cấp độ, đơn hàng, cân bằng | Ổn trong Editor | Build + Build Report; công cụ Cân bằng (làm sau) |
-| 6c – Việc làm lúc chờ cây lớn | Chưa làm (kế hoạch 8 mục, 07/11/2026) | Mục 1–6 trong MVP, 7–8 sau MVP; mỗi mục duyệt thiết kế trước |
-| 10 – Nhân vật, vùng câu, câu cá, ao nhà | Trong MVP (07/11/2026), đã có thiết kế, chưa làm | Ném perfect, giật câu, kéo cá mũi tên 4 hướng, cá theo độ hiếm/cân nặng/giá/khung giờ, cần rank/độ bền/trượt/gãy, mồi; cần art cá, phao, cần, nước |
+| 6c – Việc làm lúc chờ cây lớn | Chưa làm (kế hoạch 8 mục) | Mục 1–6 trong MVP, 7–8 sau MVP; mỗi mục duyệt thiết kế trước |
 | 7 – Lưu tiến trình | Đã viết code (save `version` 2) | Thử trên máy thật, nhập mã máy khác, trình duyệt nhúng Facebook |
 | 8 – Build & phát hành | Chưa làm | Toàn bộ |
+| 10 – Nhân vật, vùng câu, câu cá, ao nhà | **Giai đoạn 1 xong trong Editor** (người dùng xác nhận đợt A, B) | Icon tưới xong; ẩn tab (làm hết việc) thử trên web; giai đoạn 2–6 chưa làm; art xem `Docs/art-phan-10.md` |
 
-Git: nhánh `setup/phan-0-camera`, đã push lên `origin`. Code mới nhất ở `e65601e` (Phần 5, 5b, 6 mục 5, 6b, 7); các commit sau chỉ là tài liệu kế hoạch Phần 6c, 10.
-Test: lần gần nhất người dùng xác nhận trong Unity là 210 (sau Đợt 4 Phần 6b). Hiện có 221 test; ngoài Unity chạy được 164/164 xanh (phần không cần Unity).
+Test: người dùng xác nhận Test Runner ổn sau khi thêm `GridPathTests` (23) + `FarmTaskQueueTests` (27) → dự kiến 271. Ngoài Unity: test Logic 186/187 (`SmokeTests` chỉ lỗi ngoài Unity vì tên assembly). Biên dịch Logic + View + Editor ngoài Unity (thư viện Unity 6000.3.6f1): không lỗi.
+
+## Đã làm trong phiên 11/11/2026
+- Kế hoạch: nhân vật điều khiển ở nông trại, hàng việc trồng trọt (`MVP-Plan.md` Phần 10 mục 0b, `CLAUDE.md`) – commit `621e778`, `e6431c9`.
+- Logic: `GridCell`, `WalkGrid`, `GridPath` (A* 4 hướng ít rẽ, ô gần nhất tới được, chỗ đứng sát ô), `FarmTask`, `FarmTaskQueue` (đúng thứ tự, 1 việc / ô, giữ chỗ hạt), `FarmResult.AlreadyQueued`.
+- Đợt A: `CharacterSkin`, `CharacterView` (1 lớp), `CharacterMotor`, `WalkGridSource` (Ground − Plots − Blockers − vùng "sắp có"), `FarmCharacterController`, `SortingOrders`, menu **Gán sprite nhân vật**; `CameraTouchInput.TappedGround`.
+- Đợt B: `GameBootstrap.Tasks` + `PageHiding`; `FarmInteraction.Enqueue / Execute`; `FarmGesture`, `SeedPicker` xếp việc; `FarmView` phủ ô chờ + `TryGetPlotCell`; `ITapInterceptor`; nút **Dừng (N)** (`TaskStopButton`, `UiBuilder`).
+- Icon gợi ý tưới (bình tưới) trên cây chưa tưới trong `FarmView` – người dùng xác nhận ổn. Sheet đã import là `Basic tools and meterials.png` (bản có dấu cách, giống hệt bản gạch dưới).
+- Danh sách art Phần 10: `Docs/art-phan-10.md`.
 
 ## Việc đang chờ người dùng
-
-1. Phần 6 mục 5 (chạm và kéo): chạy **Về Quê → Tạo UI** (Ctrl+S), **Test Runner → EditMode → Run All** (mong đợi 221 xanh), chơi thử gieo bằng chạm/kéo, kéo thu hoạch, kéo tưới, kéo vẫn di chuyển camera.
+1. Kiểm tra `Docs/art-phan-10.md`, chốt art giai đoạn 2 (biểu tượng chỗ câu…).
 2. Cho phép bắt đầu Phần 6c mục 1–2 (đang để "chưa làm").
-3. Thêm asset cho vùng câu (tile nước, bờ, bến), biểu tượng chỗ câu, âm thanh (khi tới Phần 10).
 
 ## Việc tiếp theo
-
-0. Phần 6 mục 5 – chạy **Tạo UI**, Test Runner (221), chơi thử gieo chạm/kéo, kéo thu hoạch, kéo tưới; thử cảm giác kéo trên điện thoại.
-1. Phần 6c mục 1–2 (khi người dùng cho làm): chạy lại mô phỏng cân bằng với giới hạn đơn → duyệt → code.
-2. Phần 4 – template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) + build, so Build Report (mốc 10,8 MB) + thử trên iPhone Safari / Android; cùng lúc kiểm tra Phần 7 trên máy thật.
-3. Phần 10 – nhân vật, vùng câu, câu cá, ao nhà (trong MVP): chốt các câu hỏi còn lại, kiểm tra art, làm theo 6 giai đoạn trong `MVP-Plan.md`.
-4. Phần 3 – art (setup ô đất), vẽ phần còn lại trên `Decor`, tạo `ComingSoonArea` (trừ ao), Sprite Atlas.
-5. Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation); giảm build < 10 MB (Phần 8).
-6. Làm sau: Phần 6c mục 3–8, Phần 6 mục 4 (hiệu ứng GUI), công cụ Cân bằng, art 32×32, khung hình cây.
+1. Phần 10 giai đoạn 2 – vùng câu + di chuyển: đưa thiết kế chi tiết để duyệt.
+2. Phần 6c mục 1–2 (khi người dùng cho làm): chạy lại mô phỏng cân bằng → duyệt → code.
+3. Phần 4 – template WebGL + build, so Build Report (mốc 10,8 MB), thử iPhone Safari / Android; cùng lúc thử Phần 7 và ẩn tab (hàng việc) trên máy thật.
+4. Phần 3 – art ô đất, `Decor`, `ComingSoonArea`, Sprite Atlas.
+5. Chưa quyết: gỡ package không dùng; giảm build < 10 MB (Phần 8).
+6. Làm sau: Phần 6c mục 3–8, Phần 6 mục 4, công cụ Cân bằng, art 32×32, khung hình cây.
 
 ## Đã chốt cho Phần 10 (tóm tắt)
-
 - Câu cá ở vùng câu riêng (cùng scene, ngoài cổng trái); ao nhà chỉ thả cá sưu tầm (bóng màu, chạm xem danh sách, làm sau cùng).
-- Nhân vật đi lang thang ở nông trại; **Đi câu** → nhân vật tự đi ra cổng → vùng câu; chạm để đi, chạm chỗ câu thì đi tới rồi mới câu; camera đi theo, kéo xem xung quanh rồi tự quay về. Không joystick.
-- Trang phục: hệ hiển thị nhiều lớp dựng sẵn (thân đổi cả bộ + biến thể màu, mũ / phụ kiện lớp riêng); cửa hàng trang phục sau MVP.
+- Nhân vật: chạm để đi ở cả nông trại và vùng câu; bản đơn giản 1 lớp, art Sprout Lands (trang phục nhiều lớp làm sau). Ở nông trại: gieo / tưới / thu vào hàng việc, làm đúng thứ tự chọn; hủy bằng chạm nhân vật / nút Dừng / chạm đất; ẩn tab làm hết rồi lưu; mở ô bằng xu và UI làm ngay; camera không đi theo nhân vật, zoom giữ nguyên. Thu hoạch tạm dùng hoạt ảnh cuốc.
+- **Đi câu** (hoặc chạm cổng) → nhân vật tự đi ra cổng → vùng câu; chạm chỗ câu thì đi tới rồi mới câu; camera đi theo, kéo xem rồi tự quay về. Không joystick.
 - Kéo cá: 4 nút mũi tên + Chốt. XP câu cá cộng vào XP nhân vật. Cá giữ trong giỏ (sức chứa). Asset vùng câu người dùng thêm sau, code dùng hình tạm.
-- 6 giai đoạn: nhân vật lang thang → vùng câu + di chuyển → Logic câu cá → chơi câu cá → giỏ / bán / album / đơn → ao nhà.
+- 6 giai đoạn: nhân vật ở nông trại (xong) → vùng câu + di chuyển → Logic câu cá → chơi câu cá → giỏ / bán / album / đơn → ao nhà.
 
 ## Chưa quyết / ghi chú
-
 - Gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation).
 - Tài liệu lệch thực tế: map ghi 44×26 nhưng scene 46×26; camera có `_mapPadding` 5/5/5/2,5 (đi ra ngoài map là cố ý); hướng giảm dung lượng ghi bỏ LiberationSans trong khi UI đang dùng; Phần 5 ghi `PlotView` nhưng code là `FarmView`.
 - `02_hanh_la`, `03_xa_lach` đang tắt nhưng có sprite: cần xem lại.
+- `ComingSoonArea` (chuồng, kho, ao) chưa tạo → hiện đang tô các vùng này vào Tilemap `Blockers` để nhân vật không đi vào.
+- Phần 10 làm trước thứ tự trong plan (trước 6c mục 1–2 và chạy thử trên điện thoại) theo yêu cầu người dùng.
 
 ---
 
@@ -67,6 +70,7 @@ Mỗi phần nhỏ, chạy và kiểm tra được trước khi sang phần sau.
 - Bố cục map: Map D (trải ngang, 44×26), xem Phần 3.
 - Số ô mở sẵn: Khu 1 là 6; Khu 2, 3 mở miễn phí 1 ô khi mở khóa. Đặt trong `ZoneDefinition.startOpenCount`.
 - 07/11/2026: đưa câu cá vào MVP (Phần 10) ở vùng câu riêng (cùng scene, ngoài cổng trái); thêm nhân vật (đi lang thang ở nông trại, chạm để đi ở vùng câu, hiển thị nhiều lớp để sau thêm trang phục); ao nhà chỉ để thả cá sưu tầm.
+- 11/11/2026: bỏ nhân vật đi lang thang; ở nông trại cũng chạm để đi, gieo / tưới / thu hoạch xếp vào hàng việc, nhân vật đi tới làm lần lượt đúng thứ tự chọn (Phần 10 mục 0b); zoom giữ nguyên.
 - 06/11/2026: thêm tiến trình (cấp độ + đơn hàng) vào MVP để người chơi có mục tiêu; cân bằng lại cây theo công thức (Phần 6b). Nhiệm vụ hằng ngày, bộ sưu tập làm sau (Phần 6c).
 
 ---
@@ -170,6 +174,7 @@ Hoạt ảnh tự viết trong `FarmView`, dùng sprite giai đoạn có sẵn (
 5. Thao tác chạm và kéo (duyệt 07/11/2026, thay bảng chọn hạt + thanh "Đang gieo"):
    - Chạm ô trống → thanh hạt nhỏ bám trên ô (icon + số hạt, cây gieo gần nhất đứng đầu; chưa tới cấp / hết hạt thì mờ). Chạm icon = gieo ô đó; kéo icon = gieo mọi ô trống đi qua; hết hạt thì dừng và báo "Hết hạt" (không tự mua). Chạm icon hết hạt → mở Cửa hàng.
    - Đang zoom khu: bắt đầu kéo từ ô chín = quét thu hoạch; từ cây chưa tưới = quét tưới; kéo chỗ khác vẫn di chuyển camera. Chạm 1 ô giữ như cũ.
+   - **Từ Phần 10 giai đoạn 1 (duyệt 11/11/2026):** thao tác chạm / kéo giữ nguyên, nhưng gieo / tưới / thu hoạch không làm ngay mà xếp vào **hàng việc** của nhân vật; nhân vật đi tới làm lần lượt (xem Phần 10 mục 0b). Mở ô bằng xu vẫn làm ngay khi xác nhận.
    - Ô vừa xử lý khi kéo sáng lên thoáng qua.
 
 **Kiểm tra:** chữ có dấu hiển thị đúng trên iPhone; nút ≥ 44 pt; không bị thanh home đè.
@@ -273,14 +278,29 @@ Ngoài phạm vi MVP (theo `CLAUDE.md`): nuôi cá, chuồng, đất mở rộng
 
 **0. Nhân vật, vùng câu, ao nhà (chốt 07/11/2026)**
 - **Đánh giá:** nhân vật tự nó không làm vòng chơi hấp dẫn hơn (câu cá mới là phần chơi tay bù cho trồng trọt là chờ), nhưng mở ra: nhân vật của riêng người chơi; **chỗ tiêu xu sau khi mở hết đất** (Khu 3 hết khoảng ngày 12, cấp 15 khoảng ngày 9) bằng trang phục / phụ kiện / cần rank cao mà không lệch cân bằng; dễ thêm vùng chơi mới. Điều kiện: đoạn đi bộ ngắn, bỏ qua được; chế độ đang ở luôn rõ ràng.
-- **Nông trại (nhìn từ trên xuống, như hiện tại):** mọi thao tác giữ nguyên. Thêm nhân vật đi lang thang làm cảnh: chọn ngẫu nhiên điểm đi được trong sân → đi tới → đứng 2–5 giây → lặp; tránh hàng rào, ao, nhà kho, luống; vẽ theo trục Y cùng cây. Có thể thêm sau: đi tới ô vừa thu hoạch, đứng tưới.
-- **Sang vùng câu:** bấm **Đi câu** → nhân vật **tự đi ra cổng** (cổng trái Map D) → chuyển sang vùng câu đặt ngoài cổng trái (cùng scene, cùng Grid). Chạm thêm lần nữa thì đi nhanh / bỏ qua đoạn đi ra cổng. **Về nhà** thì ngược lại.
+- **Nông trại (nhìn từ trên xuống, như hiện tại):** người chơi điều khiển nhân vật bằng chạm để đi; nhân vật đi tới ô đất để gieo / tưới / thu hoạch (chi tiết mục 0b). Logic zoom / kéo camera giữ nguyên; camera không đi theo nhân vật ở nông trại. Không có đi lang thang làm cảnh: rảnh thì đứng yên (idle). Vẽ theo trục Y cùng cây.
+- **Sang vùng câu:** bấm **Đi câu** (hoặc chạm cổng) → nhân vật **tự đi ra cổng** (cổng trái Map D) → chuyển sang vùng câu đặt ngoài cổng trái (cùng scene, cùng Grid). Chạm thêm lần nữa thì đi nhanh / bỏ qua đoạn đi ra cổng. **Về nhà** thì ngược lại.
 - **Ở vùng câu (điều khiển nhân vật):** chạm đất trống → tìm đường và đi tới (có dấu điểm đến); **chạm chỗ câu** (bến / mép nước có biểu tượng) → đi tới điểm đứng, quay mặt ra nước, **tới nơi mới bắt đầu câu**; đang đi chạm chỗ khác thì đổi điểm đến. Câu nhiều lần tại chỗ không phải đi lại; nhớ chỗ câu lần trước. Không joystick.
 - **Camera ở vùng câu:** đi theo nhân vật (mượt, trong mép vùng); **kéo để xem xung quanh**, thả tay một lúc (vd. 2 giây) thì tự quay về nhân vật. Đang câu thì cố định khung quanh nhân vật + phao.
 - **Chế độ rõ ràng:** HUD đổi khi ở vùng câu (tên vùng, nút **Về nhà**, ẩn thanh hạt và các tab chỉ dùng ở nông trại).
 - **Vùng câu MVP:** 1 vùng nhỏ, vài chỗ câu gần lối vào. Thêm vùng (rừng, chợ, sông khác – mỗi vùng bộ cá riêng) sau MVP.
 - **Ao nhà** (Map D [35, 9, 7, 11]): chỉ thả cá sưu tầm – chọn giữ cá thay vì bán; cá không lớn, không đẻ, không cho ăn, không tạo thu nhập. Cá hiện bằng **bóng màu theo độ hiếm** bơi lang thang; sức chứa ban đầu 6 (nâng cấp sau); **chạm ao → bảng danh sách cá trong ao** (loài, cân nặng, ngày bắt, khung giờ), thả / bắt lại. Làm **sau cùng**. Bỏ `ComingSoonArea` của ao khi làm.
 - **Trang phục (chuẩn bị từ đầu, cửa hàng sau MVP):** nhân vật vẽ bằng nhiều lớp đồng bộ khung (thân, mũ, phụ kiện). Thân đổi cả bộ + biến thể màu bằng thay bảng màu (gần như không tốn art); mũ / phụ kiện là lớp riêng bám điểm neo đầu theo từng khung (chỉ vẽ 4 hướng mỗi món). Sau có thể chuyển sang phối đồ đầy đủ (mỗi món vẽ đủ khung) mà không viết lại hệ hiển thị. MVP chỉ có 1 trang phục mặc định.
+
+**0b. Nhân vật làm việc ở nông trại (duyệt 11/11/2026)**
+- **Chạm (zoom giữ nguyên):** toàn cảnh: chạm khu → zoom vào như cũ; chạm đất đi được → nhân vật đi tới (có dấu điểm đến); chạm cổng → đi câu. Đang zoom khu: chạm ngoài khu → về toàn cảnh như cũ (nhân vật không đi). Chạm ô trong khu → như Phần 6 mục 5, nhưng việc vào hàng việc.
+- **Hàng việc** (`FarmTaskQueue`, C# thuần trong `VeQue.Logic`, có test): mỗi việc = `(PlotId, Gieo / Tưới / Thu, cropId)`.
+  - Làm **đúng thứ tự được chọn** (thứ tự chạm, hoặc thứ tự ngón tay kéo qua); không tự sắp lại theo đường ngắn nhất.
+  - Mỗi ô chỉ có 1 việc đang chờ (trùng thì bỏ qua). Gieo **giữ chỗ hạt**: kéo qua nhiều ô hơn số hạt thì chỉ xếp đủ số hạt, báo "Hết hạt"; thanh hạt hiện số hạt trừ phần giữ chỗ.
+  - Kiểm tra lúc xếp việc và **kiểm tra lại lúc tới nơi** (gọi `Farm.Plant / Water / Harvest`); không làm được (cây chưa chín, đã thu, hết hạt…) thì bỏ việc đó, báo 1 lần.
+- **Đi tới chỗ làm:** A* (`GridPath`); điểm đứng là tile đi được sát ô, ưu tiên ngay trên / dưới (luống 6×2: hàng trên sát lối trên, hàng dưới sát lối dưới, giữa 2 luống có 1 tile trống), không có thì tile đi được gần nhất. Tới nơi quay mặt về ô, hoạt ảnh làm việc ~0,3–0,4 giây, rồi mới đổi trạng thái ô (hoạt ảnh cây Phần 5b chạy lúc đó).
+- **Hiển thị:** ô đang chờ có dấu nhỏ; làm xong sáng lên (`FarmView.Flash`). Chạm cây chưa tưới: thanh tiến độ hiện ngay, nhân vật tới nơi mới tưới.
+- **Nhân vật ở xa / hàng việc dài:** nhân vật ngoài khung hình khu đang zoom → hiện ở mép khu gần nhất rồi đi vào. Tốc độ đi tăng dần theo độ dài hàng việc (có trần).
+- **Hủy:** chạm nhân vật hoặc nút **Dừng** (hiện khi hàng việc không rỗng) → xóa phần còn lại, trả hạt đã giữ chỗ. Đang có hàng việc mà chạm đất để đi → cũng hủy hàng việc.
+- **Tab bị ẩn khi còn việc:** làm ngay toàn bộ phần còn lại (theo thứ tự, vẫn kiểm tra lại từng việc) rồi lưu. Hàng việc và vị trí nhân vật không lưu.
+- **Không cần đi bộ:** mở ô bằng xu, chạm chuồng / nhà kho / đất mở rộng ("sắp có"), Cửa hàng, Kho, Đơn hàng.
+- **Kiểm tra:** test Logic (thứ tự, trùng ô, giữ chỗ hạt, kiểm tra lại khi tới nơi, hủy trả hạt, làm hết khi ẩn tab); trong Editor: chạm 1 ô, kéo gieo / thu / tưới 12 ô thấy nhân vật làm lần lượt đúng thứ tự, kéo quá số hạt chỉ xếp đủ hạt, hủy giữa chừng, zoom / kéo camera như cũ, ẩn tab rồi mở lại thấy việc đã làm xong.
+
 - **Art có sẵn:** nhân vật `Basic Charakter Spritesheet.png`, `Basic Charakter Actions.png` (Sprout Lands Basic); câu cá `fishing animation front/back/side.png`, `fishing_rod*.png`, `fishing water splash frames and rod.png`, `Fish Sprites.png`, `small fish.png`, `mediuml fish.png`, `big fish 2 swimming in cirkels.png` (Ocean Pack). Cần kiểm tra đủ khung khi làm. Cần thêm: tile vùng câu (nước, bờ, bến), biểu tượng chỗ câu.
 Vòng chơi: **chọn mồi → ném cần (canh perfect) → chờ cá cắn, giật đúng lúc → kéo cá bằng chuỗi mũi tên 4 hướng → được cá (loài, độ hiếm, cân nặng, giá) hoặc sổng / đứt dây / gãy cần.**
 Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt khi ném, báo hiệu cắn câu + khung phản xạ ngắn, rồi một mini game kéo cá (Stardew Valley, Fish Quest, WebFishing, Tiny Fishing). Kéo cá dùng kiểu nhập chuỗi mũi tên theo nhịp (kiểu game nhảy theo nhịp) – chỉ mượn cơ chế, art và tên riêng.
@@ -330,10 +350,10 @@ Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt k
 **7. Kỹ thuật & thứ tự làm**
 - Logic thuần (`VeQue.Logic`): `FishDef`, `RodDef`, `BaitDef`, phiên câu dạng state machine (Chờ ném → Đang ném → Chờ cắn → Cá cắn → Kéo → Kết quả), sinh cá / sinh chuỗi mũi tên bằng `SeededRandom`, thời gian qua `IClock`; test cho tỉ lệ, cân nặng, trượt, đứt dây, độ bền. Save: cần + độ bền, mồi, giỏ cá, kỷ lục.
 - View: khung camera câu cá, phao + dây (pixel), thanh lực, nút mũi tên + vạch nhịp, hiệu ứng Perfect / đứt dây / gãy cần, âm thanh (chỉ phát sau lần chạm đầu trên web).
-- Nhân vật / vùng câu: `GridPath` (A*, C# thuần, có test) trên lưới ô đi được lấy từ Tilemap; `CharacterView` (nhiều lớp đồng bộ khung, 4 hướng, đi / đứng / câu, di chuyển theo pixel, vẽ theo trục Y); bộ điều khiển đi lang thang (nông trại) và chạm để đi (vùng câu); `CameraController` giới hạn + zoom theo vùng, chế độ đi theo nhân vật + kéo xem rồi tự quay về; `CameraTouchInput` thêm chế độ vùng câu. Save: không lưu vị trí nhân vật (luôn vào game ở nông trại); lưu cá trong ao nhà.
+- Nhân vật / vùng câu: `GridPath` (A*, C# thuần, có test) trên lưới ô đi được lấy từ Tilemap; `CharacterView` (nhiều lớp đồng bộ khung, 4 hướng, đi / đứng / câu, di chuyển theo pixel, vẽ theo trục Y); bộ điều khiển chạm để đi (nông trại + vùng câu), `FarmTaskQueue` + bộ chạy hàng việc ở nông trại; `CameraController` giới hạn + zoom theo vùng, chế độ đi theo nhân vật + kéo xem rồi tự quay về; `CameraTouchInput` thêm chế độ vùng câu. Save: không lưu vị trí nhân vật (luôn vào game ở nông trại); lưu cá trong ao nhà.
 - Art cần có: phao, cần theo rank, sprite từng loài cá, mồi, nước động, tile vùng câu (xem mục 0). Âm thanh: bước chân, quăng cần, cá cắn, đứt dây.
 - Giai đoạn (mỗi giai đoạn duyệt thiết kế chi tiết trước khi làm):
-  1. **Nhân vật đi lang thang ở nông trại**: `GridPath`, lưới ô đi được, `CharacterView` nhiều lớp (1 trang phục), bộ điều khiển đi lang thang.
+  1. **Nhân vật ở nông trại: chạm để đi + hàng việc trồng trọt** (mục 0b): `GridPath`, lưới ô đi được, `CharacterView` nhiều lớp (1 trang phục), chạm để đi, `FarmTaskQueue`, nối `FarmInteraction` / `FarmGesture` / `SeedPicker` vào hàng việc, nút Dừng, làm hết khi ẩn tab.
   2. **Vùng câu + di chuyển**: vẽ vùng ngoài cổng trái, giới hạn camera theo vùng, **Đi câu** (đi ra cổng) / **Về nhà**, chạm để đi, chạm chỗ câu, camera đi theo + kéo xem rồi tự quay về, HUD theo chế độ.
   3. **Câu cá – Logic + test**: `FishDef` (gồm khung giờ), `RodDef`, `BaitDef`, phiên câu, sinh cá / chuỗi mũi tên, độ bền.
   4. **Câu cá – chơi**: ném + chờ cắn + giật; kéo cá mũi tên; cửa hàng cần / mồi, sửa cần.
@@ -346,6 +366,7 @@ Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt k
   - **XP câu cá cộng vào XP nhân vật** (chung cấp với trồng trọt). XP mỗi con theo độ hiếm + cân nặng; đưa vào mô phỏng cân bằng để nhịp lên cấp không lệch mục tiêu.
   - **Cá giữ trong giỏ** (loài + cân nặng, có sức chứa); từ giỏ: bán, giao đơn, thả ao nhà. Giỏ đầy thì phải bán / thả bớt mới câu tiếp.
   - Asset vùng câu (tile nước, bờ, bến), biểu tượng chỗ câu, âm thanh: **người dùng thêm sau**; làm code trước với hình tạm, thay khi có asset.
+
 
 ---
 
@@ -367,7 +388,7 @@ Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt k
 | 6 – UI | Ổn trong Editor | Mục 4 hiệu ứng GUI (làm sau); mục 5 chạm/kéo chờ kiểm tra; chữ có dấu + safe-area trên iPhone |
 | 6b – Cấp độ, đơn hàng, cân bằng | Ổn trong Editor | Build + Build Report; công cụ Cân bằng (làm sau) |
 | 6c – Việc làm lúc chờ cây lớn | Chưa làm (kế hoạch 8 mục, 07/11/2026) | Mục 1–6 trong MVP, 7–8 sau MVP; mỗi mục duyệt thiết kế trước |
-| 10 – Nhân vật, vùng câu, câu cá, ao nhà | Trong MVP (07/11/2026), đã có thiết kế, chưa làm | Ném perfect, giật câu, kéo cá mũi tên 4 hướng, cá theo độ hiếm/cân nặng/giá/khung giờ, cần rank/độ bền/trượt/gãy, mồi; cần art cá, phao, cần, nước |
+| 10 – Nhân vật, vùng câu, câu cá, ao nhà | Giai đoạn 1 (nhân vật ở nông trại + hàng việc) xong trong Editor; ẩn tab chờ thử trên web | Ném perfect, giật câu, kéo cá mũi tên 4 hướng, cá theo độ hiếm/cân nặng/giá/khung giờ, cần rank/độ bền/trượt/gãy, mồi; cần art cá, phao, cần, nước |
 | 7 – Lưu tiến trình | Đã viết code (save `version` 2) | Thử trên máy thật, nhập mã máy khác, trình duyệt nhúng Facebook |
 | 8 – Build & phát hành | Chưa làm | Toàn bộ |
 
@@ -686,11 +707,185 @@ Người dùng xác nhận Đợt 2 ổn.
 - Người dùng chưa cho bắt đầu Phần 6c mục 1–2 (07/11/2026: "chưa làm").
 - Câu cá đã chốt (07/11/2026): 4 nút mũi tên + Chốt; XP câu cá cộng vào XP nhân vật (đưa vào mô phỏng cân bằng); cá giữ trong giỏ (bán / giao đơn / thả ao, giỏ đầy phải bớt mới câu tiếp); asset vùng câu, biểu tượng chỗ câu, âm thanh người dùng thêm sau – code dùng hình tạm trước. Nhân vật và Ocean Pack có sẵn, cần kiểm tra đủ khung khi làm.
 
+## Kế hoạch: điều khiển nhân vật ở nông trại (CHƯA LÀM – 11/11/2026)
+
+### Quyết định
+- Bỏ nhân vật đi lang thang làm cảnh. Ở nông trại người chơi chạm để đi; gieo / tưới / thu hoạch (chạm hoặc kéo) xếp vào hàng việc `FarmTaskQueue` (Logic, có test), nhân vật đi tới làm **đúng thứ tự chọn** (không tự sắp theo đường ngắn).
+- Zoom giữ nguyên: toàn cảnh chạm khu → zoom; chạm đất → đi tới. Đang zoom chạm ngoài khu → chỉ về toàn cảnh.
+- Giữ chỗ hạt khi xếp gieo; kiểm tra lại khi tới nơi, lỗi thì bỏ việc đó. Hủy bằng chạm nhân vật / nút Dừng (trả hạt).
+- Ẩn tab còn việc → làm hết ngay rồi lưu; không lưu hàng việc / vị trí nhân vật.
+- Mở ô bằng xu, "sắp có", Cửa hàng, Kho vẫn làm ngay, không đi bộ.
+- Đã sửa `MVP-Plan.md` (Phần 6 mục 5, Phần 10 mục 0, thêm mục 0b, mục 7 giai đoạn 1) và `CLAUDE.md`.
+
+## Phần 10 giai đoạn 1 – Logic nhân vật (XONG – 11/11/2026)
+
+Người dùng cho làm trước thứ tự trong plan (trước Phần 6c mục 1–2 và chạy thử trên điện thoại).
+
+### Đã làm
+- Mới trong `VeQue.Logic`:
+  - `GridCell`: ô `(X, Y)`, cho phép tọa độ âm.
+  - `WalkGrid`: lưới đi được (`IsWalkable`, `SetWalkable`, `SetBlocked`, `SetRect`); ô ngoài lưới coi là bị chặn.
+  - `GridPath`:
+    - A* 4 hướng trên trạng thái (ô, hướng): ra đường ngắn nhất, trong đó chọn đường ít rẽ nhất. Bộ đệm tái dùng.
+    - `FindNearestReachable`: ô đi được, tới được, gần chỗ chạm nhất.
+    - `FindStandCell`: ưu tiên trên/dưới → trái/phải → ô tới được gần nhất; trong nhóm chọn ô đi bộ ít hơn.
+  - `FarmTask` + `FarmTaskKind`.
+  - `FarmTaskQueue`:
+    - thứ tự vào trước ra trước; 1 việc mỗi ô (tính cả việc đang làm);
+    - giữ chỗ hạt khi gieo; `TryBeginNext` / `CompleteCurrent` / `Cancel`;
+    - `GetAvailableSeeds`, `IsQueued`, sự kiện `Changed`.
+  - `FarmResult.AlreadyQueued` (thêm cuối enum).
+- Test mới: `GridPathTests` (23), `FarmTaskQueueTests` (27). Ngoài Unity: 50/50 xanh. Toàn bộ test Logic chạy được ngoài Unity: 186/187; `SmokeTests` lỗi vì ngoài Unity tên assembly khác, không phải lỗi code.
+
+### Quyết định
+- Hàng việc chỉ giữ thứ tự và kiểm tra lúc xếp. View gọi `Farm` khi nhân vật tới nơi (Farm tự kiểm tra lại), rồi luôn gọi `CompleteCurrent` để trả hạt giữ chỗ, kể cả khi việc thất bại.
+- Ô đang có việc (vd. đang chờ thu hoạch) không xếp thêm việc khác cho tới khi việc đó xong.
+
+### Còn lại
+- [x] Người dùng xác nhận Test Runner ổn (11/11/2026).
+- Bước View (duyệt riêng):
+  - lưới đi được lấy từ Tilemap;
+  - `CharacterView` nhiều lớp + kiểm tra khung trong sheet;
+  - chạm để đi; bộ chạy hàng việc;
+  - nối `FarmInteraction` / `FarmGesture` / `SeedPicker` vào hàng việc;
+  - `Report` xử lý `AlreadyQueued`;
+  - nút Dừng; làm hết khi ẩn tab.
+
+## Phần 10 giai đoạn 1 – Đợt A: nhân vật + chạm để đi (XONG – 11/11/2026, người dùng xác nhận ổn)
+
+### Quyết định
+- Nhân vật bản đơn giản: 1 `SpriteRenderer`, art Sprout Lands có sẵn, chưa có hệ trang phục nhiều lớp.
+- Bố cục sheet (đã xem): `Basic Charakter Spritesheet` 4×4 khung 48×48, hàng xuống / lên / trái / phải, cột 0–1 đứng, 2–3 đi. `Basic Charakter Actions` 2×12: hàng 0–3 cuốc, 4–7 rìu, 8–11 bình tưới (cùng thứ tự hướng). Nhân vật 16 px, chân cách đáy khung 16 px → pivot (0.5, 0.333).
+- Thu hoạch dùng hoạt ảnh cuốc (chưa có khung nhặt).
+- Ô đi được = `Ground` có tile, `Plots` và `Blockers` (Tilemap mới) không có, ngoài vùng `ComingSoonArea`.
+
+### Đã làm
+- Mới (`View/Character`): `CharacterSkin` (SO), `CharacterView`, `CharacterMotor`, `WalkGridSource`, `FarmCharacterController`; `View/Map/SortingOrders` (thứ tự vẽ theo Y dùng chung cây + nhân vật).
+- Mới (`Editor`): `CharacterSkinAssigner` (menu **Về Quê → Gán sprite nhân vật**).
+- Sửa: `CameraTouchInput` (sự kiện `TappedGround` chỉ ở toàn cảnh), `ComingSoonArea` (`SizeInCells`), `FarmView` (dùng `SortingOrders`).
+- Biên dịch Logic + View + Editor ngoài Unity: không lỗi.
+
+### Còn lại
+- Người dùng: import 2 sheet, cắt 48×48, chạy Gán sprite nhân vật, tạo Tilemap `Blockers`, đặt nhân vật vào scene, chơi thử (hướng dẫn trong hội thoại 11/11/2026).
+- Đợt B: hàng việc trồng trọt.
+
+## Phần 10 giai đoạn 1 – Đợt B: hàng việc trồng trọt (XONG – 11/11/2026, người dùng xác nhận ổn)
+
+### Đã làm
+- `GameBootstrap`: giữ `Tasks` (`FarmTaskQueue`, không lưu); sự kiện `PageHiding` phát trước khi lưu lúc tab ẩn / app tạm dừng / thoát.
+- `FarmInteraction`: `Enqueue` (báo lỗi, `AlreadyQueued` thì im lặng) và `Execute`. Chạm ô chín → xếp việc thu; cây chưa tưới → xếp việc tưới + thanh tiến độ hiện ngay; ô trống đã chờ gieo thì không mở lại thanh hạt. Mở ô bằng xu vẫn làm ngay.
+- `FarmGesture`: kéo xếp việc theo thứ tự ngón tay đi qua; hạt kiểm tra bằng `GetAvailableSeeds`.
+- `SeedPicker`: số hạt đã trừ phần giữ chỗ; chạm icon xếp việc gieo.
+- `FarmView`: `TryGetPlotCell`; ô đang chờ phủ màu nhạt (`_queuedColor`, tắt được); làm xong thì sáng lên (`Flash`).
+- `CameraTouchInput`: `ITapInterceptor` (chạm nhân vật xử lý trước).
+- `CharacterMotor.SkipToFirstCellInside`: nhân vật ngoài màn hình thì hiện ở ô đầu tiên của đường đi nằm trong khung hình.
+- `FarmCharacterController`:
+  - vòng làm việc: chỗ đứng → đi → quay mặt → cuốc (gieo, thu) / bình tưới (tưới) → `Execute` → sáng ô → việc kế;
+  - tốc độ +10% mỗi việc chờ, tối đa ×2;
+  - hủy khi: chạm nhân vật, bấm Dừng, chạm đất ở toàn cảnh;
+  - ẩn tab thì làm hết việc còn lại;
+  - tự tìm `GameBootstrap` / `FarmInteraction` / `FarmView` nếu chưa gán.
+- Mới: `UI/TaskStopButton` (nút **Dừng (N)**, góc dưới-phải trên thanh tab); `UiBuilder` dựng nút này.
+- Biên dịch Logic + View + Editor ngoài Unity: không lỗi. Test Logic ngoài Unity 186/187 (`SmokeTests` chỉ lỗi ngoài Unity).
+
+### Còn lại
+- [x] Người dùng chạy Tạo UI, chơi thử theo **Kiểm tra** Phần 10 mục 0b: ổn (11/11/2026). Ẩn tab cần thử trên bản build web.
+
+## Icon gợi ý tưới trên cây chưa tưới (XONG – 11/11/2026, người dùng xác nhận ổn)
+
+### Quyết định
+- Hiện ở cả toàn cảnh và khi zoom (công tắc `_showWaterHint`); giữ 16 px (thu nhỏ vỡ pixel).
+- Art: bình tưới `Sprout Lands - Sprites - Basic pack/Objects/Basic_tools_and_meterials.png`, ô trên-trái.
+
+### Đã làm
+- `FarmView`:
+  - hiện icon khi cây đang lớn, chưa tưới, chưa chín, chưa có việc chờ;
+  - icon cách ngọn cây 2 px, đi theo giai đoạn, nhún 1 px (nhịp 1,2 giây, lệch nhịp giữa các ô);
+  - vẽ trên cây và nhân vật (thứ tự 300);
+  - xếp việc tưới thì ẩn, hủy thì hiện lại.
+- Biên dịch ngoài Unity: không lỗi.
+
+### Còn lại
+- [x] Người dùng import sheet, gán **Water Hint Sprite**, chơi thử: ổn.
+
 ## Tiếp theo (khi quay lại)
 0. Phần 6 mục 5 – chạy **Tạo UI**, Test Runner (221), chơi thử gieo chạm/kéo, kéo thu hoạch, kéo tưới; thử cảm giác kéo trên điện thoại.
 1. Phần 6c mục 1–2 (khi người dùng cho làm): chạy lại mô phỏng cân bằng với giới hạn đơn → duyệt → code.
 2. Phần 4 – template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) + build, so Build Report (mốc 10,8 MB) + thử trên iPhone Safari / Android; cùng lúc kiểm tra Phần 7 trên máy thật.
-3. Phần 10 – nhân vật, vùng câu, câu cá, ao nhà (trong MVP): chốt các câu hỏi còn lại, kiểm tra art, làm theo 6 giai đoạn trong `MVP-Plan.md`.
+3. Phần 10 – giai đoạn 1 xong trong Editor (nhân vật ở nông trại + hàng việc; icon gợi ý tưới xong). Tiếp: chốt danh sách art Phần 10 (lập 11/11/2026), rồi giai đoạn 2 (vùng câu + di chuyển). Thử ẩn tab (làm hết việc) khi có bản build web.
+   - Chưa commit: toàn bộ code Phần 10 giai đoạn 1 + icon tưới (từ sau `e6431c9`).
 4. Phần 3 – art (setup ô đất), vẽ phần còn lại trên `Decor`, tạo `ComingSoonArea` (trừ ao), Sprite Atlas.
 5. Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation); giảm build < 10 MB (Phần 8).
 6. Làm sau: Phần 6c mục 3–8, Phần 6 mục 4 (hiệu ứng GUI), công cụ Cân bằng, art 32×32, khung hình cây.
+
+
+---
+
+# Art Phần 10 (bản sao `Docs/art-phan-10.md`)
+
+# Về Quê – Art cần cho Phần 10 (lập 11/11/2026)
+
+Ký hiệu: ✅ đã dùng · 🟡 có trong pack, chưa dùng (cần kiểm tra khung khi làm) · ❌ thiếu, cần thêm.
+Đường dẫn tính từ `Assets/Art/`. Mỗi lần thêm art: build lại, so Build Report (mốc 10,8 MB đã nén, mục tiêu < 10 MB).
+
+## Giai đoạn 1 – Nhân vật ở nông trại (đã làm)
+| Thứ | Trạng thái | Nguồn / ghi chú |
+|---|---|---|
+| Nhân vật đứng / đi 4 hướng | ✅ | `Sprout Lands - Sprites - Basic pack/Characters/Basic Charakter Spritesheet.png` |
+| Cuốc, tưới 4 hướng | ✅ | `.../Characters/Basic Charakter Actions.png` (hàng 0–3 cuốc, 8–11 tưới) |
+| Icon gợi ý tưới (bình tưới) | ✅ | `.../Objects/Basic_tools_and_meterials.png` ô trên-trái |
+| Hoạt ảnh thu hoạch (cúi nhặt) | ❌ | Tạm dùng cuốc; không bắt buộc |
+| Hoạt ảnh gieo hạt (rắc hạt) | ❌ | Tạm dùng cuốc; không bắt buộc |
+| Dấu điểm đến, phủ ô đang chờ | – | Vẽ bằng code; có sprite đẹp thì thay |
+
+## Giai đoạn 2 – Vùng câu + di chuyển
+| Thứ | Trạng thái | Nguồn / ghi chú |
+|---|---|---|
+| Nước động | 🟡 | `Sprout Lands - Sprites - Basic pack/Tilesets/Water.png` (4 khung 16 px) |
+| Bờ nước / mép cỏ | 🟡 | `.../Tilesets/Grass.png`, `Hills.png` – xem đủ góc viền không |
+| Bến câu | 🟡 | `.../Objects/Wood_Bridge.png` |
+| Sen, lau sậy, cây ven nước | 🟡 | `Sprout Sorry pack/Early Access/Plant update 2/* water plants.png` |
+| Cây, bụi, đá trang trí | 🟡 | `.../Plant update 2/Trees, stumps and bushes v2.png`, `Basic_Grass_Biom_things.png` |
+| Cổng / lối ra nông trại | 🟡 | `.../Tilesets/Fences.png` |
+| **Biểu tượng chỗ câu** | ❌ | Tạm: `Ocean Pack/fishing_rod.png` hoặc "!" trong `All Icons.png` |
+| Biển tên vùng | ❌ | Không bắt buộc (có thể chỉ hiện chữ trên HUD) |
+
+## Giai đoạn 4 – Chơi câu cá
+| Thứ | Trạng thái | Nguồn / ghi chú |
+|---|---|---|
+| Hoạt ảnh câu 3 hướng (trái = lật phải) | 🟡 | `Sprout Sorry pack/Early Access/Ocean Pack/fishing animation front/back/side.png` – khung 48×48, 6 hàng: ném ×2, chờ, giật/kéo, thu cần, giơ cá. Kiểm tra khớp nhân vật Basic |
+| Phao + nước bắn | 🟡 | `.../Ocean Pack/fishing water splash frames and rod.png` |
+| Dây câu | – | Vẽ bằng code |
+| **Icon cần câu 5 bậc** | 🟡 2 / ❌ 3 | Có `fishing_rod.png`, `fishing_rod_2.png`; thiếu 3 (có thể đổi bảng màu) |
+| Icon cần gãy | ❌ | |
+| **Icon mồi: giun, cám, tép, mồi giả, mồi đặc biệt** | ❌ | Thiếu cả 5 |
+| Dấu "!" khi cá cắn | 🟡 | `Sprout Lands - UI Pack - Basic pack/Sprite sheets/Icons/All Icons.png` |
+| 4 nút mũi tên + nút Chốt | 🟡 | Mũi tên trong `All Icons.png`, nền `Sprite sheets/buttons/Square Buttons *.png`; mũi tên đỏ tô màu bằng code |
+| Thanh lực, vạch nhịp, độ căng dây, thể lực cá | – / ❌ | Vẽ bằng UI; muốn đẹp thì cần khung thanh |
+| "Perfect!", đứt dây | – | Chữ + hiệu ứng bằng code |
+
+## Giai đoạn 5 – Giỏ cá, bán, album, đơn hàng
+| Thứ | Trạng thái | Nguồn / ghi chú |
+|---|---|---|
+| **Sprite 13 loài cá nước ngọt** | ❌ | rô, diếc, tép, chép, trê, mè, lóc, lươn, tôm càng xanh, bống tượng, chép đỏ, chép vàng, trắm đen. `Ocean Pack/Fish Sprites.png` chủ yếu sinh vật biển, chỉ tạm được vài con |
+| Icon giỏ cá | ❌ | |
+| Icon độ hiếm (5 mức) | 🟡 | Sao nhiều màu `Sprite sheets/Icons/special icons/Special Icons.png` |
+| "?" loài chưa bắt | 🟡 | `All Icons.png` |
+| Icon 7 khung giờ (bình minh → khuya) | 🟡 / ❌ | `emojis-free/emoji style ui/weather/Weather_Icons_smal_freel.png` – xem đủ mặt trời / trăng không |
+
+## Giai đoạn 6 – Ao nhà
+| Thứ | Trạng thái | Nguồn / ghi chú |
+|---|---|---|
+| Bóng cá bơi | 🟡 | `Ocean Pack/small fish.png`, `mediuml fish.png`, `big fish 2 swimming in cirkels.png` (15 khung 16 px); tô màu theo độ hiếm bằng code |
+| Mặt ao | 🟡 | Dùng chung tile nước |
+
+## Âm thanh (người dùng thêm sau)
+❌ bước chân, cuốc, tưới, quăng cần, cá cắn, giật, đứt dây, được cá. AudioClip: Decompress on Load + AAC; chỉ phát sau lần chạm đầu trên web.
+
+## Cần thêm chắc chắn (theo thứ tự dùng)
+1. Biểu tượng chỗ câu (giai đoạn 2).
+2. 5 icon mồi, 3 icon cần còn thiếu, icon cần gãy (giai đoạn 4).
+3. 13 sprite cá nước ngọt + icon giỏ cá (giai đoạn 5) – phần lớn nhất.
+4. Không bắt buộc: thu hoạch / gieo hạt, khung thanh UI, biển tên vùng.
+
+Ghi chú dung lượng: 3 sheet câu cá 1536×288 khá lớn – chỉ giữ các hàng dùng tới (cắt lại sheet hoặc gom vào Sprite Atlas chỉ phần cần).

@@ -10,6 +10,7 @@ namespace VeQue.View.Map
     // - Gieo: kéo icon hạt từ thanh chọn hạt (SeedPicker gọi BeginPlant / DragTo / EndDrag) qua các ô trống.
     // - Thu hoạch / tưới: bắt đầu kéo từ một ô chín / cây chưa tưới (CameraTouchInput hỏi qua IWorldDragHandler).
     // Đường kéo được lấy mẫu dày để kéo nhanh không bỏ sót ô. Mỗi ô chỉ xử lý 1 lần trong một lần kéo.
+    // Các ô xếp vào hàng việc theo đúng thứ tự ngón tay đi qua; nhân vật làm lần lượt.
     public sealed class FarmGesture : MonoBehaviour, IWorldDragHandler
     {
         private enum Tool
@@ -115,13 +116,17 @@ namespace VeQue.View.Map
             if (!farm.TryGetPlotState(id, out PlotState plot))
                 return;
 
-            FarmResult result = FarmResult.NothingToHarvest;
+            // Ô đã có việc thì bỏ qua im lặng. Việc hợp lệ vào hàng việc; ô hiện dấu chờ (FarmView),
+            // sáng lên khi nhân vật làm xong.
+            if (_game.Tasks.IsQueued(id))
+                return;
+
             switch (_tool)
             {
                 case Tool.Plant:
                     if (plot.Status != PlotStatus.Empty)
                         return;
-                    if (farm.State.GetSeeds(_cropId) <= 0)
+                    if (_game.Tasks.GetAvailableSeeds(farm, _cropId) <= 0)
                     {
                         // Kéo tiếp qua ô khác cũng không gieo được; báo 1 lần.
                         if (!_outOfSeedsReported)
@@ -129,24 +134,19 @@ namespace VeQue.View.Map
                         _outOfSeedsReported = true;
                         return;
                     }
-                    result = _interaction.Plant(id, _cropId);
+                    _interaction.Enqueue(FarmTask.Plant(id, _cropId));
                     break;
                 case Tool.Harvest:
                     if (!farm.IsRipe(id))
                         return;
-                    result = _interaction.Harvest(id);
+                    _interaction.Enqueue(FarmTask.Harvest(id));
                     break;
                 case Tool.Water:
                     if (plot.Status != PlotStatus.Growing || plot.Watered || farm.IsRipe(id))
                         return;
-                    result = _interaction.Water(id);
+                    _interaction.Enqueue(FarmTask.Water(id));
                     break;
             }
-
-            if (result == FarmResult.Ok)
-                _view.Flash(id);
-            else
-                _interaction.Report(result);
         }
 
         private Vector2 ToWorld(Vector2 screen)

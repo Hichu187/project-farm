@@ -10,7 +10,8 @@ using VeQue.View.Map;
 namespace VeQue.View.UI
 {
     // Thanh chọn hạt nhỏ bám ngay trên ô trống vừa chạm (thay bảng trượt): mỗi cây đang bật một icon + số hạt,
-    // cây gieo gần nhất đứng đầu. Chạm icon = gieo ô đó; kéo icon = gieo hàng loạt qua FarmGesture.
+    // cây gieo gần nhất đứng đầu. Chạm icon = xếp việc gieo ô đó; kéo icon = xếp việc gieo hàng loạt qua FarmGesture.
+    // Số hạt hiện đã trừ hạt giữ chỗ cho việc gieo đang chờ.
     // Hết hạt hoặc chưa tới cấp: icon mờ; chạm vào hết hạt thì mở Cửa hàng.
     public sealed class SeedPicker : MonoBehaviour
     {
@@ -76,14 +77,21 @@ namespace VeQue.View.UI
 
             _dragIcon.gameObject.SetActive(false);
             _game.Farm.Changed += RefreshItems;
+            _game.Tasks.Changed += RefreshItems;
             RefreshItems();
         }
 
         private void OnDestroy()
         {
             if (_game != null && _game.Farm != null)
+            {
                 _game.Farm.Changed -= RefreshItems;
+                _game.Tasks.Changed -= RefreshItems;
+            }
         }
+
+        // Số hạt còn dùng được: trừ hạt đã giữ chỗ cho việc gieo đang chờ.
+        private int AvailableSeeds(string cropId) => _game.Tasks.GetAvailableSeeds(_game.Farm, cropId);
 
         private void MoveLastUsedFirst()
         {
@@ -102,7 +110,7 @@ namespace VeQue.View.UI
         {
             Farm farm = _game.Farm;
             foreach (SeedPickerItem item in _items)
-                item.Refresh(farm.State.GetSeeds(item.Crop.Id), farm.IsCropUnlocked(item.Crop.Id));
+                item.Refresh(AvailableSeeds(item.Crop.Id), farm.IsCropUnlocked(item.Crop.Id));
         }
 
         // Trả về false (kèm thông báo) nếu không gieo được bằng cây này.
@@ -114,7 +122,7 @@ namespace VeQue.View.UI
                 Message?.Invoke($"{crop.DisplayName} mở ở cấp {crop.UnlockLevel}");
                 return false;
             }
-            if (farm.State.GetSeeds(crop.Id) <= 0)
+            if (AvailableSeeds(crop.Id) <= 0)
             {
                 Hide();
                 Message?.Invoke($"Hết hạt {crop.DisplayName}, mua ở Cửa hàng");
@@ -129,8 +137,7 @@ namespace VeQue.View.UI
             if (!_isShowing || !CanUse(item.Crop))
                 return;
 
-            FarmResult result = _interaction.Plant(_plot, item.Crop.Id);
-            _interaction.Report(result);
+            _interaction.Enqueue(FarmTask.Plant(_plot, item.Crop.Id));
             Hide();
         }
 

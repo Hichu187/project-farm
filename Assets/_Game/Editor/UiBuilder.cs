@@ -65,6 +65,8 @@ namespace VeQue.EditorTools
             CropProgressPopup popup = BuildCropProgress(safe, game, interaction, view, camera);
             SeedPicker seedPicker = BuildSeedPicker(safe, game, interaction, gesture, view, camera);
             BuildHud(safe, game, out TMP_Text coins, out Button backup);
+            // Trước các bảng để bảng mở ra che nút.
+            BuildTaskStopButton(safe, game);
             OrderPanel orderPanel = BuildOrderPanel(safe, game);
             StoragePanel storagePanel = BuildPanel<StoragePanel>(safe, "StoragePanel", "Kho", game);
             ShopPanel shopPanel = BuildPanel<ShopPanel>(safe, "ShopPanel", "Cửa hàng", game);
@@ -220,6 +222,22 @@ namespace VeQue.EditorTools
 
             RectTransform backupNode = Node("Backup", hud, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-12f, 0f), new Vector2(90f, ButtonHeight));
             backup = MakeButton(backupNode, "Sao lưu", 16f, Wood, Color.white, out _);
+        }
+
+        // Nút "Dừng (N)" góc dưới-phải, trên thanh tab; chỉ hiện khi nhân vật còn việc.
+        private static void BuildTaskStopButton(RectTransform parent, GameBootstrap game)
+        {
+            RectTransform holder = Stretch("TaskStop", parent);
+            var stop = holder.gameObject.AddComponent<TaskStopButton>();
+
+            RectTransform node = Node("Button", holder, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f),
+                new Vector2(-12f, NavHeight + 12f), new Vector2(110f, ButtonHeight));
+            Button button = MakeButton(node, "Dừng", 16f, Wood, Color.white, out TMP_Text label);
+            node.gameObject.SetActive(false);
+
+            // Nhân vật có thể chưa đặt vào scene; khi đó TaskStopButton tự tìm lúc chạy.
+            var character = Object.FindFirstObjectByType<VeQue.View.Character.FarmCharacterController>();
+            Wire(stop, ("_game", game), ("_character", character), ("_button", button), ("_label", label));
         }
 
         private static T BuildPanel<T>(RectTransform parent, string name, string title, GameBootstrap game) where T : CropListPanel

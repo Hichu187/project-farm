@@ -24,5 +24,7 @@ namespace VeQue.Logic
         OrdersLocked,
         UnknownOrder,
         OrderNotReady,
+        // Ô đã có việc trong hàng việc của nhân vật.
+        AlreadyQueued,
     }
 }
