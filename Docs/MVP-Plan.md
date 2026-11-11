@@ -111,6 +111,7 @@ Hoạt ảnh tự viết trong `FarmView`, dùng sprite giai đoạn có sẵn (
 5. Thao tác chạm và kéo (duyệt 07/11/2026, thay bảng chọn hạt + thanh "Đang gieo"):
    - Chạm ô trống → thanh hạt nhỏ bám trên ô (icon + số hạt, cây gieo gần nhất đứng đầu; chưa tới cấp / hết hạt thì mờ). Chạm icon = gieo ô đó; kéo icon = gieo mọi ô trống đi qua; hết hạt thì dừng và báo "Hết hạt" (không tự mua). Chạm icon hết hạt → mở Cửa hàng.
    - Đang zoom khu: bắt đầu kéo từ ô chín = quét thu hoạch; từ cây chưa tưới = quét tưới; kéo chỗ khác vẫn di chuyển camera. Chạm 1 ô giữ như cũ.
+   - **Từ Phần 10 giai đoạn 1 (duyệt 11/11/2026):** thao tác chạm / kéo giữ nguyên, nhưng gieo / tưới / thu hoạch không làm ngay mà xếp vào **hàng việc** của nhân vật; nhân vật đi tới làm lần lượt (xem Phần 10 mục 0b). Mở ô bằng xu vẫn làm ngay khi xác nhận.
    - Ô vừa xử lý khi kéo sáng lên thoáng qua.
 
 **Kiểm tra:** chữ có dấu hiển thị đúng trên iPhone; nút ≥ 44 pt; không bị thanh home đè.
@@ -214,14 +215,29 @@ Ngoài phạm vi MVP (theo `CLAUDE.md`): nuôi cá, chuồng, đất mở rộng
 
 **0. Nhân vật, vùng câu, ao nhà (chốt 07/11/2026)**
 - **Đánh giá:** nhân vật tự nó không làm vòng chơi hấp dẫn hơn (câu cá mới là phần chơi tay bù cho trồng trọt là chờ), nhưng mở ra: nhân vật của riêng người chơi; **chỗ tiêu xu sau khi mở hết đất** (Khu 3 hết khoảng ngày 12, cấp 15 khoảng ngày 9) bằng trang phục / phụ kiện / cần rank cao mà không lệch cân bằng; dễ thêm vùng chơi mới. Điều kiện: đoạn đi bộ ngắn, bỏ qua được; chế độ đang ở luôn rõ ràng.
-- **Nông trại (nhìn từ trên xuống, như hiện tại):** mọi thao tác giữ nguyên. Thêm nhân vật đi lang thang làm cảnh: chọn ngẫu nhiên điểm đi được trong sân → đi tới → đứng 2–5 giây → lặp; tránh hàng rào, ao, nhà kho, luống; vẽ theo trục Y cùng cây. Có thể thêm sau: đi tới ô vừa thu hoạch, đứng tưới.
-- **Sang vùng câu:** bấm **Đi câu** → nhân vật **tự đi ra cổng** (cổng trái Map D) → chuyển sang vùng câu đặt ngoài cổng trái (cùng scene, cùng Grid). Chạm thêm lần nữa thì đi nhanh / bỏ qua đoạn đi ra cổng. **Về nhà** thì ngược lại.
+- **Nông trại (nhìn từ trên xuống, như hiện tại):** người chơi điều khiển nhân vật bằng chạm để đi; nhân vật đi tới ô đất để gieo / tưới / thu hoạch (chi tiết mục 0b). Logic zoom / kéo camera giữ nguyên; camera không đi theo nhân vật ở nông trại. Không có đi lang thang làm cảnh: rảnh thì đứng yên (idle). Vẽ theo trục Y cùng cây.
+- **Sang vùng câu:** bấm **Đi câu** (hoặc chạm cổng) → nhân vật **tự đi ra cổng** (cổng trái Map D) → chuyển sang vùng câu đặt ngoài cổng trái (cùng scene, cùng Grid). Chạm thêm lần nữa thì đi nhanh / bỏ qua đoạn đi ra cổng. **Về nhà** thì ngược lại.
 - **Ở vùng câu (điều khiển nhân vật):** chạm đất trống → tìm đường và đi tới (có dấu điểm đến); **chạm chỗ câu** (bến / mép nước có biểu tượng) → đi tới điểm đứng, quay mặt ra nước, **tới nơi mới bắt đầu câu**; đang đi chạm chỗ khác thì đổi điểm đến. Câu nhiều lần tại chỗ không phải đi lại; nhớ chỗ câu lần trước. Không joystick.
 - **Camera ở vùng câu:** đi theo nhân vật (mượt, trong mép vùng); **kéo để xem xung quanh**, thả tay một lúc (vd. 2 giây) thì tự quay về nhân vật. Đang câu thì cố định khung quanh nhân vật + phao.
 - **Chế độ rõ ràng:** HUD đổi khi ở vùng câu (tên vùng, nút **Về nhà**, ẩn thanh hạt và các tab chỉ dùng ở nông trại).
 - **Vùng câu MVP:** 1 vùng nhỏ, vài chỗ câu gần lối vào. Thêm vùng (rừng, chợ, sông khác – mỗi vùng bộ cá riêng) sau MVP.
 - **Ao nhà** (Map D [35, 9, 7, 11]): chỉ thả cá sưu tầm – chọn giữ cá thay vì bán; cá không lớn, không đẻ, không cho ăn, không tạo thu nhập. Cá hiện bằng **bóng màu theo độ hiếm** bơi lang thang; sức chứa ban đầu 6 (nâng cấp sau); **chạm ao → bảng danh sách cá trong ao** (loài, cân nặng, ngày bắt, khung giờ), thả / bắt lại. Làm **sau cùng**. Bỏ `ComingSoonArea` của ao khi làm.
 - **Trang phục (chuẩn bị từ đầu, cửa hàng sau MVP):** nhân vật vẽ bằng nhiều lớp đồng bộ khung (thân, mũ, phụ kiện). Thân đổi cả bộ + biến thể màu bằng thay bảng màu (gần như không tốn art); mũ / phụ kiện là lớp riêng bám điểm neo đầu theo từng khung (chỉ vẽ 4 hướng mỗi món). Sau có thể chuyển sang phối đồ đầy đủ (mỗi món vẽ đủ khung) mà không viết lại hệ hiển thị. MVP chỉ có 1 trang phục mặc định.
+
+**0b. Nhân vật làm việc ở nông trại (duyệt 11/11/2026)**
+- **Chạm (zoom giữ nguyên):** toàn cảnh: chạm khu → zoom vào như cũ; chạm đất đi được → nhân vật đi tới (có dấu điểm đến); chạm cổng → đi câu. Đang zoom khu: chạm ngoài khu → về toàn cảnh như cũ (nhân vật không đi). Chạm ô trong khu → như Phần 6 mục 5, nhưng việc vào hàng việc.
+- **Hàng việc** (`FarmTaskQueue`, C# thuần trong `VeQue.Logic`, có test): mỗi việc = `(PlotId, Gieo / Tưới / Thu, cropId)`.
+  - Làm **đúng thứ tự được chọn** (thứ tự chạm, hoặc thứ tự ngón tay kéo qua); không tự sắp lại theo đường ngắn nhất.
+  - Mỗi ô chỉ có 1 việc đang chờ (trùng thì bỏ qua). Gieo **giữ chỗ hạt**: kéo qua nhiều ô hơn số hạt thì chỉ xếp đủ số hạt, báo "Hết hạt"; thanh hạt hiện số hạt trừ phần giữ chỗ.
+  - Kiểm tra lúc xếp việc và **kiểm tra lại lúc tới nơi** (gọi `Farm.Plant / Water / Harvest`); không làm được (cây chưa chín, đã thu, hết hạt…) thì bỏ việc đó, báo 1 lần.
+- **Đi tới chỗ làm:** A* (`GridPath`); điểm đứng là tile đi được sát ô, ưu tiên ngay trên / dưới (luống 6×2: hàng trên sát lối trên, hàng dưới sát lối dưới, giữa 2 luống có 1 tile trống), không có thì tile đi được gần nhất. Tới nơi quay mặt về ô, hoạt ảnh làm việc ~0,3–0,4 giây, rồi mới đổi trạng thái ô (hoạt ảnh cây Phần 5b chạy lúc đó).
+- **Hiển thị:** ô đang chờ có dấu nhỏ; làm xong sáng lên (`FarmView.Flash`). Chạm cây chưa tưới: thanh tiến độ hiện ngay, nhân vật tới nơi mới tưới.
+- **Nhân vật ở xa / hàng việc dài:** nhân vật ngoài khung hình khu đang zoom → hiện ở mép khu gần nhất rồi đi vào. Tốc độ đi tăng dần theo độ dài hàng việc (có trần).
+- **Hủy:** chạm nhân vật hoặc nút **Dừng** (hiện khi hàng việc không rỗng) → xóa phần còn lại, trả hạt đã giữ chỗ. Đang có hàng việc mà chạm đất để đi → cũng hủy hàng việc.
+- **Tab bị ẩn khi còn việc:** làm ngay toàn bộ phần còn lại (theo thứ tự, vẫn kiểm tra lại từng việc) rồi lưu. Hàng việc và vị trí nhân vật không lưu.
+- **Không cần đi bộ:** mở ô bằng xu, chạm chuồng / nhà kho / đất mở rộng ("sắp có"), Cửa hàng, Kho, Đơn hàng.
+- **Kiểm tra:** test Logic (thứ tự, trùng ô, giữ chỗ hạt, kiểm tra lại khi tới nơi, hủy trả hạt, làm hết khi ẩn tab); trong Editor: chạm 1 ô, kéo gieo / thu / tưới 12 ô thấy nhân vật làm lần lượt đúng thứ tự, kéo quá số hạt chỉ xếp đủ hạt, hủy giữa chừng, zoom / kéo camera như cũ, ẩn tab rồi mở lại thấy việc đã làm xong.
+
 - **Art có sẵn:** nhân vật `Basic Charakter Spritesheet.png`, `Basic Charakter Actions.png` (Sprout Lands Basic); câu cá `fishing animation front/back/side.png`, `fishing_rod*.png`, `fishing water splash frames and rod.png`, `Fish Sprites.png`, `small fish.png`, `mediuml fish.png`, `big fish 2 swimming in cirkels.png` (Ocean Pack). Cần kiểm tra đủ khung khi làm. Cần thêm: tile vùng câu (nước, bờ, bến), biểu tượng chỗ câu.
 Vòng chơi: **chọn mồi → ném cần (canh perfect) → chờ cá cắn, giật đúng lúc → kéo cá bằng chuỗi mũi tên 4 hướng → được cá (loài, độ hiếm, cân nặng, giá) hoặc sổng / đứt dây / gãy cần.**
 Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt khi ném, báo hiệu cắn câu + khung phản xạ ngắn, rồi một mini game kéo cá (Stardew Valley, Fish Quest, WebFishing, Tiny Fishing). Kéo cá dùng kiểu nhập chuỗi mũi tên theo nhịp (kiểu game nhảy theo nhịp) – chỉ mượn cơ chế, art và tên riêng.
@@ -271,10 +287,10 @@ Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt k
 **7. Kỹ thuật & thứ tự làm**
 - Logic thuần (`VeQue.Logic`): `FishDef`, `RodDef`, `BaitDef`, phiên câu dạng state machine (Chờ ném → Đang ném → Chờ cắn → Cá cắn → Kéo → Kết quả), sinh cá / sinh chuỗi mũi tên bằng `SeededRandom`, thời gian qua `IClock`; test cho tỉ lệ, cân nặng, trượt, đứt dây, độ bền. Save: cần + độ bền, mồi, giỏ cá, kỷ lục.
 - View: khung camera câu cá, phao + dây (pixel), thanh lực, nút mũi tên + vạch nhịp, hiệu ứng Perfect / đứt dây / gãy cần, âm thanh (chỉ phát sau lần chạm đầu trên web).
-- Nhân vật / vùng câu: `GridPath` (A*, C# thuần, có test) trên lưới ô đi được lấy từ Tilemap; `CharacterView` (nhiều lớp đồng bộ khung, 4 hướng, đi / đứng / câu, di chuyển theo pixel, vẽ theo trục Y); bộ điều khiển đi lang thang (nông trại) và chạm để đi (vùng câu); `CameraController` giới hạn + zoom theo vùng, chế độ đi theo nhân vật + kéo xem rồi tự quay về; `CameraTouchInput` thêm chế độ vùng câu. Save: không lưu vị trí nhân vật (luôn vào game ở nông trại); lưu cá trong ao nhà.
+- Nhân vật / vùng câu: `GridPath` (A*, C# thuần, có test) trên lưới ô đi được lấy từ Tilemap; `CharacterView` (nhiều lớp đồng bộ khung, 4 hướng, đi / đứng / câu, di chuyển theo pixel, vẽ theo trục Y); bộ điều khiển chạm để đi (nông trại + vùng câu), `FarmTaskQueue` + bộ chạy hàng việc ở nông trại; `CameraController` giới hạn + zoom theo vùng, chế độ đi theo nhân vật + kéo xem rồi tự quay về; `CameraTouchInput` thêm chế độ vùng câu. Save: không lưu vị trí nhân vật (luôn vào game ở nông trại); lưu cá trong ao nhà.
 - Art cần có: phao, cần theo rank, sprite từng loài cá, mồi, nước động, tile vùng câu (xem mục 0). Âm thanh: bước chân, quăng cần, cá cắn, đứt dây.
 - Giai đoạn (mỗi giai đoạn duyệt thiết kế chi tiết trước khi làm):
-  1. **Nhân vật đi lang thang ở nông trại**: `GridPath`, lưới ô đi được, `CharacterView` nhiều lớp (1 trang phục), bộ điều khiển đi lang thang.
+  1. **Nhân vật ở nông trại: chạm để đi + hàng việc trồng trọt** (mục 0b): `GridPath`, lưới ô đi được, `CharacterView` nhiều lớp (1 trang phục), chạm để đi, `FarmTaskQueue`, nối `FarmInteraction` / `FarmGesture` / `SeedPicker` vào hàng việc, nút Dừng, làm hết khi ẩn tab.
   2. **Vùng câu + di chuyển**: vẽ vùng ngoài cổng trái, giới hạn camera theo vùng, **Đi câu** (đi ra cổng) / **Về nhà**, chạm để đi, chạm chỗ câu, camera đi theo + kéo xem rồi tự quay về, HUD theo chế độ.
   3. **Câu cá – Logic + test**: `FishDef` (gồm khung giờ), `RodDef`, `BaitDef`, phiên câu, sinh cá / chuỗi mũi tên, độ bền.
   4. **Câu cá – chơi**: ném + chờ cắn + giật; kéo cá mũi tên; cửa hàng cần / mồi, sửa cần.

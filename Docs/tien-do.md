@@ -333,6 +333,16 @@ Người dùng xác nhận Đợt 2 ổn.
 - Người dùng chưa cho bắt đầu Phần 6c mục 1–2 (07/11/2026: "chưa làm").
 - Câu cá đã chốt (07/11/2026): 4 nút mũi tên + Chốt; XP câu cá cộng vào XP nhân vật (đưa vào mô phỏng cân bằng); cá giữ trong giỏ (bán / giao đơn / thả ao, giỏ đầy phải bớt mới câu tiếp); asset vùng câu, biểu tượng chỗ câu, âm thanh người dùng thêm sau – code dùng hình tạm trước. Nhân vật và Ocean Pack có sẵn, cần kiểm tra đủ khung khi làm.
 
+## Kế hoạch: điều khiển nhân vật ở nông trại (CHƯA LÀM – 11/11/2026)
+
+### Quyết định
+- Bỏ nhân vật đi lang thang làm cảnh. Ở nông trại người chơi chạm để đi; gieo / tưới / thu hoạch (chạm hoặc kéo) xếp vào hàng việc `FarmTaskQueue` (Logic, có test), nhân vật đi tới làm **đúng thứ tự chọn** (không tự sắp theo đường ngắn).
+- Zoom giữ nguyên: toàn cảnh chạm khu → zoom; chạm đất → đi tới. Đang zoom chạm ngoài khu → chỉ về toàn cảnh.
+- Giữ chỗ hạt khi xếp gieo; kiểm tra lại khi tới nơi, lỗi thì bỏ việc đó. Hủy bằng chạm nhân vật / nút Dừng (trả hạt).
+- Ẩn tab còn việc → làm hết ngay rồi lưu; không lưu hàng việc / vị trí nhân vật.
+- Mở ô bằng xu, "sắp có", Cửa hàng, Kho vẫn làm ngay, không đi bộ.
+- Đã sửa `MVP-Plan.md` (Phần 6 mục 5, Phần 10 mục 0, thêm mục 0b, mục 7 giai đoạn 1) và `CLAUDE.md`.
+
 ## Tiếp theo (khi quay lại)
 0. Phần 6 mục 5 – chạy **Tạo UI**, Test Runner (221), chơi thử gieo chạm/kéo, kéo thu hoạch, kéo tưới; thử cảm giác kéo trên điện thoại.
 1. Phần 6c mục 1–2 (khi người dùng cho làm): chạy lại mô phỏng cân bằng với giới hạn đơn → duyệt → code.

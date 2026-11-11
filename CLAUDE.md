@@ -32,7 +32,7 @@ Kế hoạch đầy đủ: `Docs/MVP-Plan.md` (Phần 0 → 8). Tiến độ: `D
 - Phần 6c (làm sau 6b, theo thứ tự trong `Docs/MVP-Plan.md`): báo cây chín trên tab; đơn hàng có thời gian xuất hiện, giới hạn mỗi ngày, đơn gấp; chuyện bất ngờ trên ruộng; nông sản hiếm + album; nhiệm vụ ngày + điểm danh; khách vãng lai. Chế biến, trang trí: sau MVP.
 - Cây vẫn lớn khi thoát game. Lưu tiến trình + xuất/nhập mã sao lưu.
 - Câu cá (Phần 10, trong MVP): ở **vùng câu riêng** (cùng scene, ngoài nông trại), không câu ở ao nhà. Ném cần canh perfect, giật câu, kéo cá bằng chuỗi mũi tên 4 hướng; cá có độ hiếm, cân nặng, giá, khung giờ xuất hiện; cần câu có rank, độ bền, tỉ lệ trượt, gãy phải sửa / mua mới; mồi hút loài khác nhau.
-- Nhân vật (Phần 10): ở nông trại là nhân vật đi lang thang làm cảnh (người chơi vẫn thao tác kiểu nhìn từ trên xuống như cũ); sang vùng câu thì điều khiển nhân vật bằng **chạm để đi** (không joystick). Nhân vật hiển thị nhiều lớp đồng bộ khung để sau này thêm trang phục / phụ kiện.
+- Nhân vật (Phần 10): điều khiển bằng **chạm để đi** (không joystick) ở cả nông trại lẫn vùng câu. Ở nông trại: gieo / tưới / thu hoạch xếp vào hàng việc, nhân vật đi tới làm **lần lượt đúng thứ tự chọn**; mở ô bằng xu và các chạm UI vẫn làm ngay; ẩn tab thì làm hết việc còn lại rồi lưu (chi tiết `Docs/MVP-Plan.md` Phần 10 mục 0b). Nhân vật hiển thị nhiều lớp đồng bộ khung để sau này thêm trang phục / phụ kiện.
 - Ao nhà: chỉ để thả cá sưu tầm (cá không lớn, không đẻ, không cho ăn, không tạo thu nhập); cá hiện bằng bóng bơi; chạm ao xem danh sách cá. Làm sau cùng trong Phần 10.
 - Chuồng, nhà kho, đất mở rộng: chỉ là art, chạm vào hiện "sắp có".
 - Ngoài phạm vi: nuôi cá (cá lớn / đẻ / cho ăn / tạo thu nhập), chuồng, đất mở rộng, joystick, trộm nông sản, hai ví xu, thuốc trừ sâu/phân bón. Sau MVP: cửa hàng trang phục / phụ kiện, thêm vùng chơi mới.
@@ -41,7 +41,7 @@ Kế hoạch đầy đủ: `Docs/MVP-Plan.md` (Phần 0 → 8). Tiến độ: `D
 - Tilemap, Grid cell 1. Ground: cỏ + sân đất. Decor: hàng hoa, viền cỏ quanh luống, cây, rơm. Plots: ô đất. Không dùng `TilemapCollider2D`; xác định ô bằng `Grid.WorldToCell`.
 - Map D: 44×26 tile, trải ngang, hàng rào bao quanh. Kéo ngang là chính (~3,5 màn hình), dọc chỉ dịch nhẹ. Tọa độ chi tiết ở `Docs/MVP-Plan.md` Phần 3. Chỉ tham khảo cách sắp xếp nông trại Avatar/Teamobi, không lấy art.
 - Camera: Pixel Perfect Camera (package 2D Pixel Perfect cho Built-in), PPU 16, chỉ zoom bậc nguyên. Toàn cảnh Ref ~208×370 (≈13 tile ngang, zoom 5x trên màn 1080–1170 px). Zoom vào khu: tính Ref để bounding box khu (6×5 tile) chiếm ~85% bề ngang (~10x); camera tới tâm bounding box rồi mới đổi bậc zoom. Giới hạn trong mép map 44×26.
-- Kéo 1 ngón để di chuyển (giới hạn trong mép map); chạm khu → zoom vào; chạm bãi cỏ → về toàn cảnh. Không pinch zoom. Ngưỡng tách chạm/kéo ~10 px.
+- Kéo 1 ngón để di chuyển (giới hạn trong mép map); chạm khu → zoom vào; đang zoom chạm ngoài khu → về toàn cảnh; ở toàn cảnh chạm đất đi được → nhân vật đi tới. Ở nông trại camera không đi theo nhân vật. Không pinch zoom. Ngưỡng tách chạm/kéo ~10 px.
 - Cùng scene, cùng Grid có nhiều vùng: nông trại (Map D) và vùng câu (đặt ngoài cổng trái). Camera có giới hạn + zoom theo từng vùng. Ở vùng câu: chạm = đi tới / tương tác, camera đi theo nhân vật; kéo để xem xung quanh, thả tay một lúc thì camera tự quay về nhân vật.
 - Đường đi: A* trên lưới ô, ô đi được lấy từ Tilemap (hàng rào, nước, nhà, luống chặn).
 
