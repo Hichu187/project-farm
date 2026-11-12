@@ -293,11 +293,12 @@ Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt k
 - **Tỉ lệ trượt**: giật đúng lúc vẫn có xác suất trượt lưỡi (cá sổng ngay), giảm theo rank cần, tăng theo độ hiếm cá.
 - Android có thể rung máy khi cá cắn (`navigator.vibrate`); iPhone trên web không rung được → dựa vào hình + âm thanh.
 
-**3. Kéo cá – chuỗi mũi tên 4 hướng (kiểu game nhảy theo nhịp)**
-- Cá có **thể lực**, dây có **độ căng**. Mỗi **vòng**: hiện chuỗi mũi tên (↑ ↓ ← →), người chơi nhập đúng thứ tự trong thời gian giới hạn, rồi chạm **Chốt** đúng lúc con trỏ chạy qua vạch nhịp (Perfect / Tốt / Trượt).
-- Nhập đúng + chốt tốt → trừ thể lực cá (Perfect trừ nhiều, có chuỗi combo). Sai mũi tên hoặc hết giờ → độ căng tăng. Độ căng đầy → **đứt dây**: cá thoát, mất mồi, cần mất độ bền nhiều hơn, có xác suất **gãy cần**.
-- Cá càng hiếm: nhiều vòng hơn, chuỗi dài hơn (4 → 10 mũi tên), ít thời gian hơn, vạch nhịp hẹp hơn; cá huyền thoại có **mũi tên đỏ** (bấm hướng ngược lại) và chuỗi đổi giữa chừng.
-- Nhập trên điện thoại (chốt): **4 nút mũi tên lớn** (≥ 56 pt) + nút **Chốt**, đặt ở nửa dưới màn hình. Cần thử cảm giác trên máy thật.
+**3. Kéo cá – chuỗi mũi tên 4 hướng, 1 lượt (chốt lại 13/11/2026)**
+- Móc được cá → hiện **1 chuỗi** mũi tên (↑ ↓ ← →) + thanh thời gian. Nhập đúng hết chuỗi trước khi hết giờ là **câu được**. Không có nhiều vòng, thể lực cá, độ căng dây, combo hay nút Chốt.
+- **Càng nhanh càng hoàn hảo**: dùng ≤ 40% thời gian = **Perfect** (+50% XP, cân nặng lệch về nặng hơn), ≤ 70% = **Tốt** (bình thường), còn lại = **Thường** (cân nặng lệch về nhẹ). Các mốc ở `FishingTuning`.
+- **Bấm sai** 1 mũi tên → **đứt dây**: cá thoát, mất mồi, có xác suất **gãy cần** (không trừ thêm độ bền). **Hết giờ** → cá thoát (chỉ mất mồi).
+- Cá càng hiếm: chuỗi dài hơn (3–4 → 8–10 mũi tên), ít thời gian hơn (4 → 3 giây); cá huyền thoại có **mũi tên khác màu (đỏ)** – bấm hướng ngược lại (không đổi chuỗi giữa chừng). Ném Perfect: chuỗi bớt 1 mũi tên. Cần rank cao **thêm thời gian** (tre 0%, trúc +10%, thủy tinh +20%, carbon +30%, vàng +50%; thay cho "sức bền dây").
+- Nhập trên điện thoại: **4 nút mũi tên** 64 pt xếp **chữ thập ở giữa** nửa dưới màn hình (bàn phím: phím mũi tên). Cần thử cảm giác trên máy thật.
 
 **4. Cá**
 - Mỗi loài: độ hiếm (Thường / Khá / Hiếm / Quý / Huyền thoại), khoảng cân nặng (kg, lệch về nhẹ; cá nặng hiếm hơn), giá = giá gốc × hệ số cân nặng, khung giờ xuất hiện (mục 4b), độ sâu, mồi ưa thích, độ khó (số vòng, độ dài chuỗi, thời gian, khung giật, tỉ lệ trượt).
@@ -318,8 +319,8 @@ Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt k
 - Rank gợi ý: Cần tre → Cần trúc → Cần sợi thủy tinh → Cần carbon → Cần vàng. Mua ở Cửa hàng, mở theo cấp.
 - Chỉ số: độ rộng vùng Perfect, tốc độ thanh lực, sức bền dây (độ căng tối đa), tỉ lệ trượt, thưởng tỉ lệ cá hiếm, **độ bền**.
 - Mỗi lần câu trừ độ bền (đứt dây trừ nhiều hơn). Độ bền về 0 hoặc gãy khi đứt dây → **cần gãy**: sửa (tốn xu, rẻ hơn mua) hoặc mua mới. Có thể giữ nhiều cần, chọn cần trước khi câu.
-- **Lý do mất độ bền (chốt 12/11/2026):** mỗi lần ném −1 (trừ ngay, mọi kết quả kể cả bỏ dở); đứt dây −5 nữa và có thể gãy cần; độ bền về 0 = hỏng. Câu được cá (to / hiếm) không mất thêm; cá sợ, cá ăn mồi, trượt lưỡi không mất thêm.
-- **Gãy khi đứt dây** tăng khi độ bền thấp: tỉ lệ = 20% + (60% − 20%) × (1 − độ bền còn / độ bền tối đa thực tế), tính sau khi trừ −5 (đầy 20%, nửa 40%, về 0 60%).
+- **Lý do mất độ bền (chốt lại 13/11/2026: mọi mức trừ là 1):** mỗi lượt câu −1 lúc ném (trừ ngay, mọi kết quả kể cả bỏ dở); đứt dây không trừ thêm, chỉ có thể gãy cần; độ bền về 0 = hỏng. Câu được cá (to / hiếm), cá sợ, cá ăn mồi, trượt lưỡi, cá thoát không mất thêm.
+- **Gãy khi đứt dây** tăng khi độ bền thấp: tỉ lệ = 20% + (60% − 20%) × (1 − độ bền còn / độ bền tối đa thực tế) (đầy 20%, nửa 40%, về 0 60%).
 - **Sửa làm giảm độ bền tối đa:** mỗi lần sửa, độ bền tối đa giảm 10% độ bền gốc (100 → 90 → … → 10%). Khi độ bền tối đa đã **dưới 15%** thì không sửa được nữa (sau 9 lần sửa) → mua lại.
 - **Mua lại cần đang có:** được, khi cần hỏng hoặc đã từng sửa; trả đủ giá, cần về như mới (độ bền gốc, số lần sửa 0). Cần còn dùng được và chưa sửa thì không mua lại.
 - Các con số ở `FishingTuning` (data), không viết cứng.
@@ -337,7 +338,13 @@ Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt k
   1. **Nhân vật ở nông trại: chạm để đi + hàng việc trồng trọt** (mục 0b): `GridPath`, lưới ô đi được, `CharacterView` nhiều lớp (1 trang phục), chạm để đi, `FarmTaskQueue`, nối `FarmInteraction` / `FarmGesture` / `SeedPicker` vào hàng việc, nút Dừng, làm hết khi ẩn tab.
   2. **Vùng câu + di chuyển** (đã viết code 12/11/2026, vùng tạm bằng menu **Vùng câu: tạo tạm**): vẽ vùng (Tilemap riêng, chuyển cảnh), giới hạn camera theo vùng, **Đi câu** (đi ra cổng) / **Về nhà**, chạm để đi, chạm chỗ câu, camera đi theo + kéo xem rồi tự quay về, HUD theo chế độ.
   3. **Câu cá – Logic + test** (đã viết code 12/11/2026): `FishDef` (gồm khung giờ), `RodDef`, `BaitDef`, phiên câu, sinh cá / chuỗi mũi tên, độ bền. Chốt 12/11: giỏ cá 8 ô, nâng cấp được (8 → 10 → 12 → 16 → 20, giá 300 / 1.000 / 3.000 / 8.000 – data); đào được giun khi thu hoạch (10%, 1–2 con); câu cá mở từ cấp 1 (người dùng quy định lại sau), tặng cần tre + 10 giun. View chạy phần thời gian thực (thanh lực, giật, mũi tên), Logic nhận kết quả. ScriptableObject + data mặc định làm đầu giai đoạn 4.
-  4. **Câu cá – chơi**: ném + chờ cắn + giật; kéo cá mũi tên; cửa hàng cần / mồi, sửa cần.
+  4. **Câu cá – chơi** (duyệt 12/11/2026, chia 5 đợt):
+     - Đợt A – data: SO `FishDefinition` / `RodDefinition` / `BaitDefinition` / `FishingDefinition` (+ `FarmDefinition._fishing`); menu **Tạo data câu cá** (13 cá, 5 cần, 5 mồi theo bảng duyệt 12/11, cũng chạy trong **Tạo data mặc định**); menu **Câu cá: tạo art tạm** (phao 8×8, icon cá 16×16 tô màu theo độ hiếm → `Assets/_Game/Art/Fishing/`); test data.
+     - Đợt B – hoạt ảnh nhân vật `CASTING` / `WAITING` / `REELING` / `CAUGHT` (thêm vào `CharacterSkin`, `CharacterSkinAssigner`).
+     - Đợt C – ném (giữ nút, thanh lực, vùng Perfect / Tốt) + chờ cắn (phao rỉa, chìm, "!", rung Android) + giật; phao ở **đầu dây vẽ sẵn** của art Sunnyside (cố định, chốt 13/11/2026 – cách A), độ sâu Gần / Vừa / Xa vẫn theo lực nhưng chỉ hiện bằng chữ ("Perfect! · Phao: Xa"); trước Đợt D móc được cá thì báo rồi bỏ lượt; HUD vùng câu (cần + độ bền, mồi – chạm đổi, giỏ, khung giờ + còn bao lâu); đang câu chạm map không đi, nút **Thu cần** (bỏ lượt, mất mồi), ẩn tab = bỏ lượt.
+     - Đợt D – kéo cá 1 lượt (chốt lại 13/11/2026, xem mục 3): chuỗi mũi tên + thanh thời gian (màu theo hạng còn đạt được); 4 nút mũi tên chữ thập ở giữa; nhanh = Perfect; sai = đứt dây, hết giờ = cá thoát; câu được → hoạt ảnh được cá → thông báo tạm (Đợt E thay bằng hộp kết quả); Editor dùng phím mũi tên. Logic bỏ vòng / thể lực / độ căng / combo / chốt nhịp; cần: sức bền dây → thêm thời gian.
+     - Đợt E – hộp kết quả (cá, cân nặng, giá, XP, "Kỷ lục mới!"; sợ / ăn mồi / trượt / đứt dây / "Cần gãy!"); bảng **Đồ câu** (cần: mua / mua lại / sửa / chọn; mồi: mua 1 / 10; giỏ: nâng cấp; nút **Thả cá** bỏ bớt cá khỏi giỏ – tạm khi chưa bán được cá), mở từ nút **Đồ câu** trên HUD vùng câu và nút chuyển "Hạt giống | Đồ câu" trong tab Cửa hàng; thông báo đào được giun; build lại, so Build Report.
+     - Con số data (bảng duyệt 12/11): chỉnh lại sau khi chơi thử / mô phỏng cân bằng.
   5. **Giỏ cá, bán, album, đơn hàng có cá**.
   6. **Ao nhà** (sau cùng): thả cá, bóng cá bơi, bảng danh sách cá.
   - Sau MVP: cửa hàng trang phục / phụ kiện, thêm vùng chơi.

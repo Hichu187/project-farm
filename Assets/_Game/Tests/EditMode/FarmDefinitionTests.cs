@@ -216,5 +216,117 @@ namespace VeQue.Tests
                 Assert.AreEqual(5, box.height, zone.Id);
             }
         }
+
+        // ---------- Câu cá (Phần 10 giai đoạn 4) ----------
+
+        [Test]
+        public void ToDef_DefaultData_FishingEnabled()
+        {
+            FishingDef fishing = LoadAsset().ToDef().Fishing;
+
+            Assert.IsTrue(fishing.IsEnabled, "Chạy Về Quê → Tạo data câu cá.");
+            Assert.AreEqual(13, fishing.Fish.Count);
+            Assert.AreEqual(5, fishing.Rods.Count);
+            Assert.AreEqual(5, fishing.Baits.Count);
+            Assert.AreEqual(1, fishing.UnlockLevel);
+            Assert.AreEqual("can_tre", fishing.StarterRodId);
+            Assert.AreEqual("giun", fishing.StarterBaitId);
+            Assert.AreEqual(10, fishing.StarterBaitCount);
+            CollectionAssert.AreEqual(new[] { 8, 10, 12, 16, 20 }, fishing.BasketCapacities);
+            CollectionAssert.AreEqual(new long[] { 0, 300, 1000, 3000, 8000 }, fishing.BasketUpgradePrices);
+            Assert.AreEqual("giun", fishing.WormBaitId);
+            Assert.AreEqual(10, fishing.WormChancePercent);
+        }
+
+        [Test]
+        public void ToDef_DefaultData_NewFarmGetsStarterRodAndWorms()
+        {
+            FarmDef def = LoadAsset().ToDef();
+            var farm = new Farm(def, FarmState.CreateNew(def), new FakeClock { UtcNowSeconds = 1798761600 });
+
+            Assert.AreEqual("can_tre", farm.State.Fishing.EquippedRodId);
+            Assert.AreEqual(10, farm.State.Fishing.GetBaits("giun"));
+            Assert.AreEqual(FarmResult.Ok, farm.CanCast("giun"));
+        }
+
+        [Test]
+        public void ToDef_DefaultData_EverySlotHasCommonFishNearShore()
+        {
+            FishingDef fishing = LoadAsset().ToDef().Fishing;
+
+            // Chốt 12/11/2026: ném hỏng (gần bờ) khung giờ nào cũng có cá Thường.
+            for (int s = 0; s < DaySlots.Count; s++)
+            {
+                bool found = false;
+                foreach (FishDef fish in fishing.Fish)
+                {
+                    if (fish.Rarity == FishRarity.Common && (fish.Depths & FishDepth.Near) != 0
+                        && fish.GetSlotFactor((DaySlot)s) > 0f)
+                        found = true;
+                }
+                Assert.IsTrue(found, ((DaySlot)s).ToString());
+            }
+        }
+
+        [Test]
+        public void ToDef_DefaultData_RareOrBelowHasTwoSlots_RarestHavePreferredBait()
+        {
+            FishingDef fishing = LoadAsset().ToDef().Fishing;
+
+            foreach (FishDef fish in fishing.Fish)
+            {
+                int slots = 0;
+                for (int s = 0; s < DaySlots.Count; s++)
+                {
+                    if (fish.GetSlotFactor((DaySlot)s) > 0f)
+                        slots++;
+                }
+                Assert.GreaterOrEqual(slots, 1, fish.Id);
+                if (fish.Rarity <= FishRarity.Rare)
+                    Assert.GreaterOrEqual(slots, 2, fish.Id);
+
+                Assert.GreaterOrEqual(fish.PreferredBaits.Count, 1, fish.Id);
+                foreach (string bait in fish.PreferredBaits)
+                    Assert.IsTrue(fishing.TryGetBait(bait, out _), $"{fish.Id}: mồi '{bait}'");
+                Assert.AreEqual(fish.Rarity == FishRarity.Legendary, fish.RedArrows, fish.Id);
+            }
+        }
+
+        [Test]
+        public void ToDef_DefaultData_RodsGetBetterAndCostMore()
+        {
+            FishingDef fishing = LoadAsset().ToDef().Fishing;
+
+            for (int i = 1; i < fishing.Rods.Count; i++)
+            {
+                RodDef prev = fishing.Rods[i - 1];
+                RodDef rod = fishing.Rods[i];
+                Assert.Greater(rod.Rank, prev.Rank, rod.Id);
+                Assert.Greater(rod.Price, prev.Price, rod.Id);
+                Assert.Greater(rod.MaxDurability, prev.MaxDurability, rod.Id);
+                Assert.Greater(rod.PerfectHalfWidth, prev.PerfectHalfWidth, rod.Id);
+                Assert.Greater(rod.BonusTimePercent, prev.BonusTimePercent, rod.Id);
+                Assert.GreaterOrEqual(rod.UnlockLevel, prev.UnlockLevel, rod.Id);
+                Assert.Less(rod.RepairPrice, rod.Price, $"{rod.Id}: sửa rẻ hơn mua");
+            }
+            Assert.AreEqual(0, fishing.Rods[0].Price, "Cần tre tặng");
+        }
+
+        [Test]
+        public void FishingDefinition_DefaultData_FishHaveNamesAndIcons()
+        {
+            FishingDefinition fishing = LoadAsset().Fishing;
+            Assert.IsNotNull(fishing);
+
+            foreach (FishDefinition fish in fishing.Fish)
+            {
+                Assert.IsFalse(string.IsNullOrEmpty(fish.DisplayName), fish.Id);
+                Assert.IsNotNull(fish.Icon, $"{fish.Id}: chạy Về Quê → Câu cá: tạo art tạm.");
+            }
+            foreach (RodDefinition rod in fishing.Rods)
+                Assert.IsFalse(string.IsNullOrEmpty(rod.DisplayName), rod.Id);
+            foreach (BaitDefinition bait in fishing.Baits)
+                Assert.IsFalse(string.IsNullOrEmpty(bait.DisplayName), bait.Id);
+        }
     }
 }

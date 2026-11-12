@@ -91,8 +91,8 @@ namespace VeQue.Logic
             return FarmResult.Ok;
         }
 
-        // Áp kết quả phiên đã xong: cá vào giỏ + XP + kỷ lục; đứt dây trừ thêm độ bền, có thể gãy cần
-        // (độ bền càng thấp càng dễ gãy).
+        // Áp kết quả phiên đã xong: cá vào giỏ + XP + kỷ lục; đứt dây (bấm sai khi kéo) trừ thêm SnapDurabilityCost
+        // (mặc định 0) và có thể gãy cần (độ bền càng thấp càng dễ gãy). Cá thoát / sợ / ăn mồi / trượt: không thêm gì.
         public FarmResult CompleteFishing(FishingSession session)
         {
             if (session == null || session.Phase != FishingPhase.Finished)

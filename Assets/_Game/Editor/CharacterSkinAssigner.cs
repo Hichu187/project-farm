@@ -10,7 +10,7 @@ namespace VeQue.EditorTools
     // Menu Về Quê → Nhân vật Sunnyside: import + gán sprite.
     // 1. Đặt import cho các strip nhân vật Sunnyside dùng tới (PPU 16, Point, không nén, tắt mipmap) và cắt
     //    khung 96×64, pivot (0.5, 25/64) = chân nhân vật. Chạy lại giữ nguyên ID sprite (không mất tham chiếu).
-    // 2. Tạo (nếu chưa có) Assets/_Game/Data/CharacterSkin.asset: thân + dụng cụ cho 4 hoạt ảnh, 6 kiểu tóc
+    // 2. Tạo (nếu chưa có) Assets/_Game/Data/CharacterSkin.asset: thân + dụng cụ cho 8 hoạt ảnh (đứng, đi, làm việc, tưới, ném cần, chờ cá, kéo cá, được cá), 6 kiểu tóc
     //    (đo khoảng độ sáng của tóc để shader phủ màu), material Assets/_Game/Art/HairTint.mat.
     // Bảng màu tóc giữ nguyên phần đã chỉnh trong Inspector.
     public static class CharacterSkinAssigner
@@ -51,6 +51,10 @@ namespace VeQue.EditorTools
             new ClipSource("WALKING", "walk_strip8", 8, "_walk", "Walk"),
             new ClipSource("DOING", "doing_strip8", 8, "_work", "Work"),
             new ClipSource("WATERING", "watering_strip5", 5, "_water", "Water"),
+            new ClipSource("CASTING", "casting_strip15", 15, "_cast", "Cast"),
+            new ClipSource("WAITING", "waiting_strip9", 9, "_wait", "Wait"),
+            new ClipSource("REELING", "reeling_strip13", 13, "_reel", "Reel"),
+            new ClipSource("CAUGHT", "caught_strip10", 10, "_caught", "Caught"),
         };
 
         // Thứ tự = thứ tự hiện ở màn tạo nhân vật; kiểu đầu tiên là mặc định (CharacterLook.DefaultHairStyle).
@@ -162,7 +166,7 @@ namespace VeQue.EditorTools
             EditorGUIUtility.PingObject(skin);
 
             EditorUtility.DisplayDialog("Nhân vật Sunnyside",
-                (created ? "Đã tạo " : "Đã cập nhật ") + SkinPath + ": đứng, đi, làm việc, tưới; 6 kiểu tóc.\n"
+                (created ? "Đã tạo " : "Đã cập nhật ") + SkinPath + ": đứng, đi, làm việc, tưới, ném cần, chờ cá, kéo cá, được cá; 6 kiểu tóc.\n"
                 + "Độ sáng tóc: " + string.Join("; ", summary), "OK");
         }
 

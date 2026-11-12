@@ -79,6 +79,19 @@ namespace VeQue.View.Character
 
         public float GetDuration(CharacterAnim anim) => _skin != null ? _skin.GetDuration(anim) : 0f;
 
+        // Xem thử hoạt ảnh câu cá khi đang Play (chuột phải vào component). Đi một bước thì về hoạt ảnh thường.
+        [ContextMenu("Thử: ném cần")]
+        private void PreviewCast() => Play(CharacterAnim.Cast, _facing, true);
+
+        [ContextMenu("Thử: chờ cá")]
+        private void PreviewWait() => Play(CharacterAnim.Wait, _facing, true);
+
+        [ContextMenu("Thử: kéo cá")]
+        private void PreviewReel() => Play(CharacterAnim.Reel, _facing, true);
+
+        [ContextMenu("Thử: được cá")]
+        private void PreviewCaught() => Play(CharacterAnim.Caught, _facing, true);
+
         private void Awake()
         {
             _layers[CharacterSkin.BodyLayer] = GetComponent<SpriteRenderer>();

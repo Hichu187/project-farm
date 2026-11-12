@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b207b71086fda7f4b8495db68615b4df, type: 3}
+  m_Name: 02_can_truc
+  m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.RodDefinition
+  _id: can_truc
+  _displayName: "C\u1EA7n tr\xFAc"
+  _icon: {fileID: 0}
+  _rank: 2
+  _perfectHalfWidth: 0.04
+  _barPeriodSeconds: 1.3
+  _bonusTimePercent: 10
+  _slipReductionPercent: 3
+  _rareBonusPercent: 10
+  _maxDurability: 50
+  _price: 300
+  _unlockLevel: 3
+  _repairPrice: 120

@@ -86,7 +86,6 @@ namespace VeQue.View.UI
                 _travel.RegionChanged += HandleRegionChanged;
                 _travel.TravelStarted += CloseAll;
                 _travel.Message += _toast.Show;
-                _travel.SpotReached += HandleSpotReached;
             }
             if (_goFishing != null)
                 _goFishing.onClick.AddListener(GoFishing);
@@ -134,7 +133,6 @@ namespace VeQue.View.UI
                 _travel.TravelStarted -= CloseAll;
                 if (_toast != null)
                     _travel.Message -= _toast.Show;
-                _travel.SpotReached -= HandleSpotReached;
             }
         }
 
@@ -172,12 +170,6 @@ namespace VeQue.View.UI
                 _goHome.gameObject.SetActive(fishing);
             if (_regionPanel != null)
                 _regionPanel.SetActive(fishing);
-        }
-
-        // Giai đoạn 2 chỉ có di chuyển; câu cá làm ở giai đoạn 3–4.
-        private void HandleSpotReached(FishingSpot spot)
-        {
-            _toast.Show("Câu cá: sắp có");
         }
 
         private void HandleFarmChanged()

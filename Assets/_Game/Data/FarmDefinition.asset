@@ -57,6 +57,12 @@ MonoBehaviour:
   _orderXpPercent: 200
   _orderDiscardMinutes: 5
   _orderHarvestCap: 6
+  _orderRefillMinutes: 10
+  _orderUrgentRefillMinutes: 30
+  _orderUrgentChancePercent: 20
+  _orderUrgentRewardPercent: 200
+  _orderUrgentExpireMinutes: 30
+  _orderDailyLimit: 15
   _customerNames:
   - "B\xE0 T\u01B0"
   - "Ch\xFA Ba"
@@ -66,3 +72,4 @@ MonoBehaviour:
   - "\xD4ng B\u1EA3y"
   - "Ch\u1ECB \xDAt"
   - "Anh T\xE1m"
+  _fishing: {fileID: 11400000, guid: 9b5cfcb318d716f4ab05d275b1825331, type: 2}

@@ -21,6 +21,11 @@ namespace VeQue.View.Character
         Work = 2,
         // Tưới (Sunnyside WATERING).
         Water = 3,
+        // Câu cá (Sunnyside CASTING / WAITING / REELING / CAUGHT).
+        Cast = 4,
+        Wait = 5,
+        Reel = 6,
+        Caught = 7,
     }
 
     // Bộ khung hình nhân vật Sunnyside, vẽ nhìn sang phải, 3 lớp đồng bộ khung: thân + dụng cụ (theo hoạt ảnh),
@@ -56,6 +61,10 @@ namespace VeQue.View.Character
             public Sprite[] Walk = Array.Empty<Sprite>();
             public Sprite[] Work = Array.Empty<Sprite>();
             public Sprite[] Water = Array.Empty<Sprite>();
+            public Sprite[] Cast = Array.Empty<Sprite>();
+            public Sprite[] Wait = Array.Empty<Sprite>();
+            public Sprite[] Reel = Array.Empty<Sprite>();
+            public Sprite[] Caught = Array.Empty<Sprite>();
             [Range(0f, 1f)] public float MinLum = 0.15f;
             [Range(0f, 1f)] public float MaxLum = 0.5f;
 
@@ -66,6 +75,10 @@ namespace VeQue.View.Character
                     case CharacterAnim.Walk: return Walk;
                     case CharacterAnim.Work: return Work;
                     case CharacterAnim.Water: return Water;
+                    case CharacterAnim.Cast: return Cast;
+                    case CharacterAnim.Wait: return Wait;
+                    case CharacterAnim.Reel: return Reel;
+                    case CharacterAnim.Caught: return Caught;
                     default: return Idle;
                 }
             }
@@ -87,6 +100,11 @@ namespace VeQue.View.Character
         [SerializeField] private Clip _work = new Clip { Fps = 16f, Loop = false };
         // 5 khung × 10 fps = 0,5 giây.
         [SerializeField] private Clip _water = new Clip { Fps = 10f, Loop = false };
+        // Câu cá: ném 15 khung × 15 fps = 1 giây (chạy 1 lần); chờ phao lặp; kéo cá lặp; được cá 10 khung = 1 giây.
+        [SerializeField] private Clip _cast = new Clip { Fps = 15f, Loop = false };
+        [SerializeField] private Clip _wait = new Clip { Fps = 6f };
+        [SerializeField] private Clip _reel = new Clip { Fps = 12f };
+        [SerializeField] private Clip _caught = new Clip { Fps = 10f, Loop = false };
 
         [Header("Tóc")]
         [SerializeField] private HairSet[] _hairs = Array.Empty<HairSet>();
@@ -115,6 +133,10 @@ namespace VeQue.View.Character
                 case CharacterAnim.Walk: return _walk;
                 case CharacterAnim.Work: return _work;
                 case CharacterAnim.Water: return _water;
+                case CharacterAnim.Cast: return _cast;
+                case CharacterAnim.Wait: return _wait;
+                case CharacterAnim.Reel: return _reel;
+                case CharacterAnim.Caught: return _caught;
                 default: return _idle;
             }
         }

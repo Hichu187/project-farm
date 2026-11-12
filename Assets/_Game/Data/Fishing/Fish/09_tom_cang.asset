@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04fa3c247b2b7ba4590d7d189dc79f25, type: 3}
+  m_Name: 09_tom_cang
+  m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.FishDefinition
+  _id: tom_cang
+  _displayName: "T\xF4m c\xE0ng xanh"
+  _icon: {fileID: 21300000, guid: c5273c9ee7c5e00429cbc408f75db6ef, type: 3}
+  _rarity: 2
+  _minGrams: 50
+  _maxGrams: 400
+  _basePrice: 130
+  _baseXp: 8
+  _slotFactors:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 1
+  - 2
+  - 0
+  _depths: 3
+  _preferredBaits:
+  - {fileID: 11400000, guid: faa4f59eca662784ebde4db1be560fe9, type: 2}
+  _minArrows: 5
+  _maxArrows: 7
+  _pullSeconds: 3.5
+  _hookWindowSeconds: 0.6
+  _slipPercent: 12
+  _redArrows: 0

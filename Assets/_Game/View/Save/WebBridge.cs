@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace VeQue.View.Save
 {
-    // Cầu nối sang trình duyệt (Plugins/WebGL/VeQueSave.jslib): sự kiện ẩn tab và màn sao lưu HTML.
+    // Cầu nối sang trình duyệt (Plugins/WebGL/VeQueSave.jslib): sự kiện ẩn tab, màn sao lưu HTML, rung máy.
     public static class WebBridge
     {
         private delegate int ImportCallback(string code);
@@ -26,7 +26,18 @@ namespace VeQue.View.Save
 
         [DllImport("__Internal")]
         private static extern int VeQue_GetUtcOffsetMinutes();
+
+        [DllImport("__Internal")]
+        private static extern void VeQue_Vibrate(int milliseconds);
 #endif
+
+        // Rung máy (cá cắn câu). Chỉ có tác dụng trên trình duyệt Android; nơi khác bỏ qua.
+        public static void Vibrate(int milliseconds)
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            VeQue_Vibrate(milliseconds);
+#endif
+        }
 
         // Độ lệch múi giờ so với UTC (giây, dương = phía đông). Trên WebGL lấy từ trình duyệt vì múi giờ
         // trong C# có thể sai; nơi khác lấy từ máy.

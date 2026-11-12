@@ -4,6 +4,14 @@ mergeInto(LibraryManager.library, {
     return -new Date().getTimezoneOffset();
   },
 
+  // Rung máy (Android); iPhone trên web không hỗ trợ thì bỏ qua.
+  VeQue_Vibrate: function (milliseconds) {
+    try {
+      if (navigator.vibrate) navigator.vibrate(milliseconds);
+    } catch (error) {
+    }
+  },
+
   VeQue_RegisterPageHidden: function (callback) {
     if (window.__veQuePageHiddenBound) return;
     window.__veQuePageHiddenBound = true;

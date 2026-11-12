@@ -15,7 +15,7 @@ namespace VeQue.Logic
     {
         // Phao đã xuống nước, chờ cá cắn và người chơi giật.
         Waiting,
-        // Đã móc được cá, đang kéo theo vòng.
+        // Đã móc được cá, đang nhập chuỗi mũi tên (1 lượt).
         Pulling,
         // Xong (có Outcome); Farm.CompleteFishing áp kết quả.
         Finished,
@@ -31,8 +31,10 @@ namespace VeQue.Logic
         BaitStolen,
         // Giật đúng lúc nhưng trượt lưỡi.
         Slipped,
-        // Độ căng đầy: đứt dây, cá thoát; cần mất độ bền nhiều hơn, có thể gãy.
+        // Kéo cá bấm sai mũi tên: đứt dây, cá thoát; có thể gãy cần.
         LineSnapped,
+        // Kéo cá hết giờ: cá thoát (chỉ mất mồi).
+        Escaped,
     }
 
     public enum Arrow
@@ -43,30 +45,29 @@ namespace VeQue.Logic
         Right = 3,
     }
 
-    public enum BeatResult
+    // Xếp hạng kéo cá theo tốc độ nhập (càng nhanh càng hoàn hảo).
+    public enum PullGrade
     {
-        Perfect,
-        Good,
-        Miss,
+        Normal = 0,
+        Good = 1,
+        Perfect = 2,
     }
 
-    // Đề một vòng kéo cá: chuỗi mũi tên (mũi tên đỏ = bấm hướng ngược lại), thời gian nhập, độ rộng vạch nhịp.
+    // Đề kéo cá: chuỗi mũi tên (mũi tên đỏ = bấm hướng ngược lại) và thời gian nhập (đã cộng thưởng của cần).
     public sealed class PullRound
     {
-        public int Index { get; }
         public IReadOnlyList<Arrow> Arrows { get; }
         public IReadOnlyList<bool> Red { get; }
         public float TimeLimitSeconds { get; }
-        public float BeatWindow { get; }
 
-        internal PullRound(int index, Arrow[] arrows, bool[] red, float timeLimit, float beatWindow)
+        internal PullRound(Arrow[] arrows, bool[] red, float timeLimit)
         {
-            Index = index;
             Arrows = arrows;
             Red = red;
             TimeLimitSeconds = timeLimit;
-            BeatWindow = beatWindow;
         }
+
+        public int Count => Arrows.Count;
 
         // Hướng phải bấm cho mũi tên thứ i (đỏ thì ngược lại).
         public Arrow Expected(int i)
@@ -87,6 +88,7 @@ namespace VeQue.Logic
     // Một lần câu (MVP-Plan Phần 10 mục 1–3). Phần cần phản xạ thời gian thực (thanh lực, giật, nhập mũi tên)
     // do View chạy; View báo kết quả, phiên tính phần còn lại. Ngẫu nhiên riêng (seed từ Farm) nên lặp lại được.
     // Tạo bằng Farm.Cast (đã trừ mồi + độ bền); xong thì Farm.CompleteFishing áp kết quả vào tiến trình.
+    // Kéo cá 1 lượt (chốt 13/11/2026): nhập đúng hết chuỗi trước khi hết giờ là câu được; nhanh thì hạng cao hơn.
     public sealed class FishingSession
     {
         private readonly FishingTuning _tuning;
@@ -110,16 +112,11 @@ namespace VeQue.Logic
         public FishingPhase Phase { get; private set; }
         public FishingOutcome Outcome { get; private set; }
 
-        // Kéo cá.
-        public int MaxStamina { get; private set; }
-        public int Stamina { get; private set; }
-        public int MaxTension { get; private set; }
-        public int Tension { get; private set; }
-        public int Combo { get; private set; }
-        public int RoundsPlayed { get; private set; }
-        public PullRound CurrentRound { get; private set; }
+        // Đề kéo cá (có sau khi giật trúng).
+        public PullRound Pull { get; private set; }
 
         // Kết quả khi Caught.
+        public PullGrade Grade { get; private set; }
         public int Grams { get; private set; }
         public int Price { get; private set; }
         public int Xp { get; private set; }
@@ -169,7 +166,16 @@ namespace VeQue.Logic
             return power < tuning.WeakBelow ? CastQuality.Weak : CastQuality.Normal;
         }
 
-        // Giật câu ở giây thứ t (tính từ lúc phao chạm nước).
+        // Xếp hạng theo phần thời gian đã dùng.
+        public static PullGrade GradeFor(float secondsUsed, float timeLimitSeconds, FishingTuning tuning)
+        {
+            float percent = timeLimitSeconds > 0f ? secondsUsed / timeLimitSeconds * 100f : 100f;
+            if (percent <= tuning.PerfectTimePercent)
+                return PullGrade.Perfect;
+            return percent <= tuning.GoodTimePercent ? PullGrade.Good : PullGrade.Normal;
+        }
+
+        // Giật câu ở giây thứ t (tính từ lúc phao chạm nước). Trúng thì sang Pulling và có đề kéo cá (Pull).
         public FishingOutcome Strike(float t)
         {
             RequirePhase(FishingPhase.Waiting);
@@ -183,10 +189,7 @@ namespace VeQue.Logic
                 return Finish(FishingOutcome.Slipped);
 
             Phase = FishingPhase.Pulling;
-            MaxStamina = Fish.Rounds * _tuning.StaminaPerRound;
-            Stamina = MaxStamina;
-            MaxTension = Rod.LineStrength;
-            Tension = 0;
+            Pull = MakePull();
             return FishingOutcome.None;
         }
 
@@ -197,59 +200,30 @@ namespace VeQue.Logic
             return Finish(FishingOutcome.BaitStolen);
         }
 
-        // Đề vòng kế tiếp (gọi lại khi chưa nộp thì trả đề cũ).
-        public PullRound NextRound()
+        // Nhập đúng hết chuỗi sau secondsUsed giây. Quá thời gian thì cá thoát.
+        public FishingOutcome CompletePull(float secondsUsed)
         {
             RequirePhase(FishingPhase.Pulling);
-            if (CurrentRound != null)
-                return CurrentRound;
+            if (secondsUsed > Pull.TimeLimitSeconds)
+                return Finish(FishingOutcome.Escaped);
 
-            int count = SeededRandom.Range(ref _random, Fish.MinArrows, Fish.MaxArrows + 1);
-            // Ném Perfect: vòng đầu bớt 1 mũi tên.
-            if (RoundsPlayed == 0 && Quality == CastQuality.Perfect)
-                count = Math.Max(1, count - 1);
-
-            var arrows = new Arrow[count];
-            var red = new bool[count];
-            for (int i = 0; i < count; i++)
-            {
-                arrows[i] = (Arrow)SeededRandom.Range(ref _random, 0, 4);
-                red[i] = Fish.RedArrows && SeededRandom.Range(ref _random, 0, 100) < _tuning.RedArrowPercent;
-            }
-            CurrentRound = new PullRound(RoundsPlayed, arrows, red, Fish.RoundSeconds, Fish.BeatWindow);
-            return CurrentRound;
+            Grade = GradeFor(Math.Max(0f, secondsUsed), Pull.TimeLimitSeconds, _tuning);
+            RollCatch(Grade);
+            return Finish(FishingOutcome.Caught);
         }
 
-        // Nộp vòng: inputCorrect = nhập đúng cả chuỗi trước khi hết giờ; beat = chốt nhịp.
-        public FishingOutcome SubmitRound(bool inputCorrect, BeatResult beat)
+        // Bấm sai mũi tên: đứt dây.
+        public FishingOutcome WrongArrow()
         {
             RequirePhase(FishingPhase.Pulling);
-            if (CurrentRound == null)
-                throw new InvalidOperationException("Chưa lấy đề vòng (NextRound).");
+            return Finish(FishingOutcome.LineSnapped);
+        }
 
-            CurrentRound = null;
-            RoundsPlayed++;
-
-            if (!inputCorrect)
-            {
-                Combo = 0;
-                Tension += _tuning.TensionPerFail;
-                return Tension >= MaxTension ? Finish(FishingOutcome.LineSnapped) : FishingOutcome.None;
-            }
-
-            int damage = beat == BeatResult.Perfect ? _tuning.DamagePerfect
-                : beat == BeatResult.Good ? _tuning.DamageGood
-                : _tuning.DamageMiss;
-            damage += damage * Combo * _tuning.ComboBonusPercent / 100;
-            Combo = beat == BeatResult.Perfect ? Combo + 1 : 0;
-            Stamina = Math.Max(0, Stamina - damage);
-            Tension = Math.Max(0, Tension - _tuning.TensionRelief);
-
-            if (Stamina > 0)
-                return FishingOutcome.None;
-
-            RollCatch();
-            return Finish(FishingOutcome.Caught);
+        // Hết giờ nhập: cá thoát.
+        public FishingOutcome PullTimeout()
+        {
+            RequirePhase(FishingPhase.Pulling);
+            return Finish(FishingOutcome.Escaped);
         }
 
         // Người chơi bỏ cuộc (về nhà, đóng game…) khi chưa xong: coi như cá ăn mất mồi.
@@ -260,16 +234,38 @@ namespace VeQue.Logic
             return Finish(FishingOutcome.BaitStolen);
         }
 
-        // Cân nặng lệch về nhẹ (u²); giá, XP theo cân nặng.
-        private void RollCatch()
+        // Chuỗi mũi tên: độ dài theo cá (ném Perfect bớt 1), thời gian theo cá + thưởng của cần.
+        private PullRound MakePull()
         {
-            float u = NextFloat();
+            int count = SeededRandom.Range(ref _random, Fish.MinArrows, Fish.MaxArrows + 1);
+            if (Quality == CastQuality.Perfect)
+                count = Math.Max(1, count - 1);
+
+            var arrows = new Arrow[count];
+            var red = new bool[count];
+            for (int i = 0; i < count; i++)
+            {
+                arrows[i] = (Arrow)SeededRandom.Range(ref _random, 0, 4);
+                red[i] = Fish.RedArrows && SeededRandom.Range(ref _random, 0, 100) < _tuning.RedArrowPercent;
+            }
+            float time = Fish.PullSeconds * (1f + Rod.BonusTimePercent / 100f);
+            return new PullRound(arrows, red, time);
+        }
+
+        // Cân nặng theo hạng (Perfect lệch về nặng hơn); giá, XP theo cân nặng; Perfect thêm XP.
+        private void RollCatch(PullGrade grade)
+        {
+            float exponent = grade == PullGrade.Perfect ? _tuning.PerfectWeightExponent
+                : grade == PullGrade.Good ? _tuning.GoodWeightExponent
+                : _tuning.NormalWeightExponent;
+            float u = (float)Math.Pow(NextFloat(), exponent);
             int span = Fish.MaxGrams - Fish.MinGrams;
-            Grams = Fish.MinGrams + (int)Math.Round(span * u * u);
+            Grams = Fish.MinGrams + (int)Math.Round(span * u);
             float ratio = span == 0 ? 0.5f : (Grams - Fish.MinGrams) / (float)span;
             float percent = Lerp(_tuning.WeightValueMinPercent, _tuning.WeightValueMaxPercent, ratio);
             Price = Math.Max(1, (int)Math.Round(Fish.BasePrice * percent / 100f));
-            Xp = Math.Max(1, (int)Math.Round(Fish.BaseXp * percent / 100f));
+            int xpPercent = grade == PullGrade.Perfect ? 100 + _tuning.PerfectXpBonusPercent : 100;
+            Xp = Math.Max(1, (int)Math.Round(Fish.BaseXp * percent / 100f * xpPercent / 100f));
         }
 
         // Trọng số: độ hiếm × khung giờ × mồi ưa thích; chỉ cá có độ sâu khớp; Hiếm trở lên nhân thưởng
@@ -340,7 +336,6 @@ namespace VeQue.Logic
         {
             Outcome = outcome;
             Phase = FishingPhase.Finished;
-            CurrentRound = null;
             return outcome;
         }
 

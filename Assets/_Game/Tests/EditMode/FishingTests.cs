@@ -258,7 +258,10 @@ namespace VeQue.Tests
 
             Assert.AreEqual(FishingOutcome.None, session.Strike(session.BiteTime + 0.1f));
             Assert.AreEqual(FishingPhase.Pulling, session.Phase);
-            Assert.AreEqual(session.Fish.Rounds * 100, session.Stamina);
+            Assert.IsNotNull(session.Pull);
+            Assert.That(session.Pull.Count, Is.InRange(1, session.Fish.MaxArrows));
+            // Cần tre không thêm thời gian.
+            Assert.AreEqual(session.Fish.PullSeconds, session.Pull.TimeLimitSeconds, 0.0001f);
         }
 
         [Test]
@@ -269,69 +272,102 @@ namespace VeQue.Tests
             Assert.AreEqual(FishingOutcome.Slipped, session.Strike(session.BiteTime));
         }
 
-        // ---------- Kéo ----------
+        // ---------- Kéo (1 lượt, chốt 13/11/2026) ----------
+
+        [TestCase(0.0f, PullGrade.Perfect)]
+        [TestCase(1.6f, PullGrade.Perfect)]   // 40% của 4 giây.
+        [TestCase(1.7f, PullGrade.Good)]
+        [TestCase(2.8f, PullGrade.Good)]      // 70%.
+        [TestCase(2.9f, PullGrade.Normal)]
+        [TestCase(4.0f, PullGrade.Normal)]
+        public void GradeFor_FasterIsBetter(float seconds, PullGrade expected)
+        {
+            Assert.AreEqual(expected, FishingSession.GradeFor(seconds, 4f, new FishingTuning()));
+        }
 
         [Test]
-        public void Pull_AllPerfect_CaughtWithinRounds()
+        public void Pull_CompleteInTime_Caught()
         {
             FishingSession session = HookOne(CreateFarm(roSlip: 0));
 
-            FishingOutcome outcome = FishingOutcome.None;
-            while (outcome == FishingOutcome.None)
-            {
-                PullRound round = session.NextRound();
-                Assert.That(round.Arrows.Count, Is.InRange(1, session.Fish.MaxArrows));
-                outcome = session.SubmitRound(true, BeatResult.Perfect);
-            }
-
-            Assert.AreEqual(FishingOutcome.Caught, outcome);
-            Assert.LessOrEqual(session.RoundsPlayed, session.Fish.Rounds);
+            Assert.AreEqual(FishingOutcome.Caught, session.CompletePull(0.5f));
+            Assert.AreEqual(PullGrade.Perfect, session.Grade);
             Assert.That(session.Grams, Is.InRange(session.Fish.MinGrams, session.Fish.MaxGrams));
             Assert.Greater(session.Price, 0);
             Assert.Greater(session.Xp, 0);
         }
 
         [Test]
-        public void Pull_PerfectDealsMoreThanGood()
+        public void Pull_TooSlow_Escaped()
         {
-            FishingSession perfect = HookOne(CreateFarm(roSlip: 0, roRounds: 3));
-            FishingSession good = HookOne(CreateFarm(roSlip: 0, roRounds: 3));
+            FishingSession late = HookOne(CreateFarm(roSlip: 0));
+            Assert.AreEqual(FishingOutcome.Escaped, late.CompletePull(late.Pull.TimeLimitSeconds + 0.1f));
 
-            perfect.NextRound();
-            perfect.SubmitRound(true, BeatResult.Perfect);
-            good.NextRound();
-            good.SubmitRound(true, BeatResult.Good);
-
-            Assert.Less(perfect.Stamina, good.Stamina);
+            FishingSession timeout = HookOne(CreateFarm(roSlip: 0));
+            Assert.AreEqual(FishingOutcome.Escaped, timeout.PullTimeout());
+            Assert.AreEqual(FishingPhase.Finished, timeout.Phase);
         }
 
         [Test]
-        public void Pull_Failures_SnapLine()
+        public void Pull_WrongArrow_SnapsLine()
         {
-            FishingSession session = HookOne(CreateFarm(roSlip: 0, roRounds: 5));
+            FishingSession session = HookOne(CreateFarm(roSlip: 0));
 
-            FishingOutcome outcome = FishingOutcome.None;
-            int rounds = 0;
-            while (outcome == FishingOutcome.None)
-            {
-                session.NextRound();
-                outcome = session.SubmitRound(false, BeatResult.Miss);
-                rounds++;
-            }
+            Assert.AreEqual(FishingOutcome.LineSnapped, session.WrongArrow());
+        }
 
-            Assert.AreEqual(FishingOutcome.LineSnapped, outcome);
-            // Cần tre: dây chịu 100, mỗi lần sai +40 → đứt ở lần thứ 3.
-            Assert.AreEqual(3, rounds);
+        [Test]
+        public void Pull_Perfect_HeavierAndMoreXpThanNormal()
+        {
+            // Cùng trạng thái ngẫu nhiên → cùng cá, cùng số ngẫu nhiên cân nặng; chỉ khác hạng.
+            FishingSession fast = HookOne(CreateFarm(roSlip: 0));
+            FishingSession slow = HookOne(CreateFarm(roSlip: 0));
+            Assert.AreEqual(fast.Fish.Id, slow.Fish.Id);
+
+            fast.CompletePull(0.1f);
+            slow.CompletePull(slow.Pull.TimeLimitSeconds * 0.95f);
+
+            Assert.AreEqual(PullGrade.Perfect, fast.Grade);
+            Assert.AreEqual(PullGrade.Normal, slow.Grade);
+            Assert.GreaterOrEqual(fast.Grams, slow.Grams);
+            Assert.GreaterOrEqual(fast.Price, slow.Price);
+            Assert.GreaterOrEqual(fast.Xp, slow.Xp);
+        }
+
+        [Test]
+        public void Pull_PerfectXpBonusFiftyPercent()
+        {
+            // Cá rô XP gốc 1 quá nhỏ để thấy +50%: dùng công thức trên giá trị lớn qua cá XP 10.
+            FishingSession session = HookOne(CreateFarm(roSlip: 0, roXp: 10));
+            session.CompletePull(0.1f);
+
+            int span = session.Fish.MaxGrams - session.Fish.MinGrams;
+            float ratio = (session.Grams - session.Fish.MinGrams) / (float)span;
+            float percent = 60f + 80f * ratio;
+            Assert.AreEqual((int)System.Math.Round(10 * percent / 100f * 1.5f), session.Xp);
+        }
+
+        [Test]
+        public void Pull_RodBonusTime()
+        {
+            Farm farm = CreateFarm(roSlip: 0, coins: 100000);
+            farm.State.Level = 9;
+            farm.BuyRod(Carbon);
+            farm.EquipRod(Carbon);
+
+            FishingSession session = HookOne(farm);
+
+            // Cần carbon +30% thời gian.
+            Assert.AreEqual(session.Fish.PullSeconds * 1.3f, session.Pull.TimeLimitSeconds, 0.0001f);
         }
 
         [Test]
         public void RedArrows_ExpectOpposite()
         {
             FishingSession session = HookOne(CreateFarm(roSlip: 0, roRed: true));
+            PullRound round = session.Pull;
 
-            PullRound round = session.NextRound();
-
-            for (int i = 0; i < round.Arrows.Count; i++)
+            for (int i = 0; i < round.Count; i++)
             {
                 Assert.IsTrue(round.Red[i], "Tỉ lệ mũi tên đỏ 100%");
                 Assert.AreEqual(Opposite(round.Arrows[i]), round.Expected(i));
@@ -342,15 +378,13 @@ namespace VeQue.Tests
         public void NormalArrows_ExpectSame()
         {
             FishingSession session = HookOne(CreateFarm(roSlip: 0));
+            PullRound round = session.Pull;
 
-            PullRound round = session.NextRound();
-
-            for (int i = 0; i < round.Arrows.Count; i++)
+            for (int i = 0; i < round.Count; i++)
             {
                 Assert.IsFalse(round.Red[i]);
                 Assert.AreEqual(round.Arrows[i], round.Expected(i));
             }
-            Assert.AreSame(round, session.NextRound(), "Chưa nộp thì trả đề cũ");
         }
 
         // ---------- Áp kết quả ----------
@@ -399,20 +433,17 @@ namespace VeQue.Tests
         }
 
         [Test]
-        public void Complete_Snap_CostsDurabilityAndCanBreak()
+        public void Complete_Snap_OnlyCastCostAndCanBreak()
         {
-            Farm farm = CreateFarm(roSlip: 0, roRounds: 5, snapBreakPercent: 100);
+            Farm farm = CreateFarm(roSlip: 0, snapBreakPercent: 100);
             farm.TryGetEquippedRod(out RodDef def, out RodState rod);
             FishingSession session = HookOne(farm);
-            while (session.Phase == FishingPhase.Pulling)
-            {
-                session.NextRound();
-                session.SubmitRound(false, BeatResult.Miss);
-            }
+            session.WrongArrow();
 
             farm.CompleteFishing(session);
 
-            Assert.AreEqual(def.MaxDurability - 1 - 5, rod.Durability);
+            // Chốt 13/11/2026: mọi mức trừ là 1 (lúc ném); đứt dây không trừ thêm, chỉ có thể gãy.
+            Assert.AreEqual(def.MaxDurability - 1, rod.Durability);
             Assert.IsTrue(rod.IsBroken);
             Assert.AreEqual(FarmResult.RodBroken, farm.CanCast(Giun));
         }
@@ -537,9 +568,9 @@ namespace VeQue.Tests
         {
             // Tỉ lệ 0% (đầy) → 100% (về 0) để thấy rõ chênh lệch.
             int full = CountSnapBreaks(30);
-            int low = CountSnapBreaks(7);
+            int low = CountSnapBreaks(2);
 
-            // Đầy: 30 → còn 24 sau ném + đứt dây ≈ 20%; thấp: 7 → còn 1 ≈ 97%.
+            // Đầy: 30 → còn 29 sau ném ≈ 3%; thấp: 2 → còn 1 ≈ 97% (đứt dây không trừ thêm độ bền).
             Assert.Less(full, 80);
             Assert.Greater(low, 170);
         }
@@ -724,6 +755,58 @@ namespace VeQue.Tests
             Assert.AreEqual(0, state.Fishing.GetBaits(Giun));
         }
 
+        // ---------- Phép tính cho View (Đợt C) ----------
+
+        [TestCase(0f, 0f)]
+        [TestCase(0.3f, 0.5f)]
+        [TestCase(0.6f, 1f)]
+        [TestCase(0.9f, 0.5f)]
+        [TestCase(1.2f, 0f)]
+        [TestCase(1.5f, 0.5f)]
+        [TestCase(-1f, 0f)]
+        public void CastPower_PingPongsOverPeriod(float elapsed, float expected)
+        {
+            Assert.AreEqual(expected, FishingMath.CastPower(elapsed, 1.2f), 0.0001f);
+        }
+
+        [Test]
+        public void CastPower_ZeroPeriod_IsZero()
+        {
+            Assert.AreEqual(0f, FishingMath.CastPower(1f, 0f));
+        }
+
+        [TestCase(5 * 3600, 2 * 3600)]           // 5:00 Bình minh → hết lúc 7:00.
+        [TestCase(6 * 3600 + 3599, 1)]           // 6:59:59 → còn 1 giây.
+        [TestCase(18 * 3600 + 36 * 60, 24 * 60)] // 18:36 Hoàng hôn → 19:00.
+        [TestCase(23 * 3600, 6 * 3600)]          // 23:00 Khuya → 5:00 hôm sau.
+        [TestCase(23 * 3600 + 1800, 5 * 3600 + 1800)]
+        [TestCase(2 * 3600, 3 * 3600)]           // 2:00 Khuya → 5:00.
+        public void SecondsUntilEnd_ByLocalTime(long localSeconds, long expected)
+        {
+            Assert.AreEqual(expected, DaySlots.SecondsUntilEnd(Midnight + localSeconds, 0));
+        }
+
+        [Test]
+        public void SecondsUntilEnd_UsesUtcOffset()
+        {
+            // 22:00 UTC + 7 giờ = 5:00 giờ địa phương (Bình minh) → còn 2 giờ.
+            Assert.AreEqual(2 * 3600, DaySlots.SecondsUntilEnd(Midnight + 22 * 3600, 7 * 3600));
+        }
+
+        [Test]
+        public void IsNibbling_OnlyDuringNibbles()
+        {
+            Farm farm = CreateFarm();
+            FishingSession session = CastOne(farm);
+            foreach (float nibble in session.NibbleTimes)
+            {
+                Assert.IsTrue(FishingMath.IsNibbling(session, nibble, 0.15f));
+                Assert.IsTrue(FishingMath.IsNibbling(session, nibble + 0.1f, 0.15f));
+                Assert.IsFalse(FishingMath.IsNibbling(session, nibble + 0.2f, 0.15f));
+            }
+            Assert.IsFalse(FishingMath.IsNibbling(session, session.BiteTime, 0.15f));
+        }
+
         // ---------- Hỗ trợ ----------
 
         private static Arrow Opposite(Arrow arrow)
@@ -754,15 +837,11 @@ namespace VeQue.Tests
             int broken = 0;
             for (uint seed = 1; seed <= 200; seed++)
             {
-                Farm farm = CreateFarm(roSlip: 0, roRounds: 5, randomState: seed * 7919u, snapBreakMin: 0, snapBreakMax: 100);
+                Farm farm = CreateFarm(roSlip: 0, randomState: seed * 7919u, snapBreakMin: 0, snapBreakMax: 100);
                 farm.TryGetEquippedRod(out _, out RodState rod);
                 rod.Durability = startDurability;
                 FishingSession session = HookOne(farm);
-                while (session.Phase == FishingPhase.Pulling)
-                {
-                    session.NextRound();
-                    session.SubmitRound(false, BeatResult.Miss);
-                }
+                session.WrongArrow();
                 Assert.AreEqual(FishingOutcome.LineSnapped, session.Outcome);
                 farm.CompleteFishing(session);
                 if (rod.Snapped)
@@ -832,12 +911,7 @@ namespace VeQue.Tests
         private static FishingSession CatchOne(Farm farm)
         {
             FishingSession session = HookOne(farm);
-            while (session.Phase == FishingPhase.Pulling)
-            {
-                session.NextRound();
-                session.SubmitRound(true, BeatResult.Perfect);
-            }
-            Assert.AreEqual(FishingOutcome.Caught, session.Outcome);
+            Assert.AreEqual(FishingOutcome.Caught, session.CompletePull(0.5f));
             return session;
         }
 
@@ -858,10 +932,10 @@ namespace VeQue.Tests
         }
 
         private Farm CreateFarm(bool withFishing = true, int unlockLevel = UnlockLevel, int baits = 10,
-            uint randomState = 12345, int roSlip = 0, int roRounds = 2, int snapBreakPercent = 20,
+            uint randomState = 12345, int roSlip = 0, int roXp = 1, int snapBreakPercent = 20,
             int wormChance = 0, long coins = 0, bool roRed = false, int snapBreakMin = -1, int snapBreakMax = -1)
         {
-            FarmDef def = CreateDef(withFishing, unlockLevel, baits, roSlip, roRounds,
+            FarmDef def = CreateDef(withFishing, unlockLevel, baits, roSlip, roXp,
                 snapBreakMin >= 0 ? snapBreakMin : snapBreakPercent, snapBreakMax >= 0 ? snapBreakMax : snapBreakPercent,
                 wormChance, roRed);
             FarmState state = FarmState.CreateNew(def);
@@ -870,7 +944,7 @@ namespace VeQue.Tests
             return new Farm(def, state, _clock);
         }
 
-        private static FarmDef CreateDef(bool withFishing, int unlockLevel, int starterBaits, int roSlip, int roRounds,
+        private static FarmDef CreateDef(bool withFishing, int unlockLevel, int starterBaits, int roSlip, int roXp,
             int snapBreakMin, int snapBreakMax, int wormChance, bool roRed)
         {
             var zones = new[] { new ZoneDef(Zone1, new[] { new BedDef(2, 3) }, 2, new[] { 10, 10, 10, 10 }) };
@@ -886,17 +960,17 @@ namespace VeQue.Tests
                 float[] dawnOnly = { 1, 0, 0, 0, 0, 0, 0 };
                 var fish = new[]
                 {
-                    new FishDef(Ro, FishRarity.Common, 80, 300, 10, 1, allDay, FishDepth.All, new[] { Giun },
-                        roRounds, 3, 4, 4f, 0.3f, 0.9f, roSlip, roRed),
+                    new FishDef(Ro, FishRarity.Common, 80, 300, 10, roXp, allDay, FishDepth.All, new[] { Giun },
+                        3, 4, 4f, 0.9f, roSlip, roRed),
                     new FishDef(Loc, FishRarity.Rare, 500, 2500, 80, 8, dawnSunset, FishDepth.Mid | FishDepth.Far, new[] { Tep },
-                        4, 5, 7, 3.5f, 0.2f, 0.6f, 15),
+                        5, 7, 3.5f, 0.6f, 15),
                     new FishDef(ChepVang, FishRarity.Legendary, 3000, 9000, 900, 50, dawnOnly, FishDepth.Far, new[] { MoiThom },
-                        7, 8, 10, 3f, 0.1f, 0.4f, 30, redArrows: true),
+                        8, 10, 3f, 0.4f, 30, redArrows: true),
                 };
                 var rods = new[]
                 {
-                    new RodDef(Tre, 1, 0.03f, 1.2f, 100, 0, 0, 30, 0, 1, 50),
-                    new RodDef(Carbon, 4, 0.06f, 1.6f, 220, 10, 30, 120, 6000, 9, 2400),
+                    new RodDef(Tre, 1, 0.03f, 1.2f, 0, 0, 0, 30, 0, 1, 50),
+                    new RodDef(Carbon, 4, 0.06f, 1.6f, 30, 10, 30, 120, 6000, 9, 2400),
                 };
                 var baitDefs = new[]
                 {

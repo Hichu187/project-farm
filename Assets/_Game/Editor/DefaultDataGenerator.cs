@@ -155,7 +155,7 @@ namespace VeQue.EditorTools
         {
             if (AssetDatabase.LoadAssetAtPath<FarmDefinition>(FarmPath) != null
                 && !EditorUtility.DisplayDialog("Tạo data mặc định",
-                    "Data đã có. Ghi đè số liệu bằng bảng mặc định? Sprite đã gán và origin luống đã có được giữ nguyên.", "Ghi đè", "Hủy"))
+                    "Data đã có. Ghi đè số liệu bằng bảng mặc định (cả câu cá)? Sprite / icon đã gán và origin luống đã có được giữ nguyên.", "Ghi đè", "Hủy"))
                 return;
 
             EnsureFolder(DataFolder);
@@ -247,6 +247,8 @@ namespace VeQue.EditorTools
             for (int i = 0; i < CustomerNames.Length; i++)
                 names.GetArrayElementAtIndex(i).stringValue = CustomerNames[i];
             farmSo.ApplyModifiedPropertiesWithoutUndo();
+
+            FishingDataGenerator.Generate(farm);
 
             AssetDatabase.SaveAssets();
             Selection.activeObject = farm;

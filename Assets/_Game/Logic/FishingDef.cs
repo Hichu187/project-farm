@@ -37,13 +37,10 @@ namespace VeQue.Logic
         public FishDepth Depths { get; }
         public IReadOnlyList<string> PreferredBaits { get; }
 
-        // Độ khó.
-        public int Rounds { get; }
+        // Độ khó kéo cá (1 lượt, chốt 13/11/2026): chuỗi MinArrows..MaxArrows mũi tên, nhập trong PullSeconds giây.
         public int MinArrows { get; }
         public int MaxArrows { get; }
-        public float RoundSeconds { get; }
-        // Độ rộng vạch nhịp (0..1 của thanh chạy).
-        public float BeatWindow { get; }
+        public float PullSeconds { get; }
         // Khung giật câu sau khi phao chìm (giây).
         public float HookWindowSeconds { get; }
         public int SlipPercent { get; }
@@ -52,7 +49,7 @@ namespace VeQue.Logic
 
         public FishDef(string id, FishRarity rarity, int minGrams, int maxGrams, int basePrice, int baseXp,
             IReadOnlyList<float> slotFactors, FishDepth depths, IReadOnlyList<string> preferredBaits,
-            int rounds, int minArrows, int maxArrows, float roundSeconds, float beatWindow,
+            int minArrows, int maxArrows, float pullSeconds,
             float hookWindowSeconds, int slipPercent, bool redArrows = false)
         {
             if (string.IsNullOrEmpty(id))
@@ -70,10 +67,10 @@ namespace VeQue.Logic
             }
             if (depths == FishDepth.None)
                 throw new ArgumentException($"Cá '{id}' cần ít nhất 1 độ sâu.", nameof(depths));
-            if (rounds < 1 || minArrows < 1 || maxArrows < minArrows)
-                throw new ArgumentOutOfRangeException(nameof(rounds), $"Độ khó cá '{id}' không hợp lệ.");
-            if (roundSeconds <= 0f || beatWindow <= 0f || beatWindow > 1f || hookWindowSeconds <= 0f)
-                throw new ArgumentOutOfRangeException(nameof(roundSeconds), $"Thời gian của cá '{id}' không hợp lệ.");
+            if (minArrows < 1 || maxArrows < minArrows)
+                throw new ArgumentOutOfRangeException(nameof(minArrows), $"Độ khó cá '{id}' không hợp lệ.");
+            if (pullSeconds <= 0f || hookWindowSeconds <= 0f)
+                throw new ArgumentOutOfRangeException(nameof(pullSeconds), $"Thời gian của cá '{id}' không hợp lệ.");
             if (slipPercent < 0 || slipPercent > 100)
                 throw new ArgumentOutOfRangeException(nameof(slipPercent));
 
@@ -86,11 +83,9 @@ namespace VeQue.Logic
             SlotFactors = new List<float>(slotFactors).AsReadOnly();
             Depths = depths;
             PreferredBaits = new List<string>(preferredBaits ?? Array.Empty<string>()).AsReadOnly();
-            Rounds = rounds;
             MinArrows = minArrows;
             MaxArrows = maxArrows;
-            RoundSeconds = roundSeconds;
-            BeatWindow = beatWindow;
+            PullSeconds = pullSeconds;
             HookWindowSeconds = hookWindowSeconds;
             SlipPercent = slipPercent;
             RedArrows = redArrows;
@@ -109,7 +104,7 @@ namespace VeQue.Logic
         }
     }
 
-    // Cần câu (mục 5). Rank càng cao: vùng Perfect rộng hơn, thanh lực chậm hơn, dây chịu căng hơn, ít trượt hơn.
+    // Cần câu (mục 5). Rank càng cao: vùng Perfect rộng hơn, thanh lực chậm hơn, thêm thời gian kéo cá, ít trượt hơn.
     public sealed class RodDef
     {
         public string Id { get; }
@@ -118,8 +113,8 @@ namespace VeQue.Logic
         public float PerfectHalfWidth { get; }
         // Thời gian thanh lực chạy 0 → 100% → 0 (giây) – View dùng.
         public float BarPeriodSeconds { get; }
-        // Độ căng tối đa trước khi đứt dây.
-        public int LineStrength { get; }
+        // Thêm thời gian nhập chuỗi mũi tên khi kéo cá (% của FishDef.PullSeconds).
+        public int BonusTimePercent { get; }
         public int SlipReductionPercent { get; }
         public int RareBonusPercent { get; }
         public int MaxDurability { get; }
@@ -127,15 +122,15 @@ namespace VeQue.Logic
         public int UnlockLevel { get; }
         public long RepairPrice { get; }
 
-        public RodDef(string id, int rank, float perfectHalfWidth, float barPeriodSeconds, int lineStrength,
+        public RodDef(string id, int rank, float perfectHalfWidth, float barPeriodSeconds, int bonusTimePercent,
             int slipReductionPercent, int rareBonusPercent, int maxDurability, long price, int unlockLevel, long repairPrice)
         {
             if (string.IsNullOrEmpty(id))
                 throw new ArgumentException("Cần câu cần id.", nameof(id));
             if (perfectHalfWidth <= 0f || perfectHalfWidth >= 0.5f || barPeriodSeconds <= 0f)
                 throw new ArgumentOutOfRangeException(nameof(perfectHalfWidth));
-            if (lineStrength <= 0 || maxDurability <= 0)
-                throw new ArgumentOutOfRangeException(nameof(lineStrength));
+            if (bonusTimePercent < 0 || maxDurability <= 0)
+                throw new ArgumentOutOfRangeException(nameof(bonusTimePercent));
             if (slipReductionPercent < 0 || rareBonusPercent < 0 || price < 0 || repairPrice < 0 || unlockLevel < 1)
                 throw new ArgumentOutOfRangeException(nameof(price));
 
@@ -143,7 +138,7 @@ namespace VeQue.Logic
             Rank = rank;
             PerfectHalfWidth = perfectHalfWidth;
             BarPeriodSeconds = barPeriodSeconds;
-            LineStrength = lineStrength;
+            BonusTimePercent = bonusTimePercent;
             SlipReductionPercent = slipReductionPercent;
             RareBonusPercent = rareBonusPercent;
             MaxDurability = maxDurability;
@@ -176,6 +171,8 @@ namespace VeQue.Logic
     }
 
     // Các con số chung của câu cá. Giá trị mặc định là đề xuất 12/11/2026, chỉnh trong data.
+    // [Serializable] để FishingDefinition (ScriptableObject) giữ và chỉnh được trong Inspector.
+    [Serializable]
     public sealed class FishingTuning
     {
         // Ném: lực 0..1; Perfect quanh PerfectCenter ± RodDef.PerfectHalfWidth; Tốt rộng gấp GoodWidthMultiplier.
@@ -202,20 +199,20 @@ namespace VeQue.Logic
         // Khoảng cách tối thiểu giữa các lần rỉa và tới lúc cắn (giây).
         public float NibbleGapSeconds = 0.8f;
 
-        // Kéo cá: thể lực = Rounds × StaminaPerRound; mỗi vòng đúng trừ theo nhịp, combo Perfect cộng thêm %.
-        public int StaminaPerRound = 100;
-        public int DamagePerfect = 100;
-        public int DamageGood = 70;
-        public int DamageMiss = 40;
-        public int ComboBonusPercent = 10;
-        // Sai / hết giờ tăng độ căng; vòng đúng giảm bớt.
-        public int TensionPerFail = 40;
-        public int TensionRelief = 10;
+        // Kéo cá 1 lượt (chốt 13/11/2026): nhập đúng hết chuỗi trong thời gian → câu được. Xếp hạng theo thời gian đã dùng:
+        // ≤ PerfectTimePercent% = Perfect, ≤ GoodTimePercent% = Tốt, còn lại = Thường.
+        // Perfect: +PerfectXpBonusPercent% XP. Cân nặng = nhẹ nhất + (nặng nhất − nhẹ nhất) × u^số mũ (số mũ lớn = lệch nhẹ).
+        public int PerfectTimePercent = 40;
+        public int GoodTimePercent = 70;
+        public int PerfectXpBonusPercent = 50;
+        public float PerfectWeightExponent = 1f;
+        public float GoodWeightExponent = 2f;
+        public float NormalWeightExponent = 3f;
         public int RedArrowPercent = 25;
 
-        // Độ bền: mỗi lần ném, đứt dây. Câu được cá (to / hiếm) không mất thêm.
+        // Độ bền: mỗi lượt câu trừ 1 lúc ném (chốt 13/11/2026: mọi mức trừ là 1); đứt dây không trừ thêm, chỉ có thể gãy cần.
         public int CastDurabilityCost = 1;
-        public int SnapDurabilityCost = 5;
+        public int SnapDurabilityCost = 0;
         // Xác suất gãy cần khi đứt dây: độ bền đầy = Min, về 0 = Max, tuyến tính ở giữa.
         public int SnapBreakMinPercent = 20;
         public int SnapBreakMaxPercent = 60;
@@ -234,9 +231,12 @@ namespace VeQue.Logic
                 throw new ArgumentException("Cần 5 trọng số độ hiếm.");
             if (BiteMinSeconds <= 0f || BiteMaxSeconds < BiteMinSeconds)
                 throw new ArgumentException("Thời gian chờ cắn không hợp lệ.");
-            if (StaminaPerRound <= 0 || TensionPerFail <= 0)
-                throw new ArgumentException("Thể lực / độ căng không hợp lệ.");
-            if (SnapBreakMinPercent < 0 || SnapBreakMaxPercent > 100 || SnapBreakMaxPercent < SnapBreakMinPercent)
+            if (PerfectTimePercent <= 0 || GoodTimePercent < PerfectTimePercent || GoodTimePercent > 100 || PerfectXpBonusPercent < 0)
+                throw new ArgumentException("Xếp hạng kéo cá không hợp lệ.");
+            if (PerfectWeightExponent <= 0f || GoodWeightExponent <= 0f || NormalWeightExponent <= 0f)
+                throw new ArgumentException("Số mũ cân nặng không hợp lệ.");
+            if (CastDurabilityCost < 0 || SnapDurabilityCost < 0)
+                throw new ArgumentException("Mức trừ độ bền không hợp lệ.");            if (SnapBreakMinPercent < 0 || SnapBreakMaxPercent > 100 || SnapBreakMaxPercent < SnapBreakMinPercent)
                 throw new ArgumentException("Tỉ lệ gãy cần không hợp lệ.");
             if (RepairMaxLossPercent < 0 || RepairMaxLossPercent > 100 || RepairMinPercent < 0 || RepairMinPercent > 100)
                 throw new ArgumentException("Thông số sửa cần không hợp lệ.");

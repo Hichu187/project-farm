@@ -57,10 +57,19 @@ namespace VeQue.EditorTools
         // Màu xanh của greenbar_06.
         public static readonly Color BarFill = new Color32(0x63, 0xc7, 0x4d, 0xff);
 
-        // Icon chép nguyên từ Sunnyside: confirm, cancel, sandtimer, stopwatch, rod (chỗ câu).
+        // Icon chép nguyên từ Sunnyside: confirm, cancel, sandtimer, stopwatch, rod (chỗ câu),
+        // mũi tên kéo cá (arrow_up-1 của Sunnyside là mũi tên xuống).
         public static string IconPath(string name) => $"{OutputFolder}/ui_icon_{name}.png";
 
-        private static readonly string[] Icons = { "confirm", "cancel", "sandtimer", "stopwatch", "rod" };
+        public const string ArrowUp = "arrow_up";
+        public const string ArrowDown = "arrow_up-1";
+        public const string ArrowLeft = "arrow_left";
+        public const string ArrowRight = "arrow_right";
+
+        private static readonly string[] Icons =
+        {
+            "confirm", "cancel", "sandtimer", "stopwatch", "rod", ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
+        };
 
         // Tên file của bản ghép đầu tiên (12/11/2026), xóa khi chạy lại cho gọn.
         // Không có ui_box_dark.png: tên đó vẫn dùng cho khung dt.

@@ -66,6 +66,13 @@ namespace VeQue.View.Character
         public bool IsBusy => _state == State.WalkingToTask || _state == State.Working;
         // Transform của thân nhân vật (vị trí chân) – camera đi theo cái này.
         public Transform Body => _motor.transform;
+
+        public CharacterView View => _motor.View;
+
+        public Facing Facing => _motor.Facing;
+
+        // Đang câu cá: bỏ qua chạm đất (không đi, không qua cổng). Kéo camera vẫn được.
+        public bool InputLocked { get; set; }
         // Đang đi tới đích của WalkTo (chưa tới, chưa bị đổi hướng).
         public bool HasPendingArrival => _arrivedCallback != null;
 
@@ -310,6 +317,9 @@ namespace VeQue.View.Character
 
         private void HandleTapGround(Vector2 world)
         {
+            if (InputLocked)
+                return;
+
             // Cổng, chỗ câu, đang chuyển cảnh: RegionTravel lo.
             if (_travel != null && _travel.HandleGroundTap(world))
                 return;

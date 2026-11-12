@@ -41,9 +41,24 @@ namespace VeQue.Logic
         // utcSeconds: giờ Unix; utcOffsetSeconds: độ lệch múi giờ (FarmState.UtcOffsetSeconds).
         public static DaySlot Get(long utcSeconds, int utcOffsetSeconds)
         {
+            return FromHour((int)(SecondsOfDay(utcSeconds, utcOffsetSeconds) / 3600));
+        }
+
+        // Số giây còn lại tới hết khung giờ hiện tại (Khuya 23h → 5h qua nửa đêm). Luôn > 0.
+        public static long SecondsUntilEnd(long utcSeconds, int utcOffsetSeconds)
+        {
+            long secondsOfDay = SecondsOfDay(utcSeconds, utcOffsetSeconds);
+            DaySlot slot = FromHour((int)(secondsOfDay / 3600));
+            long end = EndHour(slot) * 3600L;
+            if (end <= secondsOfDay)
+                end += 86400;
+            return end - secondsOfDay;
+        }
+
+        private static long SecondsOfDay(long utcSeconds, int utcOffsetSeconds)
+        {
             long local = utcSeconds + utcOffsetSeconds;
-            long secondsOfDay = ((local % 86400) + 86400) % 86400;
-            return FromHour((int)(secondsOfDay / 3600));
+            return ((local % 86400) + 86400) % 86400;
         }
     }
 }

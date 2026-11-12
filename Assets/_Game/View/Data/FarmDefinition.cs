@@ -61,8 +61,13 @@ namespace VeQue.View.Data
         [Min(0)] [SerializeField] private int _orderDailyLimit = 15;
         [SerializeField] private string[] _customerNames = Array.Empty<string>();
 
+        [Header("Câu cá")]
+        [Tooltip("Bỏ trống = chưa có câu cá.")]
+        [SerializeField] private FishingDefinition _fishing;
+
         public IReadOnlyList<ZoneDefinition> Zones => _zones;
         public IReadOnlyList<CropDefinition> Crops => _crops;
+        public FishingDefinition Fishing => _fishing;
 
         public FarmDef ToDef()
         {
@@ -98,7 +103,8 @@ namespace VeQue.View.Data
                 _orderDiscardMinutes * 60L, _customerNames, _orderHarvestCap,
                 _orderRefillMinutes * 60L, _orderUrgentRefillMinutes * 60L, _orderUrgentChancePercent,
                 _orderUrgentRewardPercent, _orderUrgentExpireMinutes * 60L, _orderDailyLimit);
-            return new FarmDef(zones, crops, _startCoins, seeds, _waterReducePercent, levels, rescueId, orders);
+            FishingDef fishing = _fishing != null ? _fishing.ToDef() : null;
+            return new FarmDef(zones, crops, _startCoins, seeds, _waterReducePercent, levels, rescueId, orders, fishing);
         }
     }
 }

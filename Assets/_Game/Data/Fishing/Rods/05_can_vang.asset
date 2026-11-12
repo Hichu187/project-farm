@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b207b71086fda7f4b8495db68615b4df, type: 3}
+  m_Name: 05_can_vang
+  m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.RodDefinition
+  _id: can_vang
+  _displayName: "C\u1EA7n v\xE0ng"
+  _icon: {fileID: 0}
+  _rank: 5
+  _perfectHalfWidth: 0.08
+  _barPeriodSeconds: 1.8
+  _bonusTimePercent: 50
+  _slipReductionPercent: 15
+  _rareBonusPercent: 50
+  _maxDurability: 200
+  _price: 20000
+  _unlockLevel: 12
+  _repairPrice: 8000

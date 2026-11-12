@@ -1,6 +1,6 @@
 # Về Quê – Tiến độ
 
-## Tóm tắt (cập nhật 12/11/2026)
+## Tóm tắt (cập nhật 13/11/2026)
 
 | Phần | Trạng thái | Còn thiếu |
 |---|---|---|
@@ -15,12 +15,12 @@
 | 6 – UI | Ổn trong Editor | Mục 4 hiệu ứng GUI (làm sau); mục 5 chạm/kéo chờ kiểm tra; chữ có dấu + safe-area trên iPhone |
 | 6b – Cấp độ, đơn hàng, cân bằng | Ổn trong Editor | Build + Build Report; công cụ Cân bằng (làm sau) |
 | 6c – Việc làm lúc chờ cây lớn | Mục 2 (đơn hàng: chờ, Khẩn cấp, 15 đơn/ngày) xong code, người dùng xác nhận đơn ổn 12/11 | Mục 1, 3–6 trong MVP, 7–8 sau MVP; Test Runner + thử Tua thời gian mục 2; mỗi mục duyệt thiết kế trước |
-| 10 – Nhân vật, vùng câu, câu cá, ao nhà | Giai đoạn 1 xong trong Editor (nhân vật Sunnyside 3 lớp từ 3b); giai đoạn 2 (vùng câu) đã viết code, chờ kiểm tra; giai đoạn 3 (Logic câu cá) xong, thêm độ bền cần 12/11; ẩn tab chờ thử trên web | Ném perfect, giật câu, kéo cá mũi tên 4 hướng, cá theo độ hiếm/cân nặng/giá/khung giờ, cần rank/độ bền/trượt/gãy, mồi; cần art cá, phao, cần, nước |
+| 10 – Nhân vật, vùng câu, câu cá, ao nhà | Giai đoạn 1–3 xong (nhân vật, vùng câu tạm, Logic câu cá + độ bền cần). Giai đoạn 4: Đợt A (data), B (hoạt ảnh câu), C (ném / chờ / giật) xong; Đợt D (kéo cá 1 lượt, nhanh = Perfect) đã viết code, chờ kiểm tra | Đợt D kiểm tra; Đợt E (hộp kết quả, bảng Đồ câu, Thả cá, báo đào giun, build); giai đoạn 5 (bán cá, album, đơn có cá, chống kẹt tính cá), 6 (ao nhà); art cá / phao thật |
 | 7 – Lưu tiến trình | Đã viết code (save `version` 6 từ 12/11: nhân vật, hạng / hạn đơn, giới hạn ngày, múi giờ, câu cá, số lần sửa cần) | Thử trên máy thật, nhập mã máy khác, trình duyệt nhúng Facebook |
 | 8 – Build & phát hành | Chưa làm | Toàn bộ |
 
-Git: nhánh `setup/phan-0-camera`; `origin` có tới `b210c55`. Commit mới nhất `3276bb3` (Phần 10 giai đoạn 1, chưa push). **Chưa commit:** toàn bộ Phần 3b (gói Sunnyside, nhân vật 3 lớp, công cụ import tileset, tạo nhân vật, tài liệu).
-Test: người dùng xác nhận Test Runner ổn sau Phần 10 giai đoạn 1 (dự kiến 271). Sau 3b bước 1b + 6c mục 2 chưa chạy trong Unity. Ngoài Unity (12/11): NUnit Logic + test thuần 218/218 xanh (không gồm `SmokeTests`, `SaveTests`, `FarmDefinitionTests`, `UiFormatTests`, `EaseTests`).
+Git: nhánh `setup/phan-0-camera`; `origin` có tới `b210c55`. Commit mới nhất `063595a` (việc 12/11: 3b, 6c mục 2, Phần 10 giai đoạn 2–3, độ bền cần; chưa push). **Chưa commit:** Phần 10 giai đoạn 4 Đợt A–D (13/11).
+Test: Test Runner trong Unity ổn sau Đợt C (dự kiến 414); sau Đợt D chưa chạy (dự kiến 431). Ngoài Unity (13/11): NUnit Logic + `UiFormat` 345/345 xanh (không gồm `SmokeTests`, `SaveTests`, `FarmDefinitionTests`, `CharacterSkinTests`, `EaseTests`). Biên dịch Logic + View + Editor + Tests (Editor và WebGL): không lỗi.
 
 ## Phần 0 – Dọn project & khung thư mục (XONG – 29/10/2026)
 
@@ -598,6 +598,57 @@ Quyết định (sau khi kiểm tra logic câu cá):
 - Test thêm 11 ca (sửa giảm dần tới dưới 15%, mua lại khi gãy / đã sửa / mòn hết, không mua lại khi còn tốt, tỉ lệ gãy 5 mốc, độ bền thấp gãy nhiều hơn, save giữ số lần sửa, save 5 → 6, kẹp độ bền khi nạp); sửa `Repair_RestoresAndCosts`. NUnit ngoài Unity: 280/280 xanh. View / Editor chưa dùng các API này (giao diện cửa hàng cần làm ở giai đoạn 4).
 - [x] Người dùng: Test Runner trong Unity ổn (12/11/2026, dự kiến 365).
 - Chống kẹt: ghi đầy đủ ở `MVP-Plan.md` Phần 6b.
+
+## Phần 10 giai đoạn 4 – Câu cá: chơi (đang làm – 12/11/2026)
+
+### Quyết định (người dùng duyệt 12/11/2026)
+- Chia 5 đợt A–E (chi tiết `MVP-Plan.md` Phần 10 mục 7, giai đoạn 4).
+- Cá Huyền thoại: không đổi chuỗi giữa chừng; độ khó thêm bằng mũi tên khác màu (bấm ngược) – đã có trong Logic.
+- Giỏ đầy khi chưa bán được cá: thêm nút **Thả cá** trong bảng Đồ câu (tạm, tới giai đoạn 5).
+- Bảng Đồ câu mở từ nút **Đồ câu** trên HUD vùng câu + nút chuyển "Hạt giống | Đồ câu" trong tab Cửa hàng.
+- Data: 13 cá, 5 cần, 5 mồi theo bảng đề xuất 12/11; chỉnh số sau. Id mồi tép là `moi_tep` (khác cá `tep`).
+- Art tạm (Sunnyside chưa có cá, phao): phao + icon cá theo màu độ hiếm, vẽ bằng công cụ Editor; người dùng thay sau.
+
+### Đợt A – Data câu cá (XONG – 12/11/2026, người dùng xác nhận ổn)
+- `View/Data`: `FishDefinition`, `RodDefinition`, `BaitDefinition`, `FishingDefinition` (`ToDef()`, `TryGetFish` / `TryGetRod` / `TryGetBait` để View lấy tên, icon); `FarmDefinition._fishing` → `FarmDef`. `FishingTuning` (Logic) thêm `[Serializable]` để chỉnh trong Inspector.
+- Editor: `FishingDataGenerator` – menu **Về Quê → Tạo data câu cá** (cũng chạy trong **Tạo data mặc định**): `Assets/_Game/Data/Fishing/{Fish,Rods,Baits}/`, `Assets/_Game/Data/FishingDefinition.asset`, gán vào `FarmDefinition`; chạy lại chỉ ghi số, giữ icon; con số chung về mặc định `FishingTuning`. `FishingPlaceholderArt` – menu **Về Quê → Câu cá: tạo art tạm**: `Assets/_Game/Art/Fishing/bobber.png`, `fish_{common,uncommon,rare,epic,legendary}.png` (PPU 16, Point, không nén, tắt mipmap), gán icon cho cá chưa có icon / đang dùng icon tạm.
+- Test `FarmDefinitionTests` thêm 6 ca: data bật câu cá (13 / 5 / 5, quà, giỏ, giun); nông trại mới có cần tre + 10 giun, ném được; khung giờ nào cũng có cá Thường gần bờ; cá Hiếm trở xuống ≥ 2 khung, mồi ưa thích tồn tại, chỉ cá Huyền thoại có mũi tên đỏ; cần sau tốt hơn / đắt hơn, sửa rẻ hơn mua; cá / cần / mồi có tên, cá có icon.
+- Biên dịch Logic + View + Editor + Tests ngoài Unity: không lỗi. NUnit Logic ngoài Unity 280/280.
+- [x] Người dùng: **Tạo data câu cá** → **Câu cá: tạo art tạm** → Test Runner → xem `FishingDefinition.asset`: ổn.
+- Sửa kèm: thông báo (`Toast`) bị nhãn tên vùng che ở vùng câu → dời thông báo xuống dưới nhãn (`UiBuilder.BuildToast`, `HudHeight + 48`). Người dùng xác nhận ổn.
+
+### Đợt B – Hoạt ảnh câu của nhân vật (XONG – 13/11/2026, người dùng cho sang Đợt C)
+- `CharacterAnim` thêm `Cast`, `Wait`, `Reel`, `Caught`; `CharacterSkin` thêm clip `_cast` (15 khung, 15 fps, 1 lần = 1 giây), `_wait` (9 khung, 6 fps, lặp), `_reel` (13 khung, 12 fps, lặp), `_caught` (10 khung, 10 fps, 1 lần) + khung tóc tương ứng trong `HairSet`.
+- `CharacterSkinAssigner` thêm 4 strip `CASTING` / `WAITING` / `REELING` / `CAUGHT` (đã đo: chân ở hàng pixel 25 như các strip cũ → dùng chung pivot).
+- `CharacterView`: chuột phải component → **Thử: ném cần / chờ cá / kéo cá / được cá** (khi đang Play).
+- Test mới `CharacterSkinTests` (12 ca): mỗi hoạt ảnh đủ khung ở thân, dụng cụ, 6 kiểu tóc; ném / được cá chạy 1 lần, chờ / kéo lặp.
+- Biên dịch ngoài Unity: không lỗi.
+- Ghi cho Đợt C: art Sunnyside `WAITING` / `REELING` vẽ sẵn dây câu thòng xuống, đầu dây cố định ở (+30 px, −22 px) so với chân (nhìn phải), không có phao; `CASTING` có phao đỏ bay. Phao / độ xa phải tính theo điểm này (đề xuất ở Đợt C).
+- [x] Người dùng: **Nhân vật Sunnyside: import + gán sprite** → Test Runner → thử 4 hoạt ảnh.
+
+### Đợt C – Ném, chờ cắn, giật (XONG tạm – 13/11/2026, người dùng: tạm thời ổn)
+Quyết định (duyệt 13/11/2026): phao cố định ở đầu dây vẽ sẵn (cách A), độ sâu chỉ hiện bằng chữ; trước Đợt D móc được cá thì báo "Móc được …! (kéo cá: Đợt D)" rồi bỏ lượt (mất mồi); bố cục HUD tạm như kế hoạch.
+- Logic: `FishingMath.CastPower` (thanh lực 0 → 1 → 0 theo chu kỳ cần), `FishingMath.IsNibbling`; `DaySlots.SecondsUntilEnd` (còn bao lâu hết khung, qua nửa đêm). Test thêm 16 ca trong `FishingTests`.
+- View: `Fishing/FishingController` (Away → Ready → Charging → Casting → Waiting → Result; phao ở đầu dây (+30, −22 px so với chân, lật theo hướng), rỉa nhấp 1 px, cắn chìm 2 px + "!" + rung; Strike / Timeout / CompleteFishing; bỏ lượt khi Thu cần, đi qua cổng / Về nhà (`TravelStarted`), ẩn tab (`PageHiding`); đang câu khóa chạm đất). `UI/FishingHud` (khung giờ đếm ngược, cần + độ bền / độ bền tối đa, giỏ, mồi chạm để đổi, thanh lực + vùng Tốt / Perfect theo cần, nút Ném / Giật, Thu cần). `UI/HoldButton` (báo chạm xuống + nhả). `FarmCharacterController.InputLocked`, `View`, `Facing`. `GameUI` bỏ thông báo "Câu cá: sắp có". `WebBridge.Vibrate` + `VeQue_Vibrate` (jslib, `navigator.vibrate`). `UiFormat`: tên khung giờ, chất lượng ném, độ sâu, thông báo kết quả, lý do không ném được (test thêm 15 ca).
+- Editor: `UiBuilder.BuildFishing` (HUD) + `EnsureFishingController` (trên `Regions`, con `Bobber` / `BiteAlert`); `FishingPlaceholderArt` thêm `alert.png`.
+- Biên dịch ngoài Unity (Editor + WebGL): không lỗi. NUnit ngoài Unity (Logic + UiFormat): 328/328.
+- [x] Người dùng: tạo art tạm → Tạo UI → Test Runner → chơi thử: tạm thời ổn (vị trí phao, "!", thanh lực có thể chỉnh lại sau trên máy thật).
+
+### Đợt D – Kéo cá 1 lượt (đã viết code, chờ kiểm tra – 13/11/2026)
+Quyết định (người dùng 13/11/2026, thay thiết kế cũ nhiều vòng + chốt nhịp):
+- Không có nút Chốt: chỉ cần nhập đúng. Mỗi lần câu chỉ 1 lượt (1 chuỗi). Càng nhanh càng hoàn hảo: ≤ 40% thời gian Perfect (+50% XP, cân nặng u¹), ≤ 70% Tốt (u²), còn lại Thường (u³).
+- Bấm sai = đứt dây (có thể gãy cần, 20% → 60% theo độ bền); hết giờ = cá thoát (chỉ mất mồi).
+- Cần: "sức bền dây" đổi thành thêm thời gian kéo (0 / 10 / 20 / 30 / 50%).
+- **Mọi mức trừ độ bền là 1**: chỉ trừ 1 lúc ném; đứt dây không trừ thêm (`SnapDurabilityCost` = 0, chỉnh được trong data).
+- Nút: 4 mũi tên chữ thập ở giữa dưới; Thu cần góc phải dưới cùng.
+
+Đã làm:
+- Logic: `FishingSession` viết lại phần kéo: `Pull` (`PullRound`: mũi tên, đỏ, thời gian đã cộng thưởng cần), `CompletePull(giây)`, `WrongArrow()`, `PullTimeout()`, `Grade` (`PullGrade`), `GradeFor`; bỏ `NextRound` / `SubmitRound` / `BeatResult` / thể lực / độ căng / combo. `FishingOutcome.Escaped`. `FishDef`: bỏ `Rounds`, `BeatWindow`; `RoundSeconds` → `PullSeconds`. `RodDef.LineStrength` → `BonusTimePercent`. `FishingTuning`: bỏ các số thể lực / độ căng; thêm `PerfectTimePercent` 40, `GoodTimePercent` 70, `PerfectXpBonusPercent` 50, số mũ cân nặng 1 / 2 / 3; `SnapDurabilityCost` 0.
+- Data: `FishDefinition` (`_pullSeconds`, bỏ `_rounds`, `_beatWindow`), `RodDefinition` (`_bonusTimePercent`), `FishingDataGenerator` theo bảng mới.
+- View: `FishingController` thêm bước `Pulling` (phao giật 1 px, hoạt ảnh kéo; `PressArrow`; hết giờ) và `Landing` (hoạt ảnh được cá rồi mới áp kết quả); thông báo câu được "Câu được Cá rô 350 g! Perfect! · +2 XP", đứt dây làm gãy cần thêm "Cần gãy!". `FishingPullPanel` (chuỗi mũi tên – đỏ / đã nhập mờ, thanh thời gian đổi màu xanh → vàng → xám theo hạng còn đạt, 4 nút chữ thập, phím mũi tên). `FishingHud` ẩn nút Ném / mồi / dòng cần-giỏ khi kéo. `UiFormat`: `Weight`, `PullGradeName`, `CaughtText`, thông báo cá thoát.
+- Editor: `SunnysideUiImporter` thêm icon mũi tên (`arrow_up-1` là mũi tên xuống); `UiBuilder.BuildPullPanel`; nút Thu cần xuống sát đáy.
+- Test: `FishingTests` viết lại phần kéo (hạng theo thời gian, câu được, chậm = thoát, sai = đứt dây, Perfect nặng hơn + XP +50%, cần thêm thời gian, mũi tên đỏ); `UiFormatTests` thêm cân nặng, thông báo câu được, cá thoát. NUnit ngoài Unity (Logic + UiFormat): 345/345. Biên dịch Editor + WebGL: không lỗi.
+- [ ] Người dùng: **UI Sunnyside: ghép 9-slice** (thêm mũi tên) → **Tạo data câu cá** (số mới) → **Tạo UI** → Ctrl+S → Test Runner (dự kiến 431) → chơi thử: kéo nhanh / chậm / bấm sai / hết giờ, mũi tên đỏ (cá Huyền thoại – có thể tạm sửa `_redArrows` của cá rô để thử), số giỏ + XP tăng khi câu được, Thu cần / Về nhà lúc đang kéo.
 
 ## Tiếp theo (khi quay lại)
 0. Phần 6 mục 5 – chạy **Tạo UI**, Test Runner (221), chơi thử gieo chạm/kéo, kéo thu hoạch, kéo tưới; thử cảm giác kéo trên điện thoại.
