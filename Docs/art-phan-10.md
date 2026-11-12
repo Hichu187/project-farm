@@ -1,66 +1,69 @@
-# Về Quê – Art cần cho Phần 10 (lập 11/11/2026)
+# Về Quê – Art cần cho Phần 10 (cập nhật 12/11/2026: chuyển sang Sunnyside World)
 
-Ký hiệu: ✅ đã dùng · 🟡 có trong pack, chưa dùng (cần kiểm tra khung khi làm) · ❌ thiếu, cần thêm.
-Đường dẫn tính từ `Assets/Art/`. Mỗi lần thêm art: build lại, so Build Report (mốc 10,8 MB đã nén, mục tiêu < 10 MB).
+Ký hiệu: ✅ đã dùng · 🟡 có trong gói, chưa dùng · ❌ thiếu, cần vẽ / tìm thêm (cùng phong cách Sunnyside).
+Gốc gói: `Assets/Art/Sunnyside_World_ASSET_PACK_V2.1/Sunnyside_World_Assets/` (viết tắt `SS/`).
+Mỗi lần thêm art: build lại, so Build Report (mốc 10,8 MB đã nén, mục tiêu < 10 MB). Tileset 1024×1024 không nén ~4 MB → chỉ đưa vào Sprite Atlas các tile dùng tới.
+Giấy phép: gói không kèm file license → người dùng xem trang mua (Daniel Diggle, itch.io).
 
-## Giai đoạn 1 – Nhân vật ở nông trại (đã làm)
+## Nhân vật (Phần 3b bước 1, Phần 10 giai đoạn 1)
 | Thứ | Trạng thái | Nguồn / ghi chú |
 |---|---|---|
-| Nhân vật đứng / đi 4 hướng | ✅ | `Sprout Lands - Sprites - Basic pack/Characters/Basic Charakter Spritesheet.png` |
-| Cuốc, tưới 4 hướng | ✅ | `.../Characters/Basic Charakter Actions.png` (hàng 0–3 cuốc, 8–11 tưới) |
-| Icon gợi ý tưới (bình tưới) | ✅ | `.../Objects/Basic_tools_and_meterials.png` ô trên-trái |
-| Hoạt ảnh thu hoạch (cúi nhặt) | ❌ | Tạm dùng cuốc; không bắt buộc |
-| Hoạt ảnh gieo hạt (rắc hạt) | ❌ | Tạm dùng cuốc; không bắt buộc |
-| Dấu điểm đến, phủ ô đang chờ | – | Vẽ bằng code; có sprite đẹp thì thay |
+| Đứng / đi | 🟡 | `SS/Characters/Human/IDLE` (9 khung), `WALKING` (8) – strip 96×64, 2 hướng (lật trái) |
+| 3 lớp: thân, tóc, dụng cụ | 🟡 | `base_*`, `shorthair_*` (mặc định; còn bowl/curly/long/mop/spikey), `tools_*` |
+| Gieo / thu hoạch | 🟡 | `DOING` (8); có thêm `DIG` (13), `CARRY` (8) |
+| Tưới | 🟡 | `WATERING` (5) |
+| Hướng lên / xuống | ❌ | Gói chỉ có nhìn ngang – chấp nhận (giữ hướng ngang gần nhất) |
 
-## Giai đoạn 2 – Vùng câu + di chuyển
+## Vùng câu (Phần 10 giai đoạn 2)
 | Thứ | Trạng thái | Nguồn / ghi chú |
 |---|---|---|
-| Nước động | 🟡 | `Sprout Lands - Sprites - Basic pack/Tilesets/Water.png` (4 khung 16 px) |
-| Bờ nước / mép cỏ | 🟡 | `.../Tilesets/Grass.png`, `Hills.png` – xem đủ góc viền không |
-| Bến câu | 🟡 | `.../Objects/Wood_Bridge.png` |
-| Sen, lau sậy, cây ven nước | 🟡 | `Sprout Sorry pack/Early Access/Plant update 2/* water plants.png` |
-| Cây, bụi, đá trang trí | 🟡 | `.../Plant update 2/Trees, stumps and bushes v2.png`, `Basic_Grass_Biom_things.png` |
-| Cổng / lối ra nông trại | 🟡 | `.../Tilesets/Fences.png` |
-| **Biểu tượng chỗ câu** | ❌ | Tạm: `Ocean Pack/fishing_rod.png` hoặc "!" trong `All Icons.png` |
-| Biển tên vùng | ❌ | Không bắt buộc (có thể chỉ hiện chữ trên HUD) |
+| Nước, bờ, vách, bến / cầu gỗ | 🟡 | `SS/Tileset/spr_tileset_sunnysideworld_16px.png` |
+| Thuyền thúng | 🟡 | `SS/Elements/Other/spr_deco_coracle_strip4.png`, `spr_deco_coracle_land.png` |
+| Vịt, chim, cây, nấm | 🟡 | `SS/Elements/Animals`, `SS/Elements/Plants` |
+| Biểu tượng chỗ câu | 🟡 | `SS/UI/rod.png` hoặc `SS/UI/indicator.png` |
+| Biển tên vùng | ❌ | Không bắt buộc (chữ trên HUD) |
 
-## Giai đoạn 4 – Chơi câu cá
+## Câu cá (Phần 10 giai đoạn 4)
 | Thứ | Trạng thái | Nguồn / ghi chú |
 |---|---|---|
-| Hoạt ảnh câu 3 hướng (trái = lật phải) | 🟡 | `Sprout Sorry pack/Early Access/Ocean Pack/fishing animation front/back/side.png` – khung 48×48, 6 hàng: ném ×2, chờ, giật/kéo, thu cần, giơ cá. Kiểm tra khớp nhân vật Basic |
-| Phao + nước bắn | 🟡 | `.../Ocean Pack/fishing water splash frames and rod.png` |
-| Dây câu | – | Vẽ bằng code |
-| **Icon cần câu 5 bậc** | 🟡 2 / ❌ 3 | Có `fishing_rod.png`, `fishing_rod_2.png`; thiếu 3 (có thể đổi bảng màu) |
+| Ném / chờ / kéo / được cá | 🟡 | `SS/Characters/Human/CASTING` (15), `WAITING` (9, có dây + phao), `REELING` (13), `CAUGHT` (10) |
+| Dấu "!" khi cá cắn | 🟡 | `SS/UI/expression_alerted.png` |
+| Mũi tên kéo cá + Chốt | 🟡 | `SS/UI/arrow_left/right/up.png` (xuống = lật lên), `confirm.png` |
+| Thanh lực / độ căng / thể lực | 🟡 | `SS/UI/greenbar_*`, `redbar_*`, `bluebar_*`; khung `SS/UI/9slice_box_white` |
+| Icon cần câu 5 bậc | 🟡 2 / ❌ 3 | `SS/UI/rod.png`, `rod alt.png`; thiếu 3 (đổi màu / vẽ thêm) |
 | Icon cần gãy | ❌ | |
-| **Icon mồi: giun, cám, tép, mồi giả, mồi đặc biệt** | ❌ | Thiếu cả 5 |
-| Dấu "!" khi cá cắn | 🟡 | `Sprout Lands - UI Pack - Basic pack/Sprite sheets/Icons/All Icons.png` |
-| 4 nút mũi tên + nút Chốt | 🟡 | Mũi tên trong `All Icons.png`, nền `Sprite sheets/buttons/Square Buttons *.png`; mũi tên đỏ tô màu bằng code |
-| Thanh lực, vạch nhịp, độ căng dây, thể lực cá | – / ❌ | Vẽ bằng UI; muốn đẹp thì cần khung thanh |
-| "Perfect!", đứt dây | – | Chữ + hiệu ứng bằng code |
+| Icon mồi: giun, cám, tép, mồi giả, mồi đặc biệt | ❌ | |
 
-## Giai đoạn 5 – Giỏ cá, bán, album, đơn hàng
+## Giỏ cá, album, đơn (Phần 10 giai đoạn 5)
 | Thứ | Trạng thái | Nguồn / ghi chú |
 |---|---|---|
-| **Sprite 13 loài cá nước ngọt** | ❌ | rô, diếc, tép, chép, trê, mè, lóc, lươn, tôm càng xanh, bống tượng, chép đỏ, chép vàng, trắm đen. `Ocean Pack/Fish Sprites.png` chủ yếu sinh vật biển, chỉ tạm được vài con |
-| Icon giỏ cá | ❌ | |
-| Icon độ hiếm (5 mức) | 🟡 | Sao nhiều màu `Sprite sheets/Icons/special icons/Special Icons.png` |
-| "?" loài chưa bắt | 🟡 | `All Icons.png` |
-| Icon 7 khung giờ (bình minh → khuya) | 🟡 / ❌ | `emojis-free/emoji style ui/weather/Weather_Icons_smal_freel.png` – xem đủ mặt trời / trăng không |
+| **13 loài cá nước ngọt** | ❌ | rô, diếc, tép, chép, trê, mè, lóc, lươn, tôm càng xanh, bống tượng, chép đỏ, chép vàng, trắm đen. Gói chỉ có 1 cá `SS/Elements/Crops/fish.png` (11×11) – dùng tạm |
+| Icon giỏ cá | 🟡 | `SS/UI/basket.png` |
+| Đồng hồ / thời gian | 🟡 | `SS/UI/sandtimer.png`, `stopwatch.png` |
+| Icon 7 khung giờ | ❌ | Không có mặt trời / trăng |
+| Độ hiếm, "?" | ❌ / 🟡 | Tô màu bằng code hoặc vẽ thêm; "?" xem icon nhỏ trong tileset |
 
-## Giai đoạn 6 – Ao nhà
+## Ao nhà (Phần 10 giai đoạn 6)
 | Thứ | Trạng thái | Nguồn / ghi chú |
 |---|---|---|
-| Bóng cá bơi | 🟡 | `Ocean Pack/small fish.png`, `mediuml fish.png`, `big fish 2 swimming in cirkels.png` (15 khung 16 px); tô màu theo độ hiếm bằng code |
-| Mặt ao | 🟡 | Dùng chung tile nước |
+| Mặt ao | 🟡 | Nước trong tileset |
+| Bóng cá bơi | ❌ | Vẽ bằng code (bóng tối hình cá) hoặc vẽ thêm |
+
+## Nông trại (Phần 3b bước 2–3)
+| Thứ | Trạng thái | Nguồn / ghi chú |
+|---|---|---|
+| Cỏ, sân đất, hàng rào, cây, đá, nhà | 🟡 | Tileset 16 px |
+| Ô đất thường / ướt / có lỗ | 🟡 | `SS/Elements/Crops/soil_00/01/03/04.png` (16×12) |
+| 4 cây (tạm) | 🟡 | rau muống ← `kale`, cải xanh ← `cabbage`, cà chua ← `radish`, bí đỏ ← `pumpkin` (`_00` hạt, `_01`–`_04` giai đoạn, `_05` nông sản) |
+| **Bộ cây Việt cùng phong cách** | ❌ | Người dùng tự vẽ (25 cây trong data; 4 cây MVP trước) |
+| Gà, bò, lợn, cừu (chuồng "sắp có") | 🟡 | `SS/Elements/Animals` |
+| Cối xay gió, khói ống khói | 🟡 | `SS/Elements/Other`, `SS/Elements/VFX` |
 
 ## Âm thanh (người dùng thêm sau)
-❌ bước chân, cuốc, tưới, quăng cần, cá cắn, giật, đứt dây, được cá. AudioClip: Decompress on Load + AAC; chỉ phát sau lần chạm đầu trên web.
+❌ bước chân, gieo, tưới, quăng cần, cá cắn, giật, đứt dây, được cá. AudioClip: Decompress on Load + AAC; chỉ phát sau lần chạm đầu trên web.
 
-## Cần thêm chắc chắn (theo thứ tự dùng)
-1. Biểu tượng chỗ câu (giai đoạn 2).
-2. 5 icon mồi, 3 icon cần còn thiếu, icon cần gãy (giai đoạn 4).
-3. 13 sprite cá nước ngọt + icon giỏ cá (giai đoạn 5) – phần lớn nhất.
-4. Không bắt buộc: thu hoạch / gieo hạt, khung thanh UI, biển tên vùng.
-
-Ghi chú dung lượng: 3 sheet câu cá 1536×288 khá lớn – chỉ giữ các hàng dùng tới (cắt lại sheet hoặc gom vào Sprite Atlas chỉ phần cần).
+## Cần vẽ / tìm thêm (theo thứ tự dùng)
+1. Bộ cây Việt (4 cây MVP trước).
+2. 5 icon mồi, 3 icon cần còn thiếu, icon cần gãy.
+3. 13 sprite cá nước ngọt.
+4. Không bắt buộc: icon khung giờ, bóng cá bơi, biển tên vùng.

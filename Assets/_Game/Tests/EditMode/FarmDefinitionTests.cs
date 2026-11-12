@@ -190,12 +190,19 @@ namespace VeQue.Tests
         {
             OrderDef orders = LoadAsset().ToDef().Orders;
 
-            Assert.AreEqual(3, orders.SlotCount);
+            // 5 ô, chờ 10 phút (khẩn cấp 30), 20% khẩn cấp ×2 hết hạn 30 phút, 15 đơn/ngày (chốt 12/11/2026).
+            Assert.AreEqual(5, orders.SlotCount);
             Assert.AreEqual(2, orders.UnlockLevel);
             Assert.AreEqual(160, orders.CoinPercent);
             Assert.AreEqual(200, orders.XpPercent);
             Assert.AreEqual(300, orders.DiscardCooldownSeconds);
             Assert.AreEqual(6, orders.MaxHarvestsCap);
+            Assert.AreEqual(600, orders.RefillSeconds);
+            Assert.AreEqual(1800, orders.UrgentRefillSeconds);
+            Assert.AreEqual(20, orders.UrgentChancePercent);
+            Assert.AreEqual(200, orders.UrgentRewardPercent);
+            Assert.AreEqual(1800, orders.UrgentExpireSeconds);
+            Assert.AreEqual(15, orders.DailyLimit);
             Assert.GreaterOrEqual(orders.CustomerNames.Count, 1);
         }
 

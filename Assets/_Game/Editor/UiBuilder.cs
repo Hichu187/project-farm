@@ -11,7 +11,7 @@ namespace VeQue.EditorTools
 {
     // Menu Về Quê → Tạo UI: dựng toàn bộ GUI dưới Canvas của scene đang mở và nối sẵn tham chiếu.
     // Chạy lại sẽ xóa "GameUI" cũ rồi dựng mới, nên phần chỉnh tay trên GameUI sẽ mất.
-    // TODO: thay màu phẳng bằng khung, nút của UI Pack sau khi đặt Border 9-slice cho sprite.
+    // Khung, nút, tab dùng sprite Sunnyside đã ghép (menu Về Quê → UI Sunnyside: ghép 9-slice); chưa ghép thì dùng màu phẳng.
     public static class UiBuilder
     {
         private const string RootName = "GameUI";
@@ -27,7 +27,53 @@ namespace VeQue.EditorTools
         private static readonly Color Wood = new Color(0.60f, 0.40f, 0.24f);
         private static readonly Color Green = new Color(0.45f, 0.62f, 0.28f);
         private static readonly Color TextDark = new Color(0.27f, 0.16f, 0.09f);
+        private static readonly Color UrgentText = new Color(0.70f, 0.15f, 0.10f);
         private static readonly Color Dim = new Color(0f, 0f, 0f, 0.35f);
+        // Nhuộm thẻ đơn khẩn cấp (khung giấy nhân màu này thành hồng cam nhạt).
+        private static readonly Color UrgentTint = new Color(1f, 0.80f, 0.70f);
+
+        // 1 pixel art = bấy nhiêu đơn vị UI (Canvas 390 ngang; màn 1170 px → 1 đơn vị = 3 px màn hình).
+        private const float UiPixelScale = 2f;
+
+        // Sắc độ khung (SunnysideUiImporter), từ sáng tới đậm: Paper → Cream → Sand → Tan → Brown → Dark.
+        // Nút: Green, Brown, Red, Blue. Nhãn bo hai đầu: LabelPaper, LabelCream, LabelTan.
+        private enum Skin
+        {
+            Paper,
+            Cream,
+            Sand,
+            Tan,
+            Brown,
+            Dark,
+            Gray,
+            Green,
+            Red,
+            Blue,
+            LabelPaper,
+            LabelCream,
+            LabelTan,
+        }
+
+        private enum Icon
+        {
+            None,
+            Confirm,
+            Cancel,
+            Sandtimer,
+            Stopwatch,
+        }
+
+        private static readonly System.Collections.Generic.Dictionary<Icon, Sprite> Icons =
+            new System.Collections.Generic.Dictionary<Icon, Sprite>();
+        private static Sprite _bar;
+        // Font pixel tiếng Việt (menu Về Quê → Font: tạo font pixel tiếng Việt); null = font mặc định của TMP.
+        private static TMP_FontAsset _pixelFont;
+        // Material viền pixel cho chữ trắng trên nền màu (nút, thanh XP); null = không viền.
+        private static Material _outlineMaterial;
+
+        // Sprite đã ghép theo Skin; thiếu thì dựng bằng màu phẳng.
+        private static readonly System.Collections.Generic.Dictionary<Skin, Sprite> Skins =
+            new System.Collections.Generic.Dictionary<Skin, Sprite>();
 
         [MenuItem("Về Quê/Tạo UI")]
         private static void Build()
@@ -54,6 +100,11 @@ namespace VeQue.EditorTools
             }
 
             SetupScaler(canvas);
+            LoadSkin();
+            _pixelFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(PixelFontBuilder.AssetPath);
+            _outlineMaterial = _pixelFont != null ? AssetDatabase.LoadAssetAtPath<Material>(PixelFontBuilder.OutlineMaterialPath) : null;
+            if (_pixelFont == null)
+                Debug.LogWarning($"Tạo UI: chưa có {PixelFontBuilder.AssetPath}, dùng font mặc định. Chạy Về Quê → Font: tạo font pixel tiếng Việt rồi Tạo UI lại.");
 
             RectTransform root = Stretch(RootName, canvas.transform);
             var ui = root.gameObject.AddComponent<GameUI>();
@@ -75,6 +126,18 @@ namespace VeQue.EditorTools
             Toast toast = BuildToast(safe);
             UnlockDialog dialog = BuildDialog(safe, game, interaction);
             BuildLevelUpDialog(safe, game);
+            // Sau cùng để nằm trên mọi thứ (lần đầu vào game che cả HUD).
+            Button characterButton = BuildCharacterButton(safe);
+            // Vùng chơi: Đi câu dưới nút Nhân vật; ở vùng câu: Về nhà ở chỗ nút Nhân vật + tên vùng.
+            Button goFishing = BuildRegionButton(safe, "GoFishing", "Đi câu", 1);
+            Button goHome = BuildRegionButton(safe, "GoHome", "Về nhà", 0);
+            TMP_Text regionLabel = BuildRegionLabel(safe, out GameObject regionPanel);
+            CharacterCreator creator = BuildCharacterCreator(safe, game, characterButton);
+            // Sau cùng: màn tối chuyển cảnh phủ lên mọi thứ.
+            ScreenFader fader = BuildFader(safe);
+            var travel = Object.FindFirstObjectByType<RegionTravel>();
+            if (travel != null)
+                Wire(travel, ("_fader", fader));
 
             Wire(storagePanel, ("_emptyLabel", BuildEmptyLabel(storagePanel)));
             Wire(ui,
@@ -84,7 +147,14 @@ namespace VeQue.EditorTools
                 ("_storageTab", storageTab), ("_shopTab", shopTab),
                 ("_toast", toast), ("_seedPicker", seedPicker), ("_gesture", gesture), ("_orderPanel", orderPanel),
                 ("_storagePanel", storagePanel), ("_shopPanel", shopPanel),
-                ("_unlockDialog", dialog), ("_progressPopup", popup));
+                ("_unlockDialog", dialog), ("_progressPopup", popup), ("_characterCreator", creator),
+                ("_travel", travel), ("_goFishing", goFishing), ("_goHome", goHome), ("_regionLabel", regionLabel), ("_regionPanel", regionPanel));
+            var uiSo = new SerializedObject(ui);
+            SetArray(uiSo.FindProperty("_farmOnly"), new Object[]
+            {
+                farmTab.transform.parent.gameObject, characterButton.gameObject, goFishing.gameObject,
+            });
+            uiSo.ApplyModifiedPropertiesWithoutUndo();
 
             Undo.RegisterCreatedObjectUndo(root.gameObject, "Tạo UI");
             EditorSceneManager.MarkSceneDirty(canvas.gameObject.scene);
@@ -103,6 +173,10 @@ namespace VeQue.EditorTools
             scaler.referenceResolution = ReferenceResolution;
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
             scaler.matchWidthOrHeight = 0.5f;
+
+            // Đặt khung và chữ đúng ô pixel màn hình (khung 9-slice, font pixel).
+            Undo.RecordObject(canvas, "Tạo UI");
+            canvas.pixelPerfect = true;
         }
 
         private static CropProgressPopup BuildCropProgress(RectTransform parent, GameBootstrap game, FarmInteraction interaction, FarmView view, CameraController camera)
@@ -110,24 +184,33 @@ namespace VeQue.EditorTools
             RectTransform area = Stretch("CropProgress", parent);
             var popup = area.gameObject.AddComponent<CropProgressPopup>();
 
-            RectTransform box = Node("Box", area, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(96f, 42f));
+            RectTransform box = Node("Box", area, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(112f, 50f));
             AddImage(box, new Color(0.15f, 0.10f, 0.06f, 0.85f), false);
 
-            RectTransform sliderNode = Stretch("Slider", box);
-            Inset(sliderNode, 6f, 24f, 6f, 6f);
+            RectTransform sliderNode = Node("Slider", box, new Vector2(0f, 1f), Vector2.one, new Vector2(0.5f, 1f),
+                new Vector2(0f, -6f), new Vector2(-12f, 0f));
             var slider = sliderNode.gameObject.AddComponent<Slider>();
             slider.interactable = false;
             slider.transition = Selectable.Transition.None;
 
             RectTransform background = Stretch("Background", sliderNode);
-            AddImage(background, CreamDark, false);
-            RectTransform fillArea = Stretch("FillArea", sliderNode);
+            RectTransform fillArea = BuildBar(background, out float barHeight);
+            sliderNode.sizeDelta = new Vector2(-12f, barHeight);
             RectTransform fill = Stretch("Fill", fillArea);
-            AddImage(fill, Green, false);
+            AddImage(fill, BarFillColor, false);
             slider.fillRect = fill;
 
+            // Đồng hồ bấm giờ bên trái chữ thời gian còn lại.
             TMP_Text text = AddLabel(box, "Text", "", 15f, TextAlignmentOptions.Center, Color.white);
-            Inset(text.rectTransform, 2f, 2f, 2f, 20f);
+            Inset(text.rectTransform, 2f, 2f, 2f, 10f + barHeight);
+            Image clock = AddIcon(box, Icon.Stopwatch, 0f, 6f);
+            if (clock != null)
+            {
+                RectTransform clockRect = clock.rectTransform;
+                clockRect.anchorMin = clockRect.anchorMax = clockRect.pivot = new Vector2(0f, 0f);
+                clockRect.anchoredPosition = new Vector2(6f, 2f);
+                text.rectTransform.offsetMin = new Vector2(8f + clockRect.sizeDelta.x, 2f);
+            }
 
             box.gameObject.SetActive(false);
             Wire(popup, ("_game", game), ("_interaction", interaction), ("_view", view),
@@ -173,7 +256,7 @@ namespace VeQue.EditorTools
 
             RectTransform item = Create("ItemTemplate", box);
             item.sizeDelta = new Vector2(SeedItemWidth, SeedItemHeight);
-            AddImage(item, Cream, true);
+            Frame(item, Skin.Paper, Cream, true);
             CanvasGroup itemGroup = item.gameObject.AddComponent<CanvasGroup>();
             var itemScript = item.gameObject.AddComponent<SeedPickerItem>();
             RectTransform iconNode = Node("Icon", item, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -4f), new Vector2(36f, 36f));
@@ -202,22 +285,26 @@ namespace VeQue.EditorTools
             RectTransform hud = TopBand("Hud", parent, 0f, HudHeight);
 
             RectTransform coinBox = Node("Coins", hud, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(12f, 0f), new Vector2(130f, ButtonHeight));
-            AddImage(coinBox, Cream, false);
+            Frame(coinBox, Skin.LabelCream, Cream, false);
             coins = AddLabel(coinBox, "Text", "Xu 0", 18f, TextAlignmentOptions.Center, TextDark);
 
             // Cấp + thanh XP giữa xu và nút sao lưu.
             RectTransform levelBox = Node("Level", hud, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(150f, 0f), new Vector2(130f, ButtonHeight));
-            AddImage(levelBox, Cream, false);
+            Frame(levelBox, Skin.LabelCream, Cream, false);
             var levelHud = levelBox.gameObject.AddComponent<LevelHud>();
+            RectTransform barBack = Node("Bar", levelBox, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(0f, 6f), new Vector2(-16f, 0f));
+            RectTransform track = BuildBar(barBack, out float barHeight);
+            barBack.sizeDelta = new Vector2(-16f, barHeight);
             TMP_Text level = AddLabel(levelBox, "Text", "Cấp 1", 15f, TextAlignmentOptions.Center, TextDark);
-            Inset(level.rectTransform, 4f, ButtonHeight * 0.45f, 4f, 2f);
-            RectTransform barBack = Stretch("Bar", levelBox);
-            Inset(barBack, 8f, 5f, 8f, ButtonHeight * 0.58f);
-            AddImage(barBack, CreamDark, false);
-            RectTransform fill = Stretch("Fill", barBack);
+            Inset(level.rectTransform, 4f, 6f + barHeight, 4f, 2f);
+            RectTransform fill = Stretch("Fill", track);
             fill.anchorMax = new Vector2(0f, 1f);
-            AddImage(fill, Green, false);
-            TMP_Text xp = AddLabel(barBack, "Xp", "0/3", 11f, TextAlignmentOptions.Center, TextDark);
+            AddImage(fill, BarFillColor, false);
+            // Chữ XP nằm trên rãnh tối / phần xanh nên dùng màu trắng.
+            TMP_Text xp = AddLabel(barBack, "Xp", "0/3", 10f, TextAlignmentOptions.Center, _bar != null ? Color.white : TextDark);
+            if (_bar != null)
+                Outlined(xp);
             Wire(levelHud, ("_game", game), ("_level", level), ("_fill", fill), ("_xp", xp));
 
             RectTransform backupNode = Node("Backup", hud, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-12f, 0f), new Vector2(90f, ButtonHeight));
@@ -240,6 +327,166 @@ namespace VeQue.EditorTools
             Wire(stop, ("_game", game), ("_character", character), ("_button", button), ("_label", label));
         }
 
+        private const string CharacterSkinPath = "Assets/_Game/Data/CharacterSkin.asset";
+        // Khung nhân vật 96×64 phóng 8 lần; nhân vật ở giữa khung nên ô xem trước cắt lấy phần giữa.
+        private const float PreviewScale = 8f;
+
+        // Nút "Nhân vật" dưới HUD, góc trái.
+        // Nút cột trái dưới HUD (cùng cột nút Nhân vật); row 0 = chỗ nút Nhân vật, 1 = ngay dưới.
+        private static Button BuildRegionButton(RectTransform parent, string name, string text, int row)
+        {
+            RectTransform node = Node(name, parent, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(12f, -(HudHeight + 6f + row * 42f)), new Vector2(100f, 36f));
+            return MakeButton(node, text, 15f, Wood, Color.white, out _);
+        }
+
+        // Tên vùng (vd. "Bến sông") giữa, ngay dưới HUD; chỉ hiện ở vùng câu (GameUI bật / tắt panel).
+        private static TMP_Text BuildRegionLabel(RectTransform parent, out GameObject panel)
+        {
+            RectTransform band = TopBand("RegionLabel", parent, HudHeight + 6f, 36f);
+            RectTransform box = Node("Box", band, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(150f, 36f));
+            Frame(box, Skin.LabelCream, Cream, false);
+            TMP_Text label = AddLabel(box, "Text", "", 18f, TextAlignmentOptions.Center, TextDark);
+            SingleLine(label);
+            band.gameObject.SetActive(false);
+            panel = band.gameObject;
+            return label;
+        }
+
+        // Phủ đen cả màn hình (kể cả ngoài safe area); trong suốt và không chặn chạm khi không chuyển cảnh.
+        private static ScreenFader BuildFader(RectTransform parent)
+        {
+            RectTransform node = Stretch("ScreenFader", parent);
+            node.offsetMin = new Vector2(-400f, -400f);
+            node.offsetMax = new Vector2(400f, 400f);
+            AddImage(node, Color.black, true);
+            var group = node.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            group.blocksRaycasts = false;
+            group.interactable = false;
+            var fader = node.gameObject.AddComponent<ScreenFader>();
+            Wire(fader, ("_group", group));
+            return fader;
+        }
+
+        private static Button BuildCharacterButton(RectTransform parent)
+        {
+            RectTransform node = Node("CharacterButton", parent, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(12f, -(HudHeight + 6f)), new Vector2(100f, 36f));
+            return MakeButton(node, "Nhân vật", 15f, Wood, Color.white, out _);
+        }
+
+        private static CharacterCreator BuildCharacterCreator(RectTransform parent, GameBootstrap game, Button openButton)
+        {
+            RectTransform holder = Stretch("CharacterCreator", parent);
+            var creator = holder.gameObject.AddComponent<CharacterCreator>();
+
+            // Che cả vùng ngoài safe area để không chạm được map phía sau.
+            RectTransform panel = Stretch("Panel", holder);
+            panel.offsetMin = new Vector2(-400f, -400f);
+            panel.offsetMax = new Vector2(400f, 400f);
+            AddImage(panel, new Color(0f, 0f, 0f, 0.6f), true);
+
+            RectTransform box = Node("Box", panel, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(360f, 600f));
+            Frame(box, Skin.Cream, Cream, true);
+
+            TMP_Text title = AddLabel(BoxRow(box, "Title", 16f, 340f, 36f), "Text", "Nhân vật của bạn", 22f, TextAlignmentOptions.Center, TextDark);
+
+            RectTransform closeNode = Node("Close", box, Vector2.one, Vector2.one, Vector2.one, new Vector2(-8f, -8f), new Vector2(64f, 36f));
+            Button close = MakeButton(closeNode, IconOr("Đóng", Icon.Cancel), 15f, Wood, Color.white, out _, Icon.Cancel);
+
+            // Xem trước: khung cắt 220×220, 3 Image 768×512 (96×64 × 8) chồng nhau.
+            RectTransform window = BoxRow(box, "Preview", 60f, 220f, 220f);
+            Frame(window, Skin.Sand, CreamDark, false);
+            window.gameObject.AddComponent<RectMask2D>();
+            var preview = window.gameObject.AddComponent<CharacterPreview>();
+            Image body = PreviewLayer(window, "Body");
+            Image hair = PreviewLayer(window, "Hair");
+            Image tools = PreviewLayer(window, "Tools");
+            var skin = AssetDatabase.LoadAssetAtPath<VeQue.View.Character.CharacterSkin>(CharacterSkinPath);
+            if (skin == null)
+                Debug.LogWarning($"Tạo UI: chưa có {CharacterSkinPath}; chạy menu Nhân vật Sunnyside rồi Tạo UI lại.");
+            Wire(preview, ("_skin", skin), ("_body", body), ("_hair", hair), ("_tools", tools));
+
+            TMP_InputField nameInput = BuildNameInput(BoxRow(box, "Name", 296f, 300f, 48f));
+
+            RectTransform hairRow = BoxRow(box, "HairRow", 356f, 300f, 48f);
+            Button hairPrev = MakeButton(SideNode(hairRow, "Prev", true), "<", 22f, Wood, Color.white, out _);
+            Button hairNext = MakeButton(SideNode(hairRow, "Next", false), ">", 22f, Wood, Color.white, out _);
+            TMP_Text hairLabel = AddLabel(hairRow, "Label", "Tóc ngắn", 18f, TextAlignmentOptions.Center, TextDark);
+            Inset(hairLabel.rectTransform, 56f, 0f, 56f, 0f);
+
+            RectTransform colorRow = BoxRow(box, "ColorRow", 414f, 300f, 48f);
+            Button colorPrev = MakeButton(SideNode(colorRow, "Prev", true), "<", 22f, Wood, Color.white, out _);
+            Button colorNext = MakeButton(SideNode(colorRow, "Next", false), ">", 22f, Wood, Color.white, out _);
+            RectTransform swatchFrame = Node("Swatch", colorRow, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-58f, 0f), new Vector2(30f, 30f));
+            AddImage(swatchFrame, TextDark, false);
+            RectTransform swatchFill = Stretch("Fill", swatchFrame);
+            Inset(swatchFill, 3f, 3f, 3f, 3f);
+            Image swatch = AddImage(swatchFill, Color.white, false);
+            TMP_Text colorLabel = AddLabel(colorRow, "Label", "Màu gốc", 18f, TextAlignmentOptions.Center, TextDark);
+            Inset(colorLabel.rectTransform, 96f, 0f, 56f, 0f);
+
+            TMP_Text error = AddLabel(BoxRow(box, "Error", 470f, 320f, 28f), "Text", "", 15f, TextAlignmentOptions.Center, new Color(0.75f, 0.15f, 0.1f));
+
+            RectTransform confirmNode = BoxRow(box, "Confirm", 508f, 200f, 48f);
+            Button confirm = MakeButton(confirmNode, "Bắt đầu", 18f, Green, Color.white, out TMP_Text confirmLabel, Icon.Confirm);
+
+            Wire(creator, ("_game", game), ("_preview", preview), ("_panel", panel.gameObject), ("_title", title),
+                ("_nameInput", nameInput), ("_error", error),
+                ("_hairPrev", hairPrev), ("_hairNext", hairNext), ("_hairLabel", hairLabel),
+                ("_colorPrev", colorPrev), ("_colorNext", colorNext), ("_colorLabel", colorLabel), ("_colorSwatch", swatch),
+                ("_confirm", confirm), ("_confirmLabel", confirmLabel), ("_close", close), ("_openButton", openButton));
+            return creator;
+        }
+
+        // Hàng trong hộp, căn giữa, đo từ mép trên của hộp.
+        private static RectTransform BoxRow(RectTransform box, string name, float top, float width, float height)
+        {
+            return Node(name, box, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -top), new Vector2(width, height));
+        }
+
+        // Nút vuông ở mép trái / phải của một hàng.
+        private static RectTransform SideNode(RectTransform row, string name, bool left)
+        {
+            Vector2 anchor = left ? new Vector2(0f, 0.5f) : new Vector2(1f, 0.5f);
+            return Node(name, row, anchor, anchor, anchor, Vector2.zero, new Vector2(48f, 48f));
+        }
+
+        private static Image PreviewLayer(RectTransform window, string name)
+        {
+            RectTransform node = Node(name, window, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(96f * PreviewScale, 64f * PreviewScale));
+            Image image = AddImage(node, Color.white, false);
+            image.enabled = false;
+            return image;
+        }
+
+        private static TMP_InputField BuildNameInput(RectTransform node)
+        {
+            Image background = Frame(node, Skin.Paper, Color.white, true);
+            var input = node.gameObject.AddComponent<TMP_InputField>();
+
+            RectTransform area = Stretch("Text Area", node);
+            Inset(area, 12f, 6f, 12f, 6f);
+            area.gameObject.AddComponent<RectMask2D>();
+
+            TMP_Text placeholder = AddLabel(area, "Placeholder", "Tên nhân vật", 18f, TextAlignmentOptions.MidlineLeft, new Color(0.27f, 0.16f, 0.09f, 0.45f));
+            placeholder.fontStyle = FontStyles.Italic;
+            TMP_Text text = AddLabel(area, "Text", "", 18f, TextAlignmentOptions.MidlineLeft, TextDark);
+            text.richText = false;
+
+            input.targetGraphic = background;
+            input.textViewport = area;
+            input.textComponent = text;
+            input.placeholder = placeholder;
+            input.richText = false;
+            input.lineType = TMP_InputField.LineType.SingleLine;
+            input.characterLimit = VeQue.Logic.CharacterLook.MaxNameLength;
+            return input;
+        }
+
         private static T BuildPanel<T>(RectTransform parent, string name, string title, GameBootstrap game) where T : CropListPanel
         {
             RectTransform root = Stretch(name, parent);
@@ -253,7 +500,7 @@ namespace VeQue.EditorTools
             return panel;
         }
 
-        private const int OrderCards = 3;
+        private const int OrderCards = 5;
         private const int OrderItemSlots = 3;
         private const float OrderCardHeight = 116f;
 
@@ -264,6 +511,8 @@ namespace VeQue.EditorTools
             var panel = root.gameObject.AddComponent<OrderPanel>();
 
             BuildList(sheet, out RectTransform content);
+            TMP_Text dailyInfo = AddLabel(content, "DailyInfo", "", 15f, TextAlignmentOptions.Center, TextDark);
+            dailyInfo.gameObject.AddComponent<LayoutElement>().preferredHeight = 24f;
             var cards = new OrderCard[OrderCards];
             for (int i = 0; i < OrderCards; i++)
                 cards[i] = BuildOrderCard(content, i);
@@ -272,6 +521,7 @@ namespace VeQue.EditorTools
             so.FindProperty("_game").objectReferenceValue = game;
             so.FindProperty("_sheet").objectReferenceValue = sheetScript;
             SetArray(so.FindProperty("_cards"), cards);
+            so.FindProperty("_dailyInfo").objectReferenceValue = dailyInfo;
             so.ApplyModifiedPropertiesWithoutUndo();
             return panel;
         }
@@ -280,7 +530,7 @@ namespace VeQue.EditorTools
         private static OrderCard BuildOrderCard(RectTransform content, int index)
         {
             RectTransform card = Stretch($"Order{index + 1}", content);
-            AddImage(card, CreamDark, true);
+            Image background = Frame(card, Skin.Paper, CreamDark, true);
             card.gameObject.AddComponent<LayoutElement>().preferredHeight = OrderCardHeight;
             var script = card.gameObject.AddComponent<OrderCard>();
 
@@ -291,6 +541,16 @@ namespace VeQue.EditorTools
             customer.rectTransform.pivot = new Vector2(0.5f, 1f);
             customer.rectTransform.anchoredPosition = new Vector2(0f, -4f);
             customer.rectTransform.sizeDelta = new Vector2(-20f, 26f);
+
+            // Cùng hàng với người đặt, canh phải: nhãn khẩn cấp + đếm ngược hết hạn.
+            TMP_Text badge = AddLabel(body, "Badge", "", 14f, TextAlignmentOptions.MidlineRight, UrgentText);
+            badge.fontStyle = FontStyles.Bold;
+            badge.rectTransform.anchorMin = new Vector2(0f, 1f);
+            badge.rectTransform.anchorMax = Vector2.one;
+            badge.rectTransform.pivot = new Vector2(0.5f, 1f);
+            badge.rectTransform.anchoredPosition = new Vector2(0f, -4f);
+            badge.rectTransform.sizeDelta = new Vector2(-20f, 26f);
+            badge.gameObject.SetActive(false);
 
             var roots = new GameObject[OrderItemSlots];
             var icons = new Image[OrderItemSlots];
@@ -303,18 +563,24 @@ namespace VeQue.EditorTools
                 icons[i].preserveAspect = true;
                 labels[i] = AddLabel(item, "Label", "", 13f, TextAlignmentOptions.MidlineLeft, TextDark);
                 Inset(labels[i].rectTransform, 32f, 0f, 0f, 0f);
+                // "Tên\nđang có/cần": không tự xuống dòng (cắt "…" sẽ mất luôn dòng số lượng).
+                // 4 cây MVP vừa 80 đơn vị ở cỡ nhỏ; tên dài hơn sẽ lấn sang món bên cạnh.
+                labels[i].textWrappingMode = TextWrappingModes.NoWrap;
                 roots[i] = item.gameObject;
             }
 
             TMP_Text reward = AddLabel(body, "Reward", "", 14f, TextAlignmentOptions.MidlineLeft, TextDark);
-            Inset(reward.rectTransform, 10f, 6f, 160f, OrderCardHeight - 50f);
+            Inset(reward.rectTransform, 10f, 6f, 172f, OrderCardHeight - 50f);
+            SingleLine(reward);
 
-            RectTransform deliverNode = Node("Deliver", body, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-6f, 6f), new Vector2(70f, ButtonHeight));
-            Button deliver = MakeButton(deliverNode, "Giao", 15f, Green, Color.white, out _);
-            RectTransform discardNode = Node("Discard", body, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-80f, 6f), new Vector2(70f, ButtonHeight));
-            Button discard = MakeButton(discardNode, "Bỏ", 15f, Wood, Color.white, out _);
+            RectTransform deliverNode = Node("Deliver", body, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-6f, 6f), new Vector2(78f, ButtonHeight));
+            Button deliver = MakeButton(deliverNode, "Giao", 15f, Green, Color.white, out _, Icon.Confirm);
+            RectTransform discardNode = Node("Discard", body, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-88f, 6f), new Vector2(78f, ButtonHeight));
+            Button discard = MakeButton(discardNode, "Bỏ", 15f, Wood, Color.white, out _, Icon.Cancel);
 
             TMP_Text waiting = AddLabel(card, "Waiting", "", 15f, TextAlignmentOptions.Center, TextDark);
+            // Con của dòng chờ nên ẩn / hiện cùng.
+            AddIcon(waiting.rectTransform, Icon.Sandtimer, 0f, 14f);
             waiting.gameObject.SetActive(false);
 
             var so = new SerializedObject(script);
@@ -327,6 +593,12 @@ namespace VeQue.EditorTools
             so.FindProperty("_deliver").objectReferenceValue = deliver;
             so.FindProperty("_discard").objectReferenceValue = discard;
             so.FindProperty("_waiting").objectReferenceValue = waiting;
+            so.FindProperty("_background").objectReferenceValue = background;
+            so.FindProperty("_badge").objectReferenceValue = badge;
+            bool framed = background.sprite != null;
+            so.FindProperty("_normalColor").colorValue = framed ? Color.white : CreamDark;
+            if (framed)
+                so.FindProperty("_urgentColor").colorValue = UrgentTint;
             so.ApplyModifiedPropertiesWithoutUndo();
             return script;
         }
@@ -344,7 +616,7 @@ namespace VeQue.EditorTools
             backdropButton.transition = Selectable.Transition.None;
 
             sheet = Node("Sheet", root, Vector2.zero, new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, NavHeight), new Vector2(0f, SheetHeight));
-            AddImage(sheet, Cream, true);
+            Frame(sheet, Skin.Cream, Cream, true);
 
             TMP_Text titleText = AddLabel(sheet, "Title", title, 22f, TextAlignmentOptions.MidlineLeft, TextDark);
             titleText.rectTransform.anchorMin = new Vector2(0f, 1f);
@@ -354,7 +626,7 @@ namespace VeQue.EditorTools
             titleText.rectTransform.sizeDelta = new Vector2(-24f, 52f);
 
             RectTransform closeNode = Node("Close", sheet, Vector2.one, Vector2.one, Vector2.one, new Vector2(-6f, -4f), new Vector2(ButtonHeight, ButtonHeight));
-            Button close = MakeButton(closeNode, "X", 18f, Wood, Color.white, out _);
+            Button close = MakeButton(closeNode, IconOr("X", Icon.Cancel), 18f, Wood, Color.white, out _, Icon.Cancel);
 
             backdrop.gameObject.SetActive(false);
             sheet.gameObject.SetActive(false);
@@ -390,7 +662,7 @@ namespace VeQue.EditorTools
         private static CropRow BuildRowTemplate(RectTransform content)
         {
             RectTransform row = Stretch("RowTemplate", content);
-            AddImage(row, CreamDark, true);
+            Frame(row, Skin.Paper, CreamDark, true);
             row.gameObject.AddComponent<LayoutElement>().preferredHeight = RowHeight;
             var script = row.gameObject.AddComponent<CropRow>();
 
@@ -427,10 +699,10 @@ namespace VeQue.EditorTools
             out Button storage, out Button shop)
         {
             RectTransform nav = Node("Nav", parent, Vector2.zero, new Vector2(1f, 0f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(0f, NavHeight));
-            AddImage(nav, Wood, true);
+            Frame(nav, Skin.Sand, Wood, true);
             var layout = nav.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.padding = new RectOffset(6, 6, 6, 6);
-            layout.spacing = 6f;
+            layout.padding = new RectOffset(4, 4, 6, 6);
+            layout.spacing = 3f;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
 
@@ -445,9 +717,19 @@ namespace VeQue.EditorTools
         {
             RectTransform node = Stretch(label, nav);
             Button button = MakeButton(node, label, 15f, Cream, TextDark, out text);
-            text.enableAutoSizing = true;
-            text.fontSizeMin = 11f;
-            text.fontSizeMax = 15f;
+            // Font pixel giữ cỡ cố định (tự co sẽ ra cỡ lẻ, mờ nét); tab hẹp nên dùng cỡ nhỏ.
+            if (_pixelFont == null)
+            {
+                text.enableAutoSizing = true;
+                text.fontSizeMin = 11f;
+                text.fontSizeMax = 15f;
+            }
+            else
+            {
+                text.fontSize = PixelFontSizeFor(2);
+                // Chữ được tràn nhẹ lên viền khung nhãn (khung bo 4 pixel mỗi bên).
+                Inset(text.rectTransform, -2f, 0f, -2f, 0f);
+            }
             return button;
         }
 
@@ -476,7 +758,7 @@ namespace VeQue.EditorTools
             AddImage(dim, Dim, true);
 
             RectTransform box = Node("Box", dim, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(300f, 180f));
-            AddImage(box, Cream, true);
+            Frame(box, Skin.Cream, Cream, true);
 
             TMP_Text title = AddLabel(box, "Title", "Mở ô đất này?", 20f, TextAlignmentOptions.Center, TextDark);
             Inset(title.rectTransform, 12f, 112f, 12f, 12f);
@@ -484,9 +766,9 @@ namespace VeQue.EditorTools
             Inset(price.rectTransform, 12f, 68f, 12f, 68f);
 
             RectTransform cancelNode = Node("Cancel", box, Vector2.zero, Vector2.zero, Vector2.zero, new Vector2(16f, 14f), new Vector2(124f, ButtonHeight));
-            Button cancel = MakeButton(cancelNode, "Hủy", 16f, Wood, Color.white, out _);
+            Button cancel = MakeButton(cancelNode, "Hủy", 16f, Wood, Color.white, out _, Icon.Cancel);
             RectTransform confirmNode = Node("Confirm", box, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-16f, 14f), new Vector2(124f, ButtonHeight));
-            Button confirm = MakeButton(confirmNode, "Mở", 16f, Green, Color.white, out _);
+            Button confirm = MakeButton(confirmNode, "Mở", 16f, Green, Color.white, out _, Icon.Confirm);
 
             dim.gameObject.SetActive(false);
             Wire(dialog, ("_game", game), ("_interaction", interaction), ("_root", dim.gameObject),
@@ -549,7 +831,7 @@ namespace VeQue.EditorTools
             AddImage(dim, Dim, true);
 
             RectTransform box = Node("Box", dim, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(300f, 260f));
-            AddImage(box, Cream, true);
+            Frame(box, Skin.Cream, Cream, true);
 
             TMP_Text title = AddLabel(box, "Title", "Lên cấp!", 24f, TextAlignmentOptions.Center, TextDark);
             Inset(title.rectTransform, 12f, 200f, 12f, 12f);
@@ -557,7 +839,7 @@ namespace VeQue.EditorTools
             Inset(body.rectTransform, 16f, 70f, 16f, 64f);
 
             RectTransform okNode = Node("Ok", box, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 14f), new Vector2(160f, ButtonHeight));
-            Button ok = MakeButton(okNode, "Tuyệt", 18f, Green, Color.white, out _);
+            Button ok = MakeButton(okNode, "Tuyệt", 18f, Green, Color.white, out _, Icon.Confirm);
 
             dim.gameObject.SetActive(false);
             Wire(dialog, ("_game", game), ("_root", dim.gameObject), ("_title", title), ("_body", body), ("_ok", ok));
@@ -628,23 +910,169 @@ namespace VeQue.EditorTools
         {
             RectTransform rect = Stretch(name, parent);
             var label = rect.gameObject.AddComponent<TextMeshProUGUI>();
-            label.font = TMP_Settings.defaultFontAsset;
+            label.font = _pixelFont != null ? _pixelFont : TMP_Settings.defaultFontAsset;
             label.text = text;
-            label.fontSize = size;
+            label.fontSize = _pixelFont != null ? PixelFontSize(size) : size;
             label.alignment = alignment;
             label.color = color;
             label.raycastTarget = false;
             return label;
         }
 
-        private static Button MakeButton(RectTransform node, string text, float size, Color background, Color textColor, out TMP_Text label)
+        // Có sprite: tab (nền Cream) dùng nhãn giấy; nút xanh / nâu dùng khung xanh / nâu.
+        private static Button MakeButton(RectTransform node, string text, float size, Color background, Color textColor, out TMP_Text label,
+            Icon icon = Icon.None)
         {
-            Image image = AddImage(node, background, true);
+            Image image;
+            if (background == Cream)
+                image = Frame(node, Skin.LabelPaper, background, true);
+            else if (background == Green)
+                image = Frame(node, Skin.Green, background, true);
+            else if (background == Wood)
+                image = Frame(node, Skin.Brown, background, true);
+            else
+                image = AddImage(node, background, true);
             var button = node.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
             label = AddLabel(node, "Label", text, size, TextAlignmentOptions.Center, textColor);
+            SingleLine(label);
+            // Chữ trắng trên nút xanh / nâu: thêm viền tối cho dễ đọc.
+            if (textColor == Color.white)
+                Outlined(label);
+
+            // Icon bên trái chữ; nút không chữ thì icon nằm giữa.
+            Image iconImage = AddIcon(node, icon, string.IsNullOrEmpty(text) ? 0.5f : 0f, ButtonIconPadding);
+            if (iconImage != null && !string.IsNullOrEmpty(text))
+                Inset(label.rectTransform, ButtonIconPadding + iconImage.rectTransform.sizeDelta.x, 0f, 4f, 0f);
             return button;
         }
+
+        private const float ButtonIconPadding = 6f;
+
+        private static void Outlined(TMP_Text label)
+        {
+            if (_outlineMaterial != null)
+                label.fontSharedMaterial = _outlineMaterial;
+        }
+
+        // Một dòng; dài quá khung thì cắt bằng "…".
+        private static void SingleLine(TMP_Text label)
+        {
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.overflowMode = TextOverflowModes.Ellipsis;
+        }
+
+        // Nút chỉ có icon: chưa có sprite icon thì dùng chữ thay.
+        private static string IconOr(string fallback, Icon icon) => Icons.ContainsKey(icon) ? "" : fallback;
+
+        // Icon kích thước gốc × UiPixelScale, căn giữa theo chiều dọc; anchorX 0 = sát trái (cách offset), 0.5 = giữa.
+        // Không có sprite thì không thêm gì và trả về null.
+        private static Image AddIcon(RectTransform parent, Icon icon, float anchorX, float offset)
+        {
+            if (icon == Icon.None || !Icons.TryGetValue(icon, out Sprite sprite))
+                return null;
+
+            Vector2 size = sprite.rect.size * UiPixelScale;
+            var anchor = new Vector2(anchorX, 0.5f);
+            RectTransform node = Node("Icon", parent, anchor, anchor, anchor,
+                new Vector2(anchorX < 0.5f ? offset : 0f, 0f), size);
+            Image image = AddImage(node, Color.white, false);
+            image.sprite = sprite;
+            return image;
+        }
+
+        // Khung thanh (greenbar) + vùng rãnh để đặt phần đầy. Cao đúng 7 pixel art (không giãn dọc).
+        // Chưa có sprite: nền màu phẳng, rãnh = cả khung.
+        private static RectTransform BuildBar(RectTransform bar, out float height)
+        {
+            height = _bar != null ? _bar.rect.height * UiPixelScale : 12f;
+            if (_bar == null)
+            {
+                AddImage(bar, CreamDark, false);
+                return Stretch("Track", bar);
+            }
+
+            Image image = AddImage(bar, Color.white, false);
+            image.sprite = _bar;
+            image.type = Image.Type.Sliced;
+            image.pixelsPerUnitMultiplier = 100f / (_bar.pixelsPerUnit * UiPixelScale);
+
+            RectTransform track = Stretch("Track", bar);
+            Vector4 inset = SunnysideUiImporter.BarTrackInset * UiPixelScale;
+            Inset(track, inset.x, inset.y, inset.z, inset.w);
+            return track;
+        }
+
+        private static Color BarFillColor => _bar != null ? SunnysideUiImporter.BarFill : Green;
+
+        private static void LoadSkin()
+        {
+            Skins.Clear();
+            var missing = new System.Collections.Generic.List<string>();
+            foreach (Skin skin in System.Enum.GetValues(typeof(Skin)))
+            {
+                string path = SkinPath(skin);
+                var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                if (sprite != null)
+                    Skins[skin] = sprite;
+                else
+                    missing.Add(path);
+            }
+
+            Icons.Clear();
+            foreach (Icon icon in System.Enum.GetValues(typeof(Icon)))
+            {
+                if (icon == Icon.None)
+                    continue;
+                string path = SunnysideUiImporter.IconPath(icon.ToString().ToLowerInvariant());
+                var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                if (sprite != null)
+                    Icons[icon] = sprite;
+                else
+                    missing.Add(path);
+            }
+            _bar = AssetDatabase.LoadAssetAtPath<Sprite>(SunnysideUiImporter.BarPath);
+            if (_bar == null)
+                missing.Add(SunnysideUiImporter.BarPath);
+
+            // Thiếu sprite nào thì chỗ dùng sprite đó dựng bằng màu phẳng / không có icon; các chỗ khác vẫn dùng khung.
+            if (missing.Count > 0)
+                Debug.LogWarning("Tạo UI: thiếu sprite UI Sunnyside, các chỗ đó dùng màu phẳng. Chạy Về Quê → UI Sunnyside: ghép 9-slice rồi Tạo UI lại.\n"
+                    + string.Join("\n", missing));
+        }
+
+        private static string SkinPath(Skin skin)
+        {
+            switch (skin)
+            {
+                case Skin.LabelPaper: return SunnysideUiImporter.LabelPath("paper");
+                case Skin.LabelCream: return SunnysideUiImporter.LabelPath("cream");
+                case Skin.LabelTan: return SunnysideUiImporter.LabelPath("tan");
+                default: return SunnysideUiImporter.BoxPath(skin.ToString().ToLowerInvariant());
+            }
+        }
+
+        // Khung 9-slice giữ màu gốc của sprite; chưa có sprite thì nền màu phẳng.
+        private static Image Frame(RectTransform rect, Skin skin, Color flat, bool raycastTarget)
+        {
+            if (!Skins.TryGetValue(skin, out Sprite sprite))
+                return AddImage(rect, flat, raycastTarget);
+
+            Image image = AddImage(rect, Color.white, raycastTarget);
+            image.sprite = sprite;
+            image.type = Image.Type.Sliced;
+            image.fillCenter = true;
+            // Image: pixelsPerUnit = sprite PPU / Canvas.referencePixelsPerUnit × multiplier; muốn 1 pixel art = UiPixelScale đơn vị.
+            image.pixelsPerUnitMultiplier = 100f / (sprite.pixelsPerUnit * UiPixelScale);
+            return image;
+        }
+
+        // Cỡ chữ để 1 pixel thiết kế (= 1 texel atlas) = N pixel màn hình khi Canvas ×3 (màn 1170): sắc nét.
+        private static float PixelFontSizeFor(int screenPixels) => screenPixels * PixelFontBuilder.PointSize / 3f;
+
+        // FatPix rộng nên chỉ 2 bậc: chữ thường → nhỏ (2 px / pixel, cỡ 16), tiêu đề (cỡ cũ ≥ 20) → vừa (3 px, cỡ 24).
+        // Đã đo độ rộng các chuỗi dài nhất với khung chứa (12/11/2026).
+        private static float PixelFontSize(float size) => size < 20f ? PixelFontSizeFor(2) : PixelFontSizeFor(3);
 
         private static void Wire(Object target, params (string Field, Object Value)[] fields)
         {

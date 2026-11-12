@@ -8,6 +8,7 @@ namespace VeQue.View.CameraControl
     // Zoom mượt: tạm tắt PixelPerfectCamera và nội suy orthographicSize, tới nơi bật lại ở bậc zoom nguyên.
     // Zoom theo nấc: đi qua từng bậc zoom nguyên, luôn sắc nét.
     // Toàn cảnh: giới hạn trong mép map. Đang zoom: giới hạn trong khu đang xem (và mép map).
+    // Vùng khác (vùng câu): UseRegionBounds thay mép map bằng khung vùng; UseMapBounds trả về nông trại.
     // Zoom vào khu: di chuyển trước, tâm khu ngoài giới hạn ở bậc zoom hiện tại thì đi hết mức, phần còn lại đi trong lúc zoom.
     [RequireComponent(typeof(UnityEngine.Camera), typeof(PixelPerfectCamera))]
     public sealed class CameraController : MonoBehaviour
@@ -42,10 +43,14 @@ namespace VeQue.View.CameraControl
         private float _moveElapsed;
         private Vector2 _moveFrom;
         private Vector2 _moveTo;
+        private bool _hasRegionRect;
+        private Rect _regionRect;
 
         public Mode CurrentMode { get; private set; }
         public FocusArea Current { get; private set; }
         public bool IsTransitioning => _isTransitioning;
+        // Lần cuối người chơi kéo camera (giờ thật, không phụ thuộc timeScale) – CameraFollow chờ sau mốc này.
+        public float LastPanTime { get; private set; } = float.NegativeInfinity;
 
         private void Awake()
         {
@@ -86,6 +91,48 @@ namespace VeQue.View.CameraControl
 
             float unitsPerScreenPixel = 1f / (_zoom * _pixelPerfect.assetsPPU);
             SetPosition((Vector2)transform.position - screenDelta * unitsPerScreenPixel);
+            LastPanTime = Time.unscaledTime;
+        }
+
+        // Sang vùng khác (sau chuyển cảnh): giới hạn theo khung vùng, toàn cảnh, bỏ zoom khu.
+        public void UseRegionBounds(Rect bounds)
+        {
+            _hasRegionRect = true;
+            _regionRect = bounds;
+            ResetToOverview();
+        }
+
+        // Về nông trại: giới hạn theo mép map như cũ.
+        public void UseMapBounds()
+        {
+            _hasRegionRect = false;
+            ResetToOverview();
+        }
+
+        // Đặt ngay camera (đã giới hạn), không chuyển động.
+        public void JumpTo(Vector2 position)
+        {
+            if (_isTransitioning)
+                return;
+            SetPosition(position);
+        }
+
+        // Đi một phần quãng tới target (t: 0..1), dùng cho camera đi theo nhân vật.
+        public void MoveTowards(Vector2 target, float t)
+        {
+            if (_isTransitioning)
+                return;
+            SetPosition(Vector2.Lerp(transform.position, target, t));
+        }
+
+        private void ResetToOverview()
+        {
+            if (_isTransitioning)
+                EndTransition();
+            CurrentMode = Mode.Overview;
+            Current = null;
+            ApplyZoom(GetZoom(_overviewRef));
+            LastPanTime = float.NegativeInfinity;
         }
 
         public void FocusOn(FocusArea area)
@@ -228,7 +275,9 @@ namespace VeQue.View.CameraControl
             if (includeFocusArea && CurrentMode == Mode.Focused && Current != null)
                 position = ClampToRect(position, halfView, Current.PaddedRect);
 
-            if (_hasMapRect)
+            if (_hasRegionRect)
+                position = ClampToRect(position, halfView, _regionRect);
+            else if (_hasMapRect)
                 position = ClampToRect(position, halfView, _mapRect);
             return position;
         }

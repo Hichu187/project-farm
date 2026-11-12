@@ -1,4 +1,9 @@
 mergeInto(LibraryManager.library, {
+  // getTimezoneOffset trả về phút, dương khi ở phía tây UTC → đổi dấu cho giống C#.
+  VeQue_GetUtcOffsetMinutes: function () {
+    return -new Date().getTimezoneOffset();
+  },
+
   VeQue_RegisterPageHidden: function (callback) {
     if (window.__veQuePageHiddenBound) return;
     window.__veQuePageHiddenBound = true;

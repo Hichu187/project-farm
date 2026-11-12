@@ -37,7 +37,7 @@ namespace VeQue.View.Data
 
         [Header("Đơn hàng")]
         [Tooltip("Số đơn cùng lúc. 0 = không có đơn hàng.")]
-        [Min(0)] [SerializeField] private int _orderSlots = 3;
+        [Min(0)] [SerializeField] private int _orderSlots = 5;
         [Min(1)] [SerializeField] private int _orderUnlockLevel = 2;
         [Tooltip("Thưởng xu = Σ(số lượng × giá bán) × % này, làm tròn 5.")]
         [Min(0)] [SerializeField] private int _orderCoinPercent = 160;
@@ -47,6 +47,18 @@ namespace VeQue.View.Data
         [Min(0)] [SerializeField] private int _orderDiscardMinutes = 5;
         [Tooltip("Số lần thu tối đa của một loại cây trong một đơn.")]
         [Min(1)] [SerializeField] private int _orderHarvestCap = 6;
+        [Tooltip("Giao xong thì sau bao nhiêu phút có đơn thường mới.")]
+        [Min(0)] [SerializeField] private int _orderRefillMinutes = 10;
+        [Tooltip("Đơn kế tiếp là khẩn cấp thì chờ bao nhiêu phút (cả khi giao, bỏ, hết hạn).")]
+        [Min(0)] [SerializeField] private int _orderUrgentRefillMinutes = 30;
+        [Tooltip("Xác suất đơn kế tiếp là khẩn cấp (%).")]
+        [Range(0, 100)] [SerializeField] private int _orderUrgentChancePercent = 20;
+        [Tooltip("Đơn khẩn cấp: thưởng xu và XP × % này so với đơn thường cùng món.")]
+        [Min(0)] [SerializeField] private int _orderUrgentRewardPercent = 200;
+        [Tooltip("Đơn khẩn cấp hết hạn sau bao nhiêu phút kể từ lúc xuất hiện. 0 = không hết hạn.")]
+        [Min(0)] [SerializeField] private int _orderUrgentExpireMinutes = 30;
+        [Tooltip("Số đơn giao được mỗi ngày (giờ địa phương). Bỏ đơn không tính. 0 = không giới hạn.")]
+        [Min(0)] [SerializeField] private int _orderDailyLimit = 15;
         [SerializeField] private string[] _customerNames = Array.Empty<string>();
 
         public IReadOnlyList<ZoneDefinition> Zones => _zones;
@@ -83,7 +95,9 @@ namespace VeQue.View.Data
             var levels = new LevelDef(_xpToNext ?? Array.Empty<int>(), _coinsPerLevel, _unlockSeedCount);
             string rescueId = _rescueCrop != null && _rescueCrop.Enabled ? _rescueCrop.Id : null;
             var orders = new OrderDef(_orderSlots, _orderUnlockLevel, _orderCoinPercent, _orderXpPercent,
-                _orderDiscardMinutes * 60L, _customerNames, _orderHarvestCap);
+                _orderDiscardMinutes * 60L, _customerNames, _orderHarvestCap,
+                _orderRefillMinutes * 60L, _orderUrgentRefillMinutes * 60L, _orderUrgentChancePercent,
+                _orderUrgentRewardPercent, _orderUrgentExpireMinutes * 60L, _orderDailyLimit);
             return new FarmDef(zones, crops, _startCoins, seeds, _waterReducePercent, levels, rescueId, orders);
         }
     }

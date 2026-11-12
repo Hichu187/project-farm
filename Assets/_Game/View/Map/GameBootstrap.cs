@@ -58,6 +58,8 @@ namespace VeQue.View.Map
             _save = new SaveService(new PlayerPrefsStore(), def, _clock);
             FarmState state = _save.Load();
             Farm = new Farm(def, state, _save.Clock);
+            // Ngày của giới hạn đơn tính theo giờ địa phương.
+            Farm.SetUtcOffset(WebBridge.GetUtcOffsetSeconds());
             Farm.Changed += ScheduleSave;
             Farm.LeveledUp += LogLevelUp;
             Farm.Rescued += LogRescued;

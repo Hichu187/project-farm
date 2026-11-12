@@ -8,6 +8,7 @@ namespace VeQue.View.Character
     // Dựng lưới ô đi được cho nhân vật từ Tilemap, không dùng collider:
     // đi được = Ground có tile, Plots (luống) và Blockers (hàng rào, cây, rơm, nhà…) không có tile,
     // và không nằm trong vùng "sắp có" (chuồng, nhà kho, ao…).
+    // Vùng khác (vùng câu) dùng Tilemap riêng: _extraGround thêm ô đi được, _extraBlockers (nước…) chặn.
     // Blockers chỉ dùng để đánh dấu, có thể tắt Tilemap Renderer của nó.
     public sealed class WalkGridSource : MonoBehaviour
     {
@@ -15,6 +16,10 @@ namespace VeQue.View.Character
         [SerializeField] private Tilemap _plots;
         [SerializeField] private Tilemap _blockers;
         [SerializeField] private ComingSoonArea[] _blockedAreas = System.Array.Empty<ComingSoonArea>();
+        [Tooltip("Tilemap nền của vùng khác (vd. FishingGround): ô có tile là đi được.")]
+        [SerializeField] private Tilemap[] _extraGround = System.Array.Empty<Tilemap>();
+        [Tooltip("Tilemap chặn của vùng khác (vd. FishingWater): ô có tile là không đi được.")]
+        [SerializeField] private Tilemap[] _extraBlockers = System.Array.Empty<Tilemap>();
         [Tooltip("Tô đỏ các ô bị chặn khi chọn GameObject này trong Scene view.")]
         [SerializeField] private bool _drawBlockedGizmos = true;
 
@@ -34,15 +39,28 @@ namespace VeQue.View.Character
         public void Build()
         {
             BoundsInt bounds = _ground.cellBounds;
-            var grid = new WalkGrid(bounds.xMin, bounds.yMin, Mathf.Max(1, bounds.size.x), Mathf.Max(1, bounds.size.y));
-            for (int y = bounds.yMin; y < bounds.yMax; y++)
+            int xMin = bounds.xMin, yMin = bounds.yMin, xMax = bounds.xMax, yMax = bounds.yMax;
+            foreach (Tilemap extra in _extraGround)
             {
-                for (int x = bounds.xMin; x < bounds.xMax; x++)
+                if (extra == null)
+                    continue;
+                BoundsInt b = extra.cellBounds;
+                xMin = Mathf.Min(xMin, b.xMin);
+                yMin = Mathf.Min(yMin, b.yMin);
+                xMax = Mathf.Max(xMax, b.xMax);
+                yMax = Mathf.Max(yMax, b.yMax);
+            }
+
+            var grid = new WalkGrid(xMin, yMin, Mathf.Max(1, xMax - xMin), Mathf.Max(1, yMax - yMin));
+            for (int y = yMin; y < yMax; y++)
+            {
+                for (int x = xMin; x < xMax; x++)
                 {
                     var cell = new Vector3Int(x, y, 0);
-                    bool walkable = _ground.HasTile(cell)
+                    bool farm = _ground.HasTile(cell)
                         && (_plots == null || !_plots.HasTile(cell))
                         && (_blockers == null || !_blockers.HasTile(cell));
+                    bool walkable = (farm || HasAny(_extraGround, cell)) && !HasAny(_extraBlockers, cell);
                     if (walkable)
                         grid.SetWalkable(new GridCell(x, y), true);
                 }
@@ -58,6 +76,16 @@ namespace VeQue.View.Character
             }
 
             _grid = grid;
+        }
+
+        private static bool HasAny(Tilemap[] maps, Vector3Int cell)
+        {
+            for (int i = 0; i < maps.Length; i++)
+            {
+                if (maps[i] != null && maps[i].HasTile(cell))
+                    return true;
+            }
+            return false;
         }
 
         public bool IsInBlockedArea(Vector2 world)

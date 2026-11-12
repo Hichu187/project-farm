@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40ef5ae47d5c15946a2ff3abf27de54a, type: 3}
+  m_Name: SelectBoxSkin
+  m_EditorClassIdentifier: VeQue.View::VeQue.View.Anim.SelectBoxSkin
+  _topLeft: {fileID: -8434798797912550268, guid: e57c009d0cfc817418310ddc36af1f36,
+    type: 3}
+  _topRight: {fileID: 6430541286145335695, guid: 1a18e3ddc25e9f245a68202e2559e05f,
+    type: 3}
+  _bottomLeft: {fileID: -1852964129448009563, guid: 2501f0b3e265a2545925048251ef8f7d,
+    type: 3}
+  _bottomRight: {fileID: 4525430406814040127, guid: db9a596e03580af47a81a23c2c421611,
+    type: 3}
+  _outsetPixels: 2
+  _breathePeriod: 0.8
+  _breathePixels: 1
+  _snapDuration: 0.15
+  _snapPixels: 4
+  _fadeDuration: 0.3

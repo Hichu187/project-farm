@@ -1,53 +1,128 @@
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
+using UnityEditor.U2D.Sprites;
 using UnityEngine;
 using VeQue.View.Character;
 
 namespace VeQue.EditorTools
 {
-    // Menu Về Quê → Gán sprite nhân vật. Tạo (nếu chưa có) Assets/_Game/Data/CharacterSkin.asset rồi gán khung
-    // từ 2 sheet Sprout Lands, tìm sprite theo vị trí ô 48×48 trên sheet nên không phụ thuộc tên sprite.
-    // Thứ tự hàng (đã xem sheet): xuống, lên, trái, phải.
-    // - Spritesheet: cột 0–1 đứng, cột 2–3 đi.
-    // - Actions: hàng 0–3 cuốc, hàng 8–11 bình tưới (hàng 4–7 rìu, chưa dùng); mỗi hàng 2 khung.
-    // Chạy lại sẽ ghi đè khung (giữ Fps / Loop đã chỉnh).
+    // Menu Về Quê → Nhân vật Sunnyside: import + gán sprite.
+    // 1. Đặt import cho các strip nhân vật Sunnyside dùng tới (PPU 16, Point, không nén, tắt mipmap) và cắt
+    //    khung 96×64, pivot (0.5, 25/64) = chân nhân vật. Chạy lại giữ nguyên ID sprite (không mất tham chiếu).
+    // 2. Tạo (nếu chưa có) Assets/_Game/Data/CharacterSkin.asset: thân + dụng cụ cho 4 hoạt ảnh, 6 kiểu tóc
+    //    (đo khoảng độ sáng của tóc để shader phủ màu), material Assets/_Game/Art/HairTint.mat.
+    // Bảng màu tóc giữ nguyên phần đã chỉnh trong Inspector.
     public static class CharacterSkinAssigner
     {
-        private const string SheetFolder = "Assets/Art/Sprout Lands - Sprites - Basic pack/Characters/";
-        private const string BaseSheet = SheetFolder + "Basic Charakter Spritesheet.png";
-        private const string ActionSheet = SheetFolder + "Basic Charakter Actions.png";
+        private const string HumanFolder = "Assets/Art/Sunnyside_World_ASSET_PACK_V2.1/Sunnyside_World_Assets/Characters/Human/";
         private const string SkinPath = DefaultDataGenerator.DataFolder + "/CharacterSkin.asset";
-        private const int CellSize = 48;
-        private const float ExpectedPpu = 16f;
+        private const string HairMaterialPath = "Assets/_Game/Art/HairTint.mat";
+        private const string HairShader = "VeQue/HairTint";
+        private const int FrameWidth = 96;
+        private const int FrameHeight = 64;
+        private const float PixelsPerUnit = 16f;
+        // Chân nhân vật ở hàng pixel thứ 25 tính từ đáy khung (đo trên mọi strip đang dùng).
+        private static readonly Vector2 FeetPivot = new Vector2(0.5f, 25f / 64f);
+        // Pixel tối hơn mức này là viền (giữ nguyên khi phủ màu); khớp _OutlineLum của shader.
+        private const float OutlineLum = 0.12f;
 
-        private static readonly string[] FacingFields = { "Down", "Up", "Left", "Right" };
-        private const int HoeFirstRow = 0;
-        private const int WaterFirstRow = 8;
-
-        [MenuItem("Về Quê/Gán sprite nhân vật")]
-        private static void Assign()
+        private readonly struct ClipSource
         {
-            var errors = new List<string>();
-            Dictionary<Vector2Int, Sprite> baseSheet = LoadSheet(BaseSheet, errors);
-            Dictionary<Vector2Int, Sprite> actions = LoadSheet(ActionSheet, errors);
+            public readonly string Folder;
+            public readonly string Strip;
+            public readonly int Frames;
+            public readonly string Field;
+            public readonly string HairField;
 
-            for (int row = 0; row < 4; row++)
+            public ClipSource(string folder, string strip, int frames, string field, string hairField)
             {
-                for (int column = 0; column < 4; column++)
-                    Require(baseSheet, column, row, BaseSheet, errors);
-                for (int column = 0; column < 2; column++)
+                Folder = folder;
+                Strip = strip;
+                Frames = frames;
+                Field = field;
+                HairField = hairField;
+            }
+        }
+
+        private static readonly ClipSource[] Clips =
+        {
+            new ClipSource("IDLE", "idle_strip9", 9, "_idle", "Idle"),
+            new ClipSource("WALKING", "walk_strip8", 8, "_walk", "Walk"),
+            new ClipSource("DOING", "doing_strip8", 8, "_work", "Work"),
+            new ClipSource("WATERING", "watering_strip5", 5, "_water", "Water"),
+        };
+
+        // Thứ tự = thứ tự hiện ở màn tạo nhân vật; kiểu đầu tiên là mặc định (CharacterLook.DefaultHairStyle).
+        private static readonly (string Id, string Name)[] Hairs =
+        {
+            ("shorthair", "Tóc ngắn"),
+            ("longhair", "Tóc dài"),
+            ("curlyhair", "Tóc xoăn"),
+            ("bowlhair", "Tóc bát úp"),
+            ("mophair", "Tóc bù xù"),
+            ("spikeyhair", "Tóc dựng"),
+        };
+
+        [MenuItem("Về Quê/Nhân vật Sunnyside: import + gán sprite")]
+        private static void Run()
+        {
+            var prefixes = new List<string> { "base", "tools" };
+            foreach ((string id, _) in Hairs)
+                prefixes.Add(id);
+
+            var errors = new List<string>();
+            foreach (ClipSource clip in Clips)
+            {
+                foreach (string prefix in prefixes)
                 {
-                    Require(actions, column, HoeFirstRow + row, ActionSheet, errors);
-                    Require(actions, column, WaterFirstRow + row, ActionSheet, errors);
+                    string path = StripPath(clip, prefix);
+                    if (!(AssetImporter.GetAtPath(path) is TextureImporter))
+                        errors.Add($"Không thấy {path}.");
                 }
+            }
+            var shader = Shader.Find(HairShader);
+            if (shader == null)
+                errors.Add($"Không thấy shader {HairShader}.");
+            if (errors.Count > 0)
+            {
+                EditorUtility.DisplayDialog("Nhân vật Sunnyside", "Chưa làm gì vì:\n" + string.Join("\n", errors), "OK");
+                return;
+            }
+
+            var factory = new SpriteDataProviderFactories();
+            factory.Init();
+            var frames = new Dictionary<string, Sprite[]>();
+            try
+            {
+                int done = 0;
+                int total = Clips.Length * prefixes.Count;
+                foreach (ClipSource clip in Clips)
+                {
+                    foreach (string prefix in prefixes)
+                    {
+                        string path = StripPath(clip, prefix);
+                        EditorUtility.DisplayProgressBar("Nhân vật Sunnyside", path, (float)done++ / total);
+                        ImportStrip(factory, path, clip.Frames);
+                        Sprite[] sprites = LoadFrames(path);
+                        if (sprites.Length != clip.Frames)
+                            errors.Add($"{path}: có {sprites.Length} khung, cần {clip.Frames}.");
+                        frames[path] = sprites;
+                    }
+                }
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
             }
 
             if (errors.Count > 0)
             {
-                EditorUtility.DisplayDialog("Gán sprite nhân vật", "Chưa gán gì vì:\n" + string.Join("\n", errors), "OK");
+                EditorUtility.DisplayDialog("Nhân vật Sunnyside", "Đã import nhưng chưa gán vì:\n" + string.Join("\n", errors), "OK");
                 return;
             }
 
+            Material material = EnsureMaterial(shader);
             var skin = AssetDatabase.LoadAssetAtPath<CharacterSkin>(SkinPath);
             bool created = skin == null;
             if (created)
@@ -57,61 +132,147 @@ namespace VeQue.EditorTools
             }
 
             var so = new SerializedObject(skin);
-            for (int facing = 0; facing < 4; facing++)
+            foreach (ClipSource clip in Clips)
             {
-                SetFrames(so, "_idle", facing, baseSheet, facing, 0, 1);
-                SetFrames(so, "_walk", facing, baseSheet, facing, 2, 3);
-                SetFrames(so, "_hoe", facing, actions, HoeFirstRow + facing, 0, 1);
-                SetFrames(so, "_water", facing, actions, WaterFirstRow + facing, 0, 1);
+                SetArray(so.FindProperty(clip.Field + ".Body"), frames[StripPath(clip, "base")]);
+                SetArray(so.FindProperty(clip.Field + ".Tools"), frames[StripPath(clip, "tools")]);
             }
+
+            SerializedProperty hairs = so.FindProperty("_hairs");
+            hairs.arraySize = Hairs.Length;
+            var summary = new List<string>();
+            for (int i = 0; i < Hairs.Length; i++)
+            {
+                (string id, string name) = Hairs[i];
+                SerializedProperty hair = hairs.GetArrayElementAtIndex(i);
+                hair.FindPropertyRelative("Id").stringValue = id;
+                hair.FindPropertyRelative("DisplayName").stringValue = name;
+                foreach (ClipSource clip in Clips)
+                    SetArray(hair.FindPropertyRelative(clip.HairField), frames[StripPath(clip, id)]);
+
+                MeasureHair(StripPath(Clips[0], id), out float min, out float max);
+                hair.FindPropertyRelative("MinLum").floatValue = min;
+                hair.FindPropertyRelative("MaxLum").floatValue = max;
+                summary.Add($"{name}: {min:0.00}–{max:0.00}");
+            }
+            so.FindProperty("_hairMaterial").objectReferenceValue = material;
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(skin);
             AssetDatabase.SaveAssets();
             EditorGUIUtility.PingObject(skin);
 
-            EditorUtility.DisplayDialog("Gán sprite nhân vật",
-                (created ? "Đã tạo " : "Đã cập nhật ") + SkinPath + ": đứng, đi, cuốc, tưới × 4 hướng.", "OK");
+            EditorUtility.DisplayDialog("Nhân vật Sunnyside",
+                (created ? "Đã tạo " : "Đã cập nhật ") + SkinPath + ": đứng, đi, làm việc, tưới; 6 kiểu tóc.\n"
+                + "Độ sáng tóc: " + string.Join("; ", summary), "OK");
         }
 
-        private static void SetFrames(SerializedObject so, string clip, int facing,
-            Dictionary<Vector2Int, Sprite> sheet, int row, params int[] columns)
-        {
-            SerializedProperty array = so.FindProperty(clip + "." + FacingFields[facing]);
-            array.arraySize = columns.Length;
-            for (int i = 0; i < columns.Length; i++)
-                array.GetArrayElementAtIndex(i).objectReferenceValue = sheet[new Vector2Int(columns[i], row)];
-        }
+        private static string StripPath(ClipSource clip, string prefix) => $"{HumanFolder}{clip.Folder}/{prefix}_{clip.Strip}.png";
 
-        private static void Require(Dictionary<Vector2Int, Sprite> sheet, int column, int row, string path, List<string> errors)
+        private static Material EnsureMaterial(Shader shader)
         {
-            if (sheet.Count > 0 && !sheet.ContainsKey(new Vector2Int(column, row)))
-                errors.Add($"{path}: thiếu sprite ở cột {column}, hàng {row} (cần cắt lưới 48×48).");
-        }
-
-        // Khóa là (cột, hàng) tính từ góc trên-trái; rect của sprite tính từ góc dưới-trái.
-        private static Dictionary<Vector2Int, Sprite> LoadSheet(string path, List<string> errors)
-        {
-            var result = new Dictionary<Vector2Int, Sprite>();
-            foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(path))
+            var material = AssetDatabase.LoadAssetAtPath<Material>(HairMaterialPath);
+            if (material != null)
             {
-                if (!(asset is Sprite sprite))
-                    continue;
-
-                if (!Mathf.Approximately(sprite.pixelsPerUnit, ExpectedPpu))
-                {
-                    errors.Add($"{path}: Pixels Per Unit phải là {ExpectedPpu}.");
-                    return result;
-                }
-
-                Rect rect = sprite.rect;
-                int column = Mathf.FloorToInt(rect.center.x) / CellSize;
-                int row = (sprite.texture.height - Mathf.FloorToInt(rect.center.y) - 1) / CellSize;
-                result[new Vector2Int(column, row)] = sprite;
+                if (material.shader != shader)
+                    material.shader = shader;
+                return material;
             }
 
-            if (result.Count == 0 && errors.Count == 0)
-                errors.Add($"{path}: chưa cắt sprite (hoặc không tìm thấy file).");
-            return result;
+            material = new Material(shader) { name = "HairTint" };
+            AssetDatabase.CreateAsset(material, HairMaterialPath);
+            return material;
+        }
+
+        private static void SetArray(SerializedProperty array, Sprite[] sprites)
+        {
+            array.arraySize = sprites.Length;
+            for (int i = 0; i < sprites.Length; i++)
+                array.GetArrayElementAtIndex(i).objectReferenceValue = sprites[i];
+        }
+
+        // Độ sáng (gamma, như shader) tối nhất / sáng nhất của tóc, bỏ viền và pixel trong suốt.
+        private static void MeasureHair(string path, out float min, out float max)
+        {
+            min = 1f;
+            max = 0f;
+            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            try
+            {
+                if (!texture.LoadImage(File.ReadAllBytes(path)))
+                    return;
+                foreach (Color32 c in texture.GetPixels32())
+                {
+                    if (c.a == 0)
+                        continue;
+                    float lum = (0.299f * c.r + 0.587f * c.g + 0.114f * c.b) / 255f;
+                    if (lum <= OutlineLum)
+                        continue;
+                    min = Mathf.Min(min, lum);
+                    max = Mathf.Max(max, lum);
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(texture);
+            }
+
+            if (max <= min)
+            {
+                min = 0f;
+                max = 1f;
+            }
+        }
+
+        private static void ImportStrip(SpriteDataProviderFactories factory, string path, int frameCount)
+        {
+            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Multiple;
+            importer.spritePixelsPerUnit = PixelsPerUnit;
+            importer.filterMode = FilterMode.Point;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.mipmapEnabled = false;
+            importer.alphaIsTransparency = true;
+
+            ISpriteEditorDataProvider provider = factory.GetSpriteEditorDataProviderFromObject(importer);
+            provider.InitSpriteEditorDataProvider();
+            SpriteRect[] old = provider.GetSpriteRects();
+
+            string baseName = Path.GetFileNameWithoutExtension(path);
+            var rects = new SpriteRect[frameCount];
+            var pairs = new List<SpriteNameFileIdPair>(frameCount);
+            for (int i = 0; i < frameCount; i++)
+            {
+                var rect = new SpriteRect
+                {
+                    name = $"{baseName}_{i}",
+                    rect = new Rect(i * FrameWidth, 0f, FrameWidth, FrameHeight),
+                    alignment = SpriteAlignment.Custom,
+                    pivot = FeetPivot,
+                    // Giữ ID cũ để scene / asset đang tham chiếu không bị mất.
+                    spriteID = i < old.Length ? old[i].spriteID : GUID.Generate(),
+                };
+                rects[i] = rect;
+                pairs.Add(new SpriteNameFileIdPair(rect.name, rect.spriteID));
+            }
+
+            provider.SetSpriteRects(rects);
+            provider.GetDataProvider<ISpriteNameFileIdDataProvider>()?.SetNameFileIdPairs(pairs);
+            provider.Apply();
+            importer.SaveAndReimport();
+        }
+
+        // Các khung theo thứ tự từ trái sang phải trên strip.
+        private static Sprite[] LoadFrames(string path)
+        {
+            var sprites = new List<Sprite>();
+            foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(path))
+            {
+                if (asset is Sprite sprite)
+                    sprites.Add(sprite);
+            }
+            sprites.Sort((a, b) => a.rect.x.CompareTo(b.rect.x));
+            return sprites.ToArray();
         }
     }
 }

@@ -1,25 +1,26 @@
 # Về Quê – Tiến độ
 
-## Tóm tắt (cập nhật 07/11/2026)
+## Tóm tắt (cập nhật 12/11/2026)
 
 | Phần | Trạng thái | Còn thiếu |
 |---|---|---|
 | 0 – Khung project | Xong | Chưa quyết gỡ 4 package không dùng |
 | 1 – Logic + test | Xong | — |
 | 2 – Data | Xong (giá cây, cấp, đơn hàng tính lại ở 6b) | — |
-| 3 – Map & art | Đang làm | Art ô đất, `Decor` còn lại, `ComingSoonArea`, Sprite Atlas |
+| 3 – Map & art | Đang làm (chuyển sang Sunnyside ở 3b) | `ComingSoonArea`, Sprite Atlas |
+| 3b – Chuyển art sang Sunnyside | Đang làm | Bước 0, 1 xong; 1b tạo nhân vật đã viết code, chờ kiểm tra; 2 vẽ map (công cụ có, người dùng vẽ sau); 3 ô đất + cây tạm; 4 UI đang làm (khung 9-slice + màu, icon, thanh XP: người dùng xác nhận ổn; font FatPix dựng từ SVG + viền: chờ xem lại); 5 dọn Sprout Lands + build |
 | 4 – Camera | Ổn trong Editor | Template WebGL, thử trên iPhone / Android |
-| 5 – Ô đất & cây | Ổn trong Editor | Gán sprite đủ 4 cây, tile đất ướt (xác nhận lại) |
+| 5 – Ô đất & cây | Ổn trong Editor | Đổi sprite cây + tile đất sang Sunnyside (3b bước 3); bộ cây Việt người dùng vẽ |
 | 5b – Hoạt ảnh cây | Ổn trong Editor (Đợt A + B) | Khung hình: chờ art |
 | 6 – UI | Ổn trong Editor | Mục 4 hiệu ứng GUI (làm sau); mục 5 chạm/kéo chờ kiểm tra; chữ có dấu + safe-area trên iPhone |
 | 6b – Cấp độ, đơn hàng, cân bằng | Ổn trong Editor | Build + Build Report; công cụ Cân bằng (làm sau) |
-| 6c – Việc làm lúc chờ cây lớn | Chưa làm (kế hoạch 8 mục, 07/11/2026) | Mục 1–6 trong MVP, 7–8 sau MVP; mỗi mục duyệt thiết kế trước |
-| 10 – Nhân vật, vùng câu, câu cá, ao nhà | Giai đoạn 1 (nhân vật ở nông trại + hàng việc) xong trong Editor; ẩn tab chờ thử trên web | Ném perfect, giật câu, kéo cá mũi tên 4 hướng, cá theo độ hiếm/cân nặng/giá/khung giờ, cần rank/độ bền/trượt/gãy, mồi; cần art cá, phao, cần, nước |
-| 7 – Lưu tiến trình | Đã viết code (save `version` 2) | Thử trên máy thật, nhập mã máy khác, trình duyệt nhúng Facebook |
+| 6c – Việc làm lúc chờ cây lớn | Mục 2 (đơn hàng: chờ, Khẩn cấp, 15 đơn/ngày) xong code, người dùng xác nhận đơn ổn 12/11 | Mục 1, 3–6 trong MVP, 7–8 sau MVP; Test Runner + thử Tua thời gian mục 2; mỗi mục duyệt thiết kế trước |
+| 10 – Nhân vật, vùng câu, câu cá, ao nhà | Giai đoạn 1 xong trong Editor (nhân vật Sunnyside 3 lớp từ 3b); giai đoạn 2 (vùng câu) đã viết code, chờ kiểm tra; giai đoạn 3 (Logic câu cá) xong, thêm độ bền cần 12/11; ẩn tab chờ thử trên web | Ném perfect, giật câu, kéo cá mũi tên 4 hướng, cá theo độ hiếm/cân nặng/giá/khung giờ, cần rank/độ bền/trượt/gãy, mồi; cần art cá, phao, cần, nước |
+| 7 – Lưu tiến trình | Đã viết code (save `version` 6 từ 12/11: nhân vật, hạng / hạn đơn, giới hạn ngày, múi giờ, câu cá, số lần sửa cần) | Thử trên máy thật, nhập mã máy khác, trình duyệt nhúng Facebook |
 | 8 – Build & phát hành | Chưa làm | Toàn bộ |
 
-Git: nhánh `setup/phan-0-camera`, đã push lên `origin`. Code mới nhất ở `e65601e` (Phần 5, 5b, 6 mục 5, 6b, 7); các commit sau chỉ là tài liệu kế hoạch Phần 6c, 10.
-Test: lần gần nhất người dùng xác nhận trong Unity là 210 (sau Đợt 4 Phần 6b). Hiện có 221 test; ngoài Unity chạy được 164/164 xanh (phần không cần Unity).
+Git: nhánh `setup/phan-0-camera`; `origin` có tới `b210c55`. Commit mới nhất `3276bb3` (Phần 10 giai đoạn 1, chưa push). **Chưa commit:** toàn bộ Phần 3b (gói Sunnyside, nhân vật 3 lớp, công cụ import tileset, tạo nhân vật, tài liệu).
+Test: người dùng xác nhận Test Runner ổn sau Phần 10 giai đoạn 1 (dự kiến 271). Sau 3b bước 1b + 6c mục 2 chưa chạy trong Unity. Ngoài Unity (12/11): NUnit Logic + test thuần 218/218 xanh (không gồm `SmokeTests`, `SaveTests`, `FarmDefinitionTests`, `UiFormatTests`, `EaseTests`).
 
 ## Phần 0 – Dọn project & khung thư mục (XONG – 29/10/2026)
 
@@ -434,12 +435,181 @@ Người dùng cho làm trước thứ tự trong plan (trước Phần 6c mục
 ### Còn lại
 - [x] Người dùng import sheet, gán **Water Hint Sprite**, chơi thử: ổn.
 
+## Phần 3b – Chuyển art sang Sunnyside World (đang làm – 12/11/2026)
+
+### Quyết định
+- Chuyển hẳn sang Sunnyside World (một phong cách). Cây Sunnyside dùng tạm: rau muống ← `kale`, cải xanh ← `cabbage`, cà chua ← `radish`, bí đỏ ← `pumpkin`; người dùng sẽ vẽ bộ cây Việt cùng phong cách.
+- Nhân vật: 3 lớp (thân `base`, tóc `shorthair`, dụng cụ `tools`), 2 hướng (lật trái), khung 96×64, pivot (0.5, 25/64).
+- Thứ tự: 0 tài liệu + dọn → 1 nhân vật → 2 map → 3 ô đất + cây; 4 UI làm sau; 5 dọn Sprout Lands + build.
+
+### Đã làm
+- Bước 0:
+  - xóa `Sunnyside_World_Gamemaker/` (66 MB) và `.DS_Store`;
+  - sửa `CLAUDE.md` (Art, Map); `MVP-Plan.md` thêm Phần 3b + ghi thay đổi 12/11; viết lại `Docs/art-phan-10.md` theo Sunnyside.
+- Bước 1 (XONG – người dùng chuyển sang bước 2):
+  - `CharacterSkin`: 3 lớp / clip; hoạt ảnh đứng `IDLE` 8 fps, đi `WALKING` 10 fps, làm việc `DOING` 16 fps, tưới `WATERING` 10 fps; `Hoe` → `Work`.
+  - `CharacterView`: 3 `SpriteRenderer` + `SortingGroup` (thứ tự theo Y), lật khi quay trái, lên / xuống giữ hướng ngang.
+  - Editor: menu **Về Quê → Nhân vật Sunnyside: import + gán sprite** (tự đặt import + cắt 96×64 cho 12 strip, giữ ID sprite khi chạy lại); `VeQue.Editor.asmdef` thêm `Unity.2D.Sprite.Editor`.
+  - Biên dịch ngoài Unity: không lỗi.
+
+### Còn lại
+- [x] Người dùng chạy menu nhân vật Sunnyside (bước 1).
+- Bước 1b – tạo nhân vật (duyệt 12/11/2026, đã viết code, chờ kiểm tra):
+  - Quyết định: chọn tên (1–16 ký tự), kiểu tóc (6 kiểu), màu tóc (Gốc + 7 màu); hiện lần đầu vào game (cả save cũ) + nút **Nhân vật** trên HUD; phủ màu bằng shader `VeQue/HairTint` (độ sáng tóc chuẩn hóa theo từng kiểu, giữ viền) vì tóc `shorthair` gần đen, nhân màu không thấy.
+  - Logic: `CharacterLook` (+ chuẩn hóa tên, dạng dựng sẵn), `FarmState.Character`, `Farm.SetCharacter`, `FarmResult.InvalidName`; save `version` 3 (`SaveCharacter`; save 2 → chưa tạo nhân vật). Phần 6c mục 2 lùi sang `version` 4. Test mới `CharacterLookTests` (20; tổng trong Unity dự kiến 291); sửa `OrderTests.Save_CurrentVersionIs3`. Ngoài Unity: test Logic 206/207 (`SmokeTests` chỉ lỗi ngoài Unity).
+  - View: `CharacterSkin` tách 6 bộ tóc + bảng màu + material; `CharacterView.SetLook`; `FarmCharacterController` áp ngoại hình theo `Farm.Changed`; `CharacterPreview`, `CharacterCreator`; `GameUI` đóng bảng khi mở màn nhân vật; shader `Assets/_Game/Art/Shaders/HairTint.shader`.
+  - Editor: menu nhân vật import thêm 6 kiểu tóc, đo độ sáng tóc, tạo `Assets/_Game/Art/HairTint.mat`; `UiBuilder` dựng màn tạo nhân vật + nút HUD.
+  - Biên dịch ngoài Unity: không lỗi.
+- Bước 2 (đã viết công cụ; hướng dẫn từng bước ghi trong `MVP-Plan.md` Phần 3b bước 2; người dùng vẽ map sau):
+  - Tileset Sunnyside tách lớp: đất / nước làm nền, cỏ phủ trên bằng mảnh viền bo tròn trong suốt → nền + hàng rào vẽ bằng công cụ vẽ map cũ (đổi tile), viền cỏ mềm / ao / nhà / cây vẽ tay trên `Decor`.
+  - Editor: menu **Về Quê → Sunnyside: import tileset 16px** (đặt import, cắt 16×16 bỏ ô trống – 1740 tile, tên `ss_x_y` theo tọa độ, giữ ID khi chạy lại).
+  - Gợi ý tile: cỏ `ss_1_1` (+ biến thể `ss_1_2`…`ss_5_2`), sân đất `ss_3_1` (biến thể `ss_9_7`, `ss_10_7`, `ss_9_8`, `ss_10_8`), nước `ss_4_1`, hàng rào gỗ quanh `ss_38_1`…`ss_42_4` (ngang `ss_39_2`, dọc `ss_40_3`, góc người dùng chọn khi thử).
+- Bước 2 map, bước 3 ô đất + cây, bước 4 UI (sau), bước 5 dọn + build.
+- Kiểm tra giấy phép Sunnyside.
+
+## Khung chọn 4 góc Sunnyside (đã viết code, chờ kiểm tra – 12/11/2026)
+
+### Quyết định
+- Một kiểu khung 4 góc (`UI/selectbox_tl/tr/bl/br`, 8×9 px) cho mọi thứ "đang chọn", thay lớp phủ màu / chấm trắng.
+- Chạm khu: góc thu vào ôm khu (4 px → khít, 0,15 giây), zoom xong mờ dần 0,3 giây (không giữ khi đang zoom). Ô đất (12/11 chốt sau 3 lần thử): ô còn chờ có khung khít ô (không lấn ô bên), mờ (alpha 0,4), đứng yên; ô nhân vật đang làm có 1 khung nới 2 px, co giãn 0→2 px theo từng pixel (0,6 giây; thử nhấp nháy độ đậm trước, người dùng chọn co giãn), vẽ trên khung ô chờ. Khung đứng yên tắt Update. Làm xong: vẫn lóe vàng, khung tắt. Ô khóa đang mở bảng mua: khung đứng yên (vàng nhạt). Đích đi bộ: khung thở.
+- Chỉ dời góc theo bước pixel và đổi độ trong suốt, không phóng sprite; đặt góc theo `sprite.bounds` nên không cần chỉnh pivot. Khung vẽ trên cây / nhân vật (thứ tự 290), dưới icon gợi ý tưới (300).
+
+### Đã làm
+- `View/Anim/SelectBoxSkin` (SO: 4 góc + thông số), `View/Anim/SelectBox` (4 `SpriteRenderer`, kiểu Static / Breathe, thu vào, mờ dần).
+- `CameraControl/ZoneSelectHighlight`: theo dõi `CameraController.Current`, không sửa luồng chạm.
+- `FarmView`: khung mờ khít ô cho ô chờ, khung co giãn cho ô đang làm; `ShowPlotSelection` / `HidePlotSelection`. `UnlockDialog` bật / tắt khung (tự tìm `FarmView`). `FarmCharacterController`: dấu điểm đến dùng khung (bỏ texture tự tạo). Đổi tên trường màu / thứ tự để giá trị mặc định mới có hiệu lực.
+- Editor: menu **Về Quê → Khung chọn: tạo asset + gán vào scene** (tạo `Assets/_Game/Data/SelectBoxSkin.asset`, gán vào `FarmView`, `FarmCharacterController`, thêm `ZoneSelectHighlight` lên camera; cảnh báo nếu import sai).
+- Biên dịch ngoài Unity: không lỗi.
+
+### Còn lại
+- [ ] Người dùng: 4 file selectbox đặt Compression **None** (PPU 16, Point đã đúng; tắt mipmap nếu đang bật) → chạy menu Khung chọn → lưu scene → chơi thử: khung sắc nét ở toàn cảnh (5x) và zoom (~10x), phân biệt ô chờ / đang làm / đích đi; Test Runner vẫn xanh.
+
+## Phần 6c mục 2 – Đơn hàng: thời gian chờ, hạng Khẩn cấp, giới hạn ngày (đã viết code, chờ kiểm tra – 12/11/2026)
+
+### Quyết định (người dùng duyệt 12/11/2026, thay thiết kế 07/11)
+- 5 ô đơn. Giao xong → chờ 10 phút (đơn kế khẩn cấp: 30 phút). Bỏ đơn → 5 phút (khẩn cấp vẫn 30). Hạng đơn kế tung lúc ô trống.
+- Khẩn cấp: 20%, thưởng xu + XP ×2, hết hạn 30 phút kể từ lúc xuất hiện → ô trống, chờ như khi giao. Thay ô đơn gấp riêng.
+- Giới hạn 15 đơn giao/ngày (giờ địa phương); bỏ đơn, hết hạn không tính; đủ thì không sinh đơn mới tới 0 giờ.
+- Chưa chạy lại mô phỏng cân bằng (`sim2.py` không có trong repo) → chơi thử rồi chỉnh số trong `FarmDefinition`.
+
+### Đã làm
+- Logic: `OrderRank`; `OrderState.Rank` / `ExpiresAt`; `OrderDef` thêm thời gian chờ, tỉ lệ / % thưởng / hạn khẩn cấp, giới hạn ngày (tham số tùy chọn, mặc định = hành vi cũ); `FarmState.OrderDay` / `DeliveredToday` / `UtcOffsetSeconds`; `Farm`: `SetUtcOffset`, `CurrentDay`, `SecondsUntilNextDay`, `OrdersLeftToday`, `CanReceiveOrderToday`, `TryGetOrderTimeLeft`; `FarmResult.OrderExpired`. Lỗi cũ: giao xong sinh đơn mới ngay (không chờ) – đã sửa.
+- Save `version` 4 (`rank`, `expiresAt`, `orderDay`, `deliveredToday`, `utcOffsetSeconds`); save 1–3 nạp được.
+- Test: `OrderTests` thêm 11 ca (chờ sau giao, khẩn cấp ×2 + hạn, hết hạn, chờ 30 phút sau giao / bỏ, tỉ lệ ~20%, giới hạn ngày, sang ngày, bỏ đơn không tính, múi giờ, save khứ hồi, save 3 → 4); sửa `Save_CurrentVersionIs4`, `CharacterLookTests` dùng `SaveData.CurrentVersion`. NUnit ngoài Unity (Logic + test thuần): 218/218 xanh.
+- View: `FarmDefinition` thêm 6 trường (mặc định 10 / 30 / 20% / 200% / 30 / 15), `_orderSlots` 3 → 5 (cả asset và `DefaultDataGenerator`); `WebBridge.GetUtcOffsetSeconds` + jslib `VeQue_GetUtcOffsetMinutes`; `GameBootstrap` gọi `Farm.SetUtcOffset` lúc mở game; `OrderCard` (màu nền + nhãn khẩn cấp), `OrderPanel` (dòng "Còn N đơn hôm nay", đếm ngược theo hạng, hết lượt, báo hết hạn); `UiBuilder` dựng 5 thẻ + dòng đầu bảng.
+- Tài liệu: `MVP-Plan.md` Phần 6b mục B, 6c mục 2, thay đổi 12/11; `CLAUDE.md` (5 đơn, hạng, giới hạn ngày).
+- Biên dịch ngoài Unity: không lỗi.
+
+### Còn lại
+- [ ] Người dùng: chạy **Về Quê → Tạo UI** (5 thẻ, nhãn khẩn cấp, dòng đầu bảng), Test Runner, chơi thử bằng **Tua thời gian**: giao đơn → ô đếm ngược 10 / 30 phút; thấy đơn khẩn cấp (thẻ khác màu, đếm ngược hạn), để hết hạn; giao đủ 15 đơn → hết đơn tới 0 giờ; save cũ nạp được.
+- [ ] Build WebGL kiểm tra jslib múi giờ (cú pháp `.jslib` chưa được Unity xử lý thật).
+
+## Phần 3b bước 4 – UI Sunnyside (khung + màu: người dùng xác nhận ổn 12/11/2026)
+
+### Quyết định
+- Dùng UI Sunnyside (`UI/9slice_box_white`, `label_*`), không dùng Sprout Lands UI Pack (khác phong cách, sẽ xóa).
+- 1 pixel art = 2 đơn vị UI (Canvas 390 ngang → 6 px trên màn 1170).
+- 12/11 (người dùng: panel hơi đậm, thêm sắc độ): tô lại khung `w` (giữ viền, đổi vệt sáng + nền) thành nhiều sắc độ: paper `f7ebd2`, cream `ead4aa`, sand `d9ae84`, tan (`lt` gốc), brown `b86f50`, dark (`dt` gốc), gray (`w` gốc), nút green / red / blue; nhãn paper / cream / tan.
+- Phối: tấm bảng + hộp thoại = cream, thẻ / hàng / ô nhập = paper, thanh tab = sand, tab = nhãn paper, ô xu / cấp = nhãn cream, nút xanh = green, nút nâu = brown; chữ nâu đậm khắp nơi; đơn khẩn cấp nhuộm paper thành hồng cam nhạt.
+
+### Đã làm
+- Editor: menu **Về Quê → UI Sunnyside: ghép 9-slice** ghép 9 mảnh 3×3 thành sprite 9×9 (Border 3), tô thêm sắc độ, ghép nhãn 24×13 (Border 4) vào `Assets/_Game/Art/UI/` (`ui_box_<tên>.png`, `ui_label_<tên>.png`; xóa 4 file tên cũ nếu có) (PPU 16, Point, không nén, không mipmap); không sửa asset gốc.
+- `UiBuilder`: hàm `Frame` (Image Sliced, `pixelsPerUnitMultiplier` theo `UiPixelScale`), `MakeButton` chọn khung theo màu; chưa ghép sprite thì vẫn dựng màu phẳng như cũ.
+- Biên dịch ngoài Unity: không lỗi.
+
+### Còn lại
+- [x] Người dùng chạy menu ghép → **Tạo UI**: màu ổn. (Lỗi đã sửa: menu ghép từng xóa nhầm `ui_box_dark.png` vì trùng tên file cũ; `UiBuilder` thiếu 1 sprite thì cả UI về màu phẳng → nay chỉ chỗ thiếu.)
+- Icon + thanh (12/11/2026, đã viết code, chờ người dùng xem):
+  - Menu ghép thêm `ui_bar.png` (khung `greenbar_00`, Border 2/3/2/2) và chép `ui_icon_confirm / cancel / sandtimer / stopwatch.png`.
+  - Thanh XP (HUD) và thanh tiến độ cây (popup): khung `greenbar` cao đúng 7 pixel art, phần đầy màu `#63c74d` co giãn liên tục (không nhảy theo 7 nấc của `greenbar_00–06`); chữ XP trắng.
+  - Nút: dấu tích cho Giao / Mở / Tuyệt / Bắt đầu; dấu X cho Bỏ / Hủy; nút đóng bảng (X) và nút Đóng màn nhân vật chỉ còn icon (thiếu sprite thì hiện chữ). Nút Mua / Bán trong Kho / Cửa hàng chưa có icon.
+  - Đồng hồ cát ở dòng chờ đơn; đồng hồ bấm giờ ở popup tiến độ cây (hộp 112×50).
+- [x] Người dùng xem icon + thanh XP: ổn.
+- Font pixel VT323 (12/11/2026, đã viết code, chờ người dùng xem):
+  - Tìm hiểu: VT323 (OFL, Google Fonts) chắc chắn có tiếng Việt → người dùng thêm `Assets/_Game/Art/Font/VT323-Regular.ttf`. Kiểm tra file: đủ 146 chữ Việt (134 có dấu + gốc + đ/Đ). Ứng viên hợp phong cách hơn: FatPix VN (chưa rõ giấy phép thương mại).
+  - VT323: em 1000, pixel thiết kế cao 80 / rộng 40 đơn vị, chữ hoa 0,56 em, rộng cố định 0,4 em.
+  - Editor: menu **Về Quê → Font: tạo VT323 tiếng Việt** → `Assets/_Game/Art/Font/VT323 Pixel.asset` (TMP Static, RASTER_HINTED, lấy mẫu 25, atlas 512, lọc Point; ASCII + 146 chữ Việt + ký hiệu UI `·×→…`); tĩnh nên build không mang file .ttf.
+  - `UiBuilder`: mọi nhãn dùng font này (chưa có thì font mặc định); cỡ chữ làm tròn: < 17 → 50/3, còn lại → 25 (sắc nét trên màn 1170, Canvas ×3); tab bỏ tự co cỡ.
+  - Người dùng xem: VT323 bẹp, dính → đổi sang **FatPix VN** (NgnDang, itch.io: miễn phí cả thương mại, không bán lại, nên ghi công). Đã xóa file VT323.
+  - FatPix `FatPix-VN-SVG.otf`: nét CFF + bảng SVG màu (1,9 MB, TMP bỏ qua); đủ 146 chữ Việt + ASCII; thiếu `·` `→` `…` → fallback font mặc định TMP. 1 pixel thiết kế = 43,7778/1000 em (đọc từ SVG).
+  - Menu đổi tên **Về Quê → Font: tạo font pixel tiếng Việt** → `Assets/_Game/Art/Font/FatPix Pixel.asset` (lấy mẫu 46, atlas 1024). Cỡ chữ UI: < 15 → 15,2; 15–19 → 22,8; ≥ 20 → 30,5 (2 / 3 / 4 px màn hình mỗi pixel thiết kế khi Canvas ×3); tab dùng cỡ nhỏ.
+  - Người dùng: nhiều chỗ tràn → đo độ rộng thật (hmtx FatPix) các chuỗi dài nhất so với khung: tràn ở xu HUD, Dừng, Nhân vật, tên cây, info Cửa hàng, tab "Đơn hàng (N)", toast, món trong thẻ đơn, nút Giao, dòng hết đơn, Kho trống.
+  - Sửa: cỡ chữ còn 2 bậc (cỡ cũ < 20 → 15,2; ≥ 20 → 22,8); chữ trong nút một dòng, dài thì "…"; tab rộng hơn (padding 4, spacing 3, chữ tràn nhẹ lên viền nhãn); món trong thẻ đơn 2 dòng "tên / số lượng"; nút Giao / Bỏ 78; dòng thưởng một dòng.
+  - Outline (duyệt cách 1, 12/11/2026, đã viết code): shader `Assets/_Game/Art/Shaders/PixelTextOutline.shader` ("VeQue/TMP Pixel Outline", dựa trên TMP Mobile/Bitmap): lấy 8 điểm quanh cách `_OutlineTexels` (2 texel = 1 pixel thiết kế), tô `_OutlineColor` (mặc định `#181425` viền Sunnyside); `_OutlineCorners` 0/1 (4 / 8 hướng); `_Padding` 2 để TMP nới khung chữ. Atlas padding 2 → 4. Menu font tạo / cập nhật `Assets/_Game/Art/Font/FatPix Outline.mat` (giữ file cũ, chỉ gắn atlas mới). `UiBuilder`: chữ trắng trên nút xanh / nâu và chữ XP dùng material viền.
+  - Người dùng: chữ vẫn chưa sạch. Nguyên nhân: nét CFF của FatPix ghép theo từng chữ với tỉ lệ riêng (1 pixel = 43,2–45,1 đơn vị, lệch ~0,5 pixel) → vẽ lại ra atlas thì pixel dày mỏng không đều; Canvas không ×3 nguyên ở nhiều màn / Game view.
+  - Sửa (duyệt bước 1 + 2, 12/11/2026): menu font đọc thẳng bảng SVG (ô `<rect>` đúng lưới, xử lý chữ lật `scale(s,-s)`, gzip) → atlas 512 Alpha8, 1 pixel thiết kế = 1 texel, padding 3; khoảng cách chữ đều (advance = rộng + 1; dấu cách theo hmtx); FaceInfo đo từ chữ thật, PointSize 24. Cỡ chữ UI: 16 (2 px / pixel) và 24 (3 px). Viền 1 texel (`_OutlineTexels` = `_Padding` = 1). Canvas bật `pixelPerfect`.
+  - Lỗi lần chạy đầu: mất chữ có dấu / Latin-1 (â, ấ, ạ, ô, à…). Nguyên nhân: 23.141 ô vẽ bằng `<path d="M x y L … Z">` (không phải `<rect>`), và chữ ghép có nhiều nhóm `<g transform>` (chữ gốc + dấu, tỉ lệ / lệch riêng) – bản đầu chỉ đọc `<rect>` và transform đầu tiên. Sửa: đọc cả path, từng nhóm; đưa mọi nhóm về lưới nhóm đầu bằng tâm ô rồi làm tròn xuống (thử bằng Python: không chữ nào rỗng, dấu đúng chỗ). Đỉnh dòng tính theo chữ thường có dấu (chữ hoa có dấu được nhô lên) để chữ canh giữa nút.
+  - Bước 3 (chưa làm, chờ người dùng chọn): ép tỉ lệ Canvas nguyên để sạch pixel trên mọi màn.
+  - Chờ: người dùng chạy menu font → **Tạo UI** → xem ở Game view 1170×2532, Scale 1x; ghi công FatPix khi phát hành.
+- [ ] Build lại so Build Report.
+
+## Phần 10 giai đoạn 2 – Vùng câu + di chuyển (đã viết code, chờ kiểm tra – 12/11/2026)
+
+### Quyết định (người dùng duyệt 12/11/2026)
+- **Chuyển cảnh bằng màn tối** (không đi bộ liền mạch): đi ra cổng → tối 0,25 giây → đứng ở cổng vùng mới → sáng. Vùng câu Tilemap riêng (`FishingGround` đi được, `FishingWater` chặn), đặt ở x = −60 (camera nông trại không thấy; giới hạn camera nông trại vẫn lấy từ Ground).
+- Đang có hàng việc mà đi câu: hủy, trả hạt, toast "Đã hủy N việc để đi câu". Bấm Đi câu lần nữa khi đang đi ra cổng: bỏ qua đoạn đi bộ. Chạm đất chỗ khác: hủy chuyến.
+- Zoom vùng câu = toàn cảnh nông trại. Camera đi theo nhân vật (mượt), kéo để xem, thả tay 2 giây tự về.
+- HUD vùng câu: ẩn thanh tab, nút Nhân vật, nút Đi câu; hiện tên vùng "Bến sông" + nút Về nhà. Giai đoạn 2 chưa câu: tới chỗ câu → quay mặt ra nước, toast "Câu cá: sắp có".
+- Không lưu vùng (luôn vào game ở nông trại).
+
+### Đã làm
+- View: `PlayRegion` (khung, loại, tên, cổng, chỗ câu), `FishingSpot` (ô đứng, hướng, vùng chạm, icon cần nhấp nhô), `RegionTravel` (đi ra cổng → màn tối → đổi vùng / camera → sáng; chạm cổng, chạm chỗ câu), `CameraFollow`, `ScreenFader`. `CameraController`: `UseRegionBounds` / `UseMapBounds`, `JumpTo`, `MoveTowards`, `LastPanTime`. `WalkGridSource`: `_extraGround` / `_extraBlockers`. `FarmCharacterController`: `WalkTo(ô, khi tới)`, `PlaceAt`, `Face`, `Body`, chạm đất qua `RegionTravel` trước. `GameUI`: nút Đi câu / Về nhà, khung tên vùng, `_farmOnly`.
+- Editor: menu **Về Quê → Vùng câu: tạo tạm** (tile Sunnyside cỏ / đất / nước → `Assets/_Game/Art/Tiles/Fishing/`; vùng 24×26, hồ trái, 3 bến, lối từ cổng; GameObject `Regions` + `RegionTravel`; `CameraFollow` lên camera; gán vào `WalkGridSource`, nhân vật). Cổng nông trại mặc định ô (0, 8). `UiBuilder`: nút Đi câu (dưới Nhân vật), Về nhà, nhãn vùng, màn tối (trên cùng). Menu ghép UI thêm icon `rod`.
+- Biên dịch ngoài Unity: không lỗi. Logic không đổi.
+
+### Còn lại
+- [ ] Người dùng: **UI Sunnyside: ghép 9-slice** (icon cần) → **Vùng câu: tạo tạm** → **Tạo UI** → lưu scene → thử: Đi câu (có / không có hàng việc, bấm 2 lần), camera đi theo + kéo xem 2 giây tự về, chạm chỗ câu, không đi trên nước, Về nhà, chạm cổng; zoom khu / hàng việc như cũ sau khi về.
+- [ ] Art vùng câu thật (người dùng thêm sau), chỉnh cổng nông trại nếu map khác.
+
+## Phần 10 giai đoạn 3 – Câu cá: Logic + test (XONG – 12/11/2026, Test Runner 354/354)
+
+### Quyết định (người dùng duyệt 12/11/2026)
+- View chạy phần thời gian thực (thanh lực, giật câu, nhập mũi tên + chốt nhịp) rồi báo kết quả; Logic chọn cá, lịch rỉa / cắn, đề vòng kéo, thể lực / độ căng, cân nặng, giá, XP, độ bền. Ngẫu nhiên qua `SeededRandom` (seed lấy từ `FarmState.RandomState`).
+- Giỏ cá 8 ô, nâng cấp được (data: 8 → 10 → 12 → 16 → 20, giá 300 / 1.000 / 3.000 / 8.000). Đào được giun khi thu hoạch (10%, 1–2 con). Mở câu cá từ cấp 1 (người dùng quy định lại sau), tặng cần tre + 10 giun 1 lần.
+- Số đề xuất (chưa mô phỏng cân bằng): giá cá Thường 8–15 → Huyền thoại 600–1.200; XP 1 / 3 / 8 / 20 / 50; cần tre (tặng, 30 bền) → trúc 300 → thủy tinh 1.500 → carbon 6.000 → vàng 20.000; sửa = 40% giá; mồi giun 2 (không bán, đào được), cám 3, tép 5, mồi giả 8, mồi thơm 25.
+- Mỗi lần ném trừ 1 mồi + 1 bền ngay lúc ném (bỏ dở vẫn mất); đứt dây −5 bền, 20% gãy; bền về 0 = hỏng; sửa đầy lại. (Đổi 12/11, xem mục Sửa độ bền cần bên dưới.)
+
+### Đã làm
+- Logic: `DaySlot` / `DaySlots` (7 khung, theo múi giờ); `FishingDef.cs` (`FishRarity`, `FishDepth`, `FishDef`, `RodDef`, `BaitDef`, `FishingTuning` – mọi con số, `FishingDef` + `None`); `FishingState.cs` (`RodState`, `CaughtFish`, `FishingState`); `FishingSession.cs` (máy trạng thái Waiting → Pulling → Finished; `Classify`, `Strike`, `Timeout`, `NextRound` / `SubmitRound`, `Abandon`; `PullRound` + mũi tên đỏ); `Farm.Fishing.cs` (`Farm` thành `partial`: `CanCast`, `Cast`, `CompleteFishing`, `BuyRod`, `EquipRod`, `RepairRod`, `BuyBait`, `UpgradeBasket`, quà mở câu cá, đào giun khi thu hoạch + sự kiện `BaitFound`); `FarmDef.Fishing`, `FarmState.Fishing`, 12 `FarmResult` mới.
+- Chọn cá: trọng số độ hiếm × khung giờ × mồi ưa thích (×3); chỉ cá có độ sâu khớp lực ném; Hiếm trở lên nhân thưởng (Perfect +50%, Tốt +15%, cần, mồi); ném hỏng chỉ ra cá Thường.
+- Save `version` 5 (`SaveFishing`, `SaveRod`, `SaveFish`); save 1–4 nạp được (được tặng cần + mồi); mục hỏng bỏ qua.
+- Test `FishingTests` (51 ca: khung giờ ranh giới + múi giờ; quà mở; ném trừ mồi / bền, chặn khi hết mồi / cần hỏng / giỏ đầy; xếp hạng ném; cá hệ số 0 không ra, cá Huyền thoại ra được lúc bình minh, ném hỏng chỉ cá Thường, mồi ưa thích tăng tỉ lệ, cùng seed cùng kết quả; giật sớm / đúng / trễ / trượt; kéo Perfect bắt được, Perfect mạnh hơn Tốt, sai liên tục đứt dây; mũi tên đỏ; giỏ, XP, kỷ lục; đứt dây trừ bền + gãy; bền 0 hỏng; sửa, mua cần / mồi, nâng giỏ; đào giun; save khứ hồi, save 4 → 5, mục hỏng). `Save_CurrentVersionIs5`. NUnit ngoài Unity: 269/269 xanh.
+
+### Còn lại
+- [x] Test Runner trong Unity (12/11): 353/354 – lỗi `FarmDefinitionTests.ToDef_DefaultData_Orders` còn chờ 3 ô đơn (data đã 5 ô từ 6c mục 2) → đã sửa test, thêm kiểm các số mới (chờ, khẩn cấp, 15 đơn/ngày). Chạy lại: người dùng xác nhận tất cả ổn (354/354).
+- [ ] Giai đoạn 4: ScriptableObject cá / cần / mồi + data mặc định (13 cá, 5 cần, 5 mồi) trong `DefaultDataGenerator`; giao diện câu (ném + chờ cắn + giật; kéo mũi tên); cửa hàng cần / mồi, sửa cần, nâng giỏ; nhân vật `CASTING` / `WAITING` / `REELING` / `CAUGHT`; art cá (người dùng).
+- [ ] Mô phỏng cân bằng có câu cá (thu nhập / giờ so với trồng cây).
+- [ ] Giai đoạn 5: chống kẹt tính cá trong giỏ (`MVP-Plan.md` Phần 6b mục Chống kẹt).
+- [ ] Data giai đoạn 4: có vài cá Thường cả ngày, ở độ sâu Gần.
+
+### Sửa độ bền cần (XONG code – 12/11/2026, người dùng duyệt)
+Quyết định (sau khi kiểm tra logic câu cá):
+- Chốt nhịp Trượt mà nhập đúng vẫn trừ thể lực cá (40) – giữ.
+- Data luôn có vài cá Thường cả ngày (đường dự phòng chọn cá chỉ dùng khi data thiếu).
+- Lý do mất độ bền giữ nguyên: ném −1, đứt dây −5 + có thể gãy; câu được cá to / hiếm không mất thêm.
+- Gãy khi đứt dây: 20% (độ bền đầy) → 60% (về 0), tuyến tính theo độ bền còn / độ bền tối đa thực tế, tính sau khi trừ.
+- Mỗi lần sửa độ bền tối đa giảm 10% độ bền gốc; độ bền tối đa đã dưới 15% thì không sửa được (`RodWornOut`) → mua lại.
+- Mua lại cần đang có khi hỏng hoặc đã sửa: đủ giá, về như mới. Còn dùng được và chưa sửa → `AlreadyOwned`.
+
+Đã làm:
+- `FishingTuning`: `SnapBreakPercent` → `SnapBreakMinPercent` 20 / `SnapBreakMaxPercent` 60; thêm `RepairMaxLossPercent` 10, `RepairMinPercent` 15; hàm `MaxDurabilityPercent`, `MaxDurabilityAfterRepairs`, `CanRepairAgain`, `SnapBreakPercentAt`.
+- `RodState.RepairCount`; `Farm`: `GetRodMaxDurability`, `CanRepairAgain`; `RepairRod` giảm độ bền tối đa, chặn `RodWornOut`; `BuyRod` mua lại được; `CompleteFishing` dùng tỉ lệ gãy theo độ bền; nạp save kẹp độ bền ≤ độ bền tối đa thực tế. `FarmResult.RodWornOut`.
+- Save `version` 6 (`SaveRod.repairCount`); save 5 nạp được (chưa sửa lần nào). `Save_CurrentVersionIs5` → `Is6`.
+- Test thêm 11 ca (sửa giảm dần tới dưới 15%, mua lại khi gãy / đã sửa / mòn hết, không mua lại khi còn tốt, tỉ lệ gãy 5 mốc, độ bền thấp gãy nhiều hơn, save giữ số lần sửa, save 5 → 6, kẹp độ bền khi nạp); sửa `Repair_RestoresAndCosts`. NUnit ngoài Unity: 280/280 xanh. View / Editor chưa dùng các API này (giao diện cửa hàng cần làm ở giai đoạn 4).
+- [x] Người dùng: Test Runner trong Unity ổn (12/11/2026, dự kiến 365).
+- Chống kẹt: ghi đầy đủ ở `MVP-Plan.md` Phần 6b.
+
 ## Tiếp theo (khi quay lại)
 0. Phần 6 mục 5 – chạy **Tạo UI**, Test Runner (221), chơi thử gieo chạm/kéo, kéo thu hoạch, kéo tưới; thử cảm giác kéo trên điện thoại.
-1. Phần 6c mục 1–2 (khi người dùng cho làm): chạy lại mô phỏng cân bằng với giới hạn đơn → duyệt → code.
+1. Phần 6c mục 2 đã viết code (xem mục trên, chờ kiểm tra). Phần 6c mục 1 (báo cây chín trên tab) chưa làm.
 2. Phần 4 – template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) + build, so Build Report (mốc 10,8 MB) + thử trên iPhone Safari / Android; cùng lúc kiểm tra Phần 7 trên máy thật.
-3. Phần 10 – giai đoạn 1 xong trong Editor (nhân vật ở nông trại + hàng việc; icon gợi ý tưới xong). Tiếp: chốt danh sách art Phần 10 (lập 11/11/2026), rồi giai đoạn 2 (vùng câu + di chuyển). Thử ẩn tab (làm hết việc) khi có bản build web.
-   - Chưa commit: toàn bộ code Phần 10 giai đoạn 1 + icon tưới (từ sau `e6431c9`).
-4. Phần 3 – art (setup ô đất), vẽ phần còn lại trên `Decor`, tạo `ComingSoonArea` (trừ ao), Sprite Atlas.
+3. Phần 3b (đang làm, trước Phần 10 giai đoạn 2):
+   - Bước 1b tạo nhân vật: người dùng chạy menu **Nhân vật Sunnyside** + **Tạo UI** (đã thấy `HairTint.mat` và scene đổi), Test Runner (dự kiến 291), chơi thử theo **Kiểm tra** trong `MVP-Plan.md` Phần 3b bước 1b; thử bàn phím ảo ô nhập tên trên điện thoại.
+   - Commit Phần 3b khi người dùng cho.
+   - Bước 2 vẽ lại Map D (hướng dẫn trong `MVP-Plan.md` Phần 3b bước 2) – người dùng làm sau.
+   - Bước 3 ô đất + 4 cây tạm (kale / cabbage / radish / pumpkin); bước 4 UI (sau); bước 5 dọn Sprout Lands + Sprite Atlas + build, so Build Report.
+   - Kiểm tra giấy phép dùng thương mại Sunnyside.
+   Sau 3b: Phần 10 giai đoạn 2 (vùng câu + di chuyển, dùng nước / bến / thuyền thúng Sunnyside). Thử ẩn tab (làm hết việc) khi có bản build web.
+4. Phần 3 – tạo `ComingSoonArea` (trừ ao) sau khi vẽ lại map Sunnyside.
 5. Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation); giảm build < 10 MB (Phần 8).
-6. Làm sau: Phần 6c mục 3–8, Phần 6 mục 4 (hiệu ứng GUI), công cụ Cân bằng, art 32×32, khung hình cây.
+6. Làm sau: Phần 6c mục 3–8 (save hiện `version` 4), Phần 6 mục 4 (hiệu ứng GUI, gộp với 3b bước 4), công cụ Cân bằng, khung hình cây.

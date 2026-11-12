@@ -28,12 +28,18 @@ namespace VeQue.EditorTools
         private const string RescueCropId = "rau_muong";
 
         // Đơn hàng (MVP-Plan Phần 6b).
-        private const int OrderSlots = 3;
+        private const int OrderSlots = 5;
         private const int OrderUnlockLevel = 2;
         private const int OrderCoinPercent = 160;
         private const int OrderXpPercent = 200;
         private const int OrderDiscardMinutes = 5;
         private const int OrderHarvestCap = 6;
+        private const int OrderRefillMinutes = 10;
+        private const int OrderUrgentRefillMinutes = 30;
+        private const int OrderUrgentChancePercent = 20;
+        private const int OrderUrgentRewardPercent = 200;
+        private const int OrderUrgentExpireMinutes = 30;
+        private const int OrderDailyLimit = 15;
         private static readonly string[] CustomerNames =
         {
             "Bà Tư", "Chú Ba", "Cô Năm", "Bác Hai", "Dì Sáu", "Ông Bảy", "Chị Út", "Anh Tám",
@@ -230,6 +236,12 @@ namespace VeQue.EditorTools
             farmSo.FindProperty("_orderXpPercent").intValue = OrderXpPercent;
             farmSo.FindProperty("_orderDiscardMinutes").intValue = OrderDiscardMinutes;
             farmSo.FindProperty("_orderHarvestCap").intValue = OrderHarvestCap;
+            farmSo.FindProperty("_orderRefillMinutes").intValue = OrderRefillMinutes;
+            farmSo.FindProperty("_orderUrgentRefillMinutes").intValue = OrderUrgentRefillMinutes;
+            farmSo.FindProperty("_orderUrgentChancePercent").intValue = OrderUrgentChancePercent;
+            farmSo.FindProperty("_orderUrgentRewardPercent").intValue = OrderUrgentRewardPercent;
+            farmSo.FindProperty("_orderUrgentExpireMinutes").intValue = OrderUrgentExpireMinutes;
+            farmSo.FindProperty("_orderDailyLimit").intValue = OrderDailyLimit;
             SerializedProperty names = farmSo.FindProperty("_customerNames");
             names.arraySize = CustomerNames.Length;
             for (int i = 0; i < CustomerNames.Length; i++)

@@ -25,6 +25,11 @@ namespace VeQue.Logic
                 zones = zones,
                 orders = ToSaveOrders(state.Orders),
                 randomState = state.RandomState,
+                character = ToSaveCharacter(state.Character),
+                orderDay = state.OrderDay,
+                deliveredToday = state.DeliveredToday,
+                utcOffsetSeconds = state.UtcOffsetSeconds,
+                fishing = ToSaveFishing(state.Fishing),
             };
         }
 
@@ -67,8 +72,122 @@ namespace VeQue.Logic
                 // Số ô, đơn có cây không còn: Farm chỉnh khi nạp.
                 Orders = FromSaveOrders(data.orders),
                 RandomState = (uint)data.randomState,
+                Character = FromSaveCharacter(data.character),
+                OrderDay = data.orderDay > 0 ? data.orderDay : 0,
+                DeliveredToday = data.deliveredToday > 0 ? data.deliveredToday : 0,
+                UtcOffsetSeconds = data.utcOffsetSeconds,
+                Fishing = FromSaveFishing(data.fishing),
             };
             return SaveLoadResult.Ok;
+        }
+
+        private static SaveFishing ToSaveFishing(FishingState fishing)
+        {
+            fishing = fishing ?? new FishingState();
+            var rods = new List<SaveRod>();
+            foreach (RodState rod in fishing.Rods)
+            {
+                if (rod != null)
+                    rods.Add(new SaveRod { id = rod.Id, durability = rod.Durability, snapped = rod.Snapped, repairCount = rod.RepairCount });
+            }
+            var basket = new List<SaveFish>();
+            foreach (CaughtFish fish in fishing.Basket)
+            {
+                if (fish != null)
+                    basket.Add(new SaveFish { id = fish.FishId, grams = fish.Grams, caughtAt = fish.CaughtAt, slot = (int)fish.Slot });
+            }
+            return new SaveFishing
+            {
+                rods = rods.ToArray(),
+                equippedRod = fishing.EquippedRodId,
+                baits = ToSaveCounts(fishing.Baits),
+                basket = basket.ToArray(),
+                basketLevel = fishing.BasketLevel,
+                records = ToSaveCounts(fishing.RecordGrams),
+                starterGranted = fishing.StarterGranted,
+            };
+        }
+
+        // Save cũ (không có fishing): trạng thái trống, Farm tặng cần + mồi khi mở câu cá.
+        // Mục hỏng (id rỗng, số âm) thì bỏ qua, không làm hỏng cả save.
+        private static FishingState FromSaveFishing(SaveFishing saved)
+        {
+            var fishing = new FishingState();
+            if (saved == null)
+                return fishing;
+
+            if (saved.rods != null)
+            {
+                foreach (SaveRod rod in saved.rods)
+                {
+                    if (rod != null && !string.IsNullOrEmpty(rod.id) && !fishing.TryGetRod(rod.id, out _))
+                        fishing.Rods.Add(new RodState
+                        {
+                            Id = rod.id,
+                            Durability = Math.Max(0, rod.durability),
+                            Snapped = rod.snapped,
+                            RepairCount = Math.Max(0, rod.repairCount),
+                        });
+                }
+            }
+            if (saved.basket != null)
+            {
+                foreach (SaveFish fish in saved.basket)
+                {
+                    if (fish == null || string.IsNullOrEmpty(fish.id) || fish.grams <= 0)
+                        continue;
+                    int slot = fish.slot >= 0 && fish.slot < DaySlots.Count ? fish.slot : 0;
+                    fishing.Basket.Add(new CaughtFish { FishId = fish.id, Grams = fish.grams, CaughtAt = fish.caughtAt, Slot = (DaySlot)slot });
+                }
+            }
+            ReadCountsLenient(saved.baits, fishing.Baits);
+            ReadCountsLenient(saved.records, fishing.RecordGrams);
+            fishing.EquippedRodId = string.IsNullOrEmpty(saved.equippedRod) ? null : saved.equippedRod;
+            fishing.BasketLevel = Math.Max(0, saved.basketLevel);
+            fishing.StarterGranted = saved.starterGranted;
+            return fishing;
+        }
+
+        private static void ReadCountsLenient(SaveCount[] saved, Dictionary<string, int> counts)
+        {
+            if (saved == null)
+                return;
+            foreach (SaveCount item in saved)
+            {
+                if (item != null && !string.IsNullOrEmpty(item.id) && item.count > 0)
+                    counts[item.id] = item.count;
+            }
+        }
+
+        private static SaveCharacter ToSaveCharacter(CharacterLook look)
+        {
+            look = look ?? new CharacterLook();
+            return new SaveCharacter
+            {
+                created = look.Created,
+                name = look.Name ?? "",
+                hairStyle = look.HairStyle,
+                hairColor = look.HairColor,
+            };
+        }
+
+        // Save cũ (không có character) hoặc tên hỏng: coi như chưa tạo nhân vật, người chơi tạo lại.
+        private static CharacterLook FromSaveCharacter(SaveCharacter saved)
+        {
+            var look = new CharacterLook();
+            if (saved == null)
+                return look;
+
+            if (!string.IsNullOrEmpty(saved.hairStyle))
+                look.HairStyle = saved.hairStyle;
+            if (!string.IsNullOrEmpty(saved.hairColor))
+                look.HairColor = saved.hairColor;
+            if (saved.created && CharacterLook.TryNormalizeName(saved.name, out string name))
+            {
+                look.Name = name;
+                look.Created = true;
+            }
+            return look;
         }
 
         private static SaveOrder[] ToSaveOrders(OrderState[] orders)
@@ -92,6 +211,8 @@ namespace VeQue.Logic
                     rewardCoins = order.RewardCoins,
                     rewardXp = order.RewardXp,
                     availableAt = order.AvailableAt,
+                    rank = (int)order.Rank,
+                    expiresAt = order.ExpiresAt,
                 };
             }
             return result;
@@ -113,6 +234,8 @@ namespace VeQue.Logic
                     continue;
 
                 order.AvailableAt = s.availableAt;
+                // Hạng lạ (save sửa tay / bản sau) coi như đơn thường.
+                order.Rank = s.rank == (int)OrderRank.Urgent ? OrderRank.Urgent : OrderRank.Normal;
                 if (s.items == null || s.items.Length == 0)
                     continue;
 
@@ -132,6 +255,7 @@ namespace VeQue.Logic
                 order.Items = items;
                 order.RewardCoins = s.rewardCoins;
                 order.RewardXp = s.rewardXp;
+                order.ExpiresAt = s.expiresAt > 0 ? s.expiresAt : 0;
             }
             return result;
         }

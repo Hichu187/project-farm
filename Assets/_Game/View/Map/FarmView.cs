@@ -21,6 +21,8 @@ namespace VeQue.View.Map
         private const int FlashSortingOrder = 50;
         // Trên mọi cây và nhân vật (cùng dùng SortingOrders.ByCellY).
         private const int WaterHintSortingOrder = 300;
+        // Khung chọn: trên cây và nhân vật, dưới icon gợi ý tưới.
+        private const int SelectBoxSortingOrder = 290;
 
         private enum CropAnim
         {
@@ -49,8 +51,8 @@ namespace VeQue.View.Map
             public float AnimStart;
             public bool Moved;
 
-            // Phủ màu nhạt khi ô đang có việc chờ nhân vật làm.
-            public SpriteRenderer Queued;
+            // Khung khít ô, mờ khi ô có việc chờ (tạo lần đầu cần tới).
+            public SelectBox Queued;
 
             // Bình tưới trên ngọn cây chưa tưới (tạo lần đầu cần tới).
             public SpriteRenderer WaterHint;
@@ -141,9 +143,18 @@ namespace VeQue.View.Map
         [SerializeField] private int _waterHintBobPixels = 1;
         [SerializeField] private Color _waterHintColor = Color.white;
 
-        [Header("Ô đang chờ nhân vật làm")]
+        [Header("Khung chọn 4 góc")]
+        [Tooltip("Sunnyside UI/selectbox_*. Gán bằng menu Về Quê → Khung chọn: tạo asset + gán vào scene.")]
+        [SerializeField] private SelectBoxSkin _selectBoxSkin;
+        [Tooltip("Ô có việc chờ: khung khít ô, mờ, đứng yên. Ô đang làm: khung nới ra, co giãn.")]
         [SerializeField] private bool _showQueued = true;
-        [SerializeField] private Color _queuedColor = new Color(0.75f, 0.9f, 1f, 0.3f);
+        [SerializeField] private Color _queuedFaintColor = new Color(1f, 1f, 1f, 0.4f);
+        [Tooltip("Mép ngoài góc của khung ô chờ nằm ngoài ô bao nhiêu pixel: 0 = khít ô, không lấn ô bên.")]
+        [SerializeField] private int _queuedOutsetPixels = 0;
+        [Tooltip("Ô nhân vật đang làm: chỉ 1 khung nên nới ra ngoài ô cho thoáng (OutsetPixels của skin), co giãn.")]
+        [SerializeField] private Color _currentBoxColor = Color.white;
+        [Tooltip("Ô khóa đang mở bảng mua: khung đứng yên.")]
+        [SerializeField] private Color _selectedBoxColor = new Color(1f, 0.95f, 0.6f);
 
         private readonly List<PlotVisual> _visuals = new List<PlotVisual>();
         private readonly List<Effect> _ghosts = new List<Effect>();
@@ -153,6 +164,8 @@ namespace VeQue.View.Map
         private bool _blinkOn;
         private bool _initialized;
         private Sprite _pixelSprite;
+        private SelectBox _selectedBox;
+        private SelectBox _currentBox;
 
         public bool TryGetPlotAt(Vector2 world, out PlotId id)
         {
@@ -209,6 +222,23 @@ namespace VeQue.View.Map
             flash.Renderer.transform.position = center;
             flash.Renderer.color = _flashColor;
             flash.Renderer.gameObject.SetActive(true);
+        }
+
+        // Khung đứng yên quanh ô (vd. ô khóa đang mở bảng mua). Gọi lại với ô khác thì khung chuyển sang ô đó.
+        public void ShowPlotSelection(PlotId id)
+        {
+            if (!HasSelectBoxSkin() || !TryGetPlotCell(id, out Vector3Int cell))
+                return;
+
+            if (_selectedBox == null)
+                _selectedBox = SelectBox.Create(_selectBoxSkin, transform, "PlotSelectBox", SelectBoxSortingOrder);
+            _selectedBox.Show(CellRect(cell), SelectBox.Motion.Static, _selectedBoxColor);
+        }
+
+        public void HidePlotSelection()
+        {
+            if (_selectedBox != null)
+                _selectedBox.Hide();
         }
 
         // Điểm giữa cạnh trên của sprite cây (toạ độ world); false nếu ô không có cây.
@@ -328,34 +358,63 @@ namespace VeQue.View.Map
             }
         }
 
-        // Bật / tắt lớp phủ "đang chờ" theo hàng việc. Lớp phủ tạo lần đầu cần tới (tối đa 1 mỗi ô).
+        // Theo hàng việc: ô còn chờ có khung khít ô, mờ, đứng yên (tạo lần đầu cần tới, tối đa 1 mỗi ô);
+        // ô nhân vật đang làm có 1 khung nới ra, co giãn, vẽ trên khung ô chờ bên cạnh.
         private void RefreshQueued()
         {
             // Xếp / hủy việc tưới làm icon gợi ý tưới ẩn / hiện lại.
             RefreshWaterHints();
 
-            if (!_showQueued || _pixelSprite == null)
+            if (!_showQueued || !HasSelectBoxSkin())
                 return;
 
             FarmTaskQueue tasks = _game.Tasks;
+            bool hasCurrentCell = false;
+            Vector3Int currentCell = default;
             for (int i = 0; i < _visuals.Count; i++)
             {
                 PlotVisual visual = _visuals[i];
-                bool queued = tasks.IsQueued(visual.Id);
-                if (queued && visual.Queued == null)
+                bool current = tasks.HasCurrent && tasks.Current.Plot == visual.Id;
+                bool pending = !current && tasks.IsQueued(visual.Id);
+                if (current)
                 {
-                    SpriteRenderer renderer = CreatePooledRenderer($"PlotQueued {visual.Id}");
-                    renderer.sprite = _pixelSprite;
-                    renderer.color = _queuedColor;
-                    // Dưới lớp sáng lên (FlashSortingOrder) để vẫn thấy ô sáng khi làm xong.
-                    renderer.sortingOrder = FlashSortingOrder - 1;
-                    renderer.transform.localScale = Vector3.one * SpritePixelsPerUnit;
-                    renderer.transform.position = _plots.GetCellCenterWorld(visual.Cell);
-                    visual.Queued = renderer;
+                    hasCurrentCell = true;
+                    currentCell = visual.Cell;
                 }
-                if (visual.Queued != null && visual.Queued.gameObject.activeSelf != queued)
-                    visual.Queued.gameObject.SetActive(queued);
+
+                if (!pending)
+                {
+                    if (visual.Queued != null)
+                        visual.Queued.Hide();
+                    continue;
+                }
+
+                if (visual.Queued == null)
+                    visual.Queued = SelectBox.Create(_selectBoxSkin, transform, $"PlotQueued {visual.Id}", SelectBoxSortingOrder);
+                visual.Queued.Show(CellRect(visual.Cell), SelectBox.Motion.Static, _queuedFaintColor, 0f, false, _queuedOutsetPixels);
             }
+
+            if (hasCurrentCell)
+            {
+                if (_currentBox == null)
+                    _currentBox = SelectBox.Create(_selectBoxSkin, transform, "PlotCurrentBox", SelectBoxSortingOrder + 1);
+                _currentBox.Show(CellRect(currentCell), SelectBox.Motion.Scale, _currentBoxColor);
+            }
+            else if (_currentBox != null)
+            {
+                _currentBox.Hide();
+            }
+        }
+
+        private bool HasSelectBoxSkin()
+        {
+            return _selectBoxSkin != null && _selectBoxSkin.IsValid;
+        }
+
+        private Rect CellRect(Vector3Int cell)
+        {
+            Vector3 min = _plots.CellToWorld(cell);
+            return new Rect(min.x, min.y, _plots.cellSize.x, _plots.cellSize.y);
         }
 
         private SpriteRenderer CreatePooledRenderer(string name)

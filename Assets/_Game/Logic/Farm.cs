@@ -5,8 +5,12 @@ namespace VeQue.Logic
 {
     // Luật chơi: gieo, tưới, thu hoạch, mua hạt, bán nông sản, mở ô. Mọi thay đổi FarmState đi qua đây.
     // Thời gian chỉ lấy từ IClock; không đếm giờ theo frame.
-    public sealed class Farm
+    public sealed partial class Farm
     {
+        private const long SecondsPerDay = 86400;
+        // Múi giờ thật nằm trong UTC−12 … UTC+14.
+        private const int MaxUtcOffsetSeconds = 14 * 3600;
+
         private readonly IClock _clock;
 
         // Báo sau mỗi lệnh thành công. Cây lớn theo thời gian không phát sự kiện, View tự làm mới định kỳ.
@@ -27,6 +31,7 @@ namespace VeQue.Logic
 
             ValidateState();
             State.GrantAvailableStartPlots(Definition);
+            GrantFishingStarter();
             TryRescue();
             FillOrders();
         }
@@ -34,6 +39,51 @@ namespace VeQue.Logic
         public int OrderSlotCount => State.Orders.Length;
 
         public bool OrdersUnlocked => Definition.Orders.SlotCount > 0 && State.Level >= Definition.Orders.UnlockLevel;
+
+        // Chỉ số ngày theo giờ địa phương (đổi lúc 0 giờ).
+        public long CurrentDay => FloorDiv(_clock.UtcNowSeconds + State.UtcOffsetSeconds, SecondsPerDay);
+
+        // Số giây tới 0 giờ hôm sau (giờ địa phương).
+        public long SecondsUntilNextDay => (CurrentDay + 1) * SecondsPerDay - (_clock.UtcNowSeconds + State.UtcOffsetSeconds);
+
+        public bool HasDailyOrderLimit => Definition.Orders.DailyLimit > 0;
+
+        // Số đơn còn giao được hôm nay (không giới hạn thì int.MaxValue). Đọc theo ngày hiện tại kể cả khi chưa làm mới.
+        public int OrdersLeftToday
+        {
+            get
+            {
+                int limit = Definition.Orders.DailyLimit;
+                if (limit <= 0)
+                    return int.MaxValue;
+                int delivered = CurrentDay > State.OrderDay ? 0 : State.DeliveredToday;
+                return Math.Max(0, limit - delivered);
+            }
+        }
+
+        // Còn chỗ cho đơn mới hôm nay: số đơn đã giao + đơn đang có trên bảng chưa đủ giới hạn.
+        // Nhờ vậy trên bảng không bao giờ có đơn không giao được vì hết lượt.
+        public bool CanReceiveOrderToday => OrdersLeftToday > ActiveOrderCount;
+
+        // Đơn khẩn cấp đang có: số giây còn lại trước khi hết hạn; false nếu đơn không hết hạn.
+        public bool TryGetOrderTimeLeft(int slot, out long seconds)
+        {
+            seconds = 0;
+            if (!TryGetOrder(slot, out OrderState order) || !order.HasOrder || order.ExpiresAt <= 0)
+                return false;
+            seconds = Math.Max(0L, order.ExpiresAt - _clock.UtcNowSeconds);
+            return true;
+        }
+
+        // Độ lệch múi giờ (giây, dương = phía đông UTC). View gọi lúc mở game; đổi ngày thì đếm lại lượt đơn.
+        public void SetUtcOffset(int seconds)
+        {
+            seconds = Math.Max(-MaxUtcOffsetSeconds, Math.Min(MaxUtcOffsetSeconds, seconds));
+            if (seconds == State.UtcOffsetSeconds)
+                return;
+            State.UtcOffsetSeconds = seconds;
+            RefreshOrders();
+        }
 
         public bool TryGetOrder(int slot, out OrderState order)
         {
@@ -49,7 +99,8 @@ namespace VeQue.Logic
         // Đủ nông sản trong Kho để giao đơn này.
         public bool CanDeliver(int slot)
         {
-            if (!OrdersUnlocked || !TryGetOrder(slot, out OrderState order) || !order.HasOrder)
+            if (!OrdersUnlocked || !TryGetOrder(slot, out OrderState order) || !order.HasOrder
+                || order.IsExpired(_clock.UtcNowSeconds))
                 return false;
             foreach (OrderItem item in order.Items)
             {
@@ -67,6 +118,13 @@ namespace VeQue.Logic
                 return FarmResult.UnknownOrder;
             if (!order.HasOrder)
                 return FarmResult.OrderNotReady;
+            long now = _clock.UtcNowSeconds;
+            if (order.IsExpired(now))
+            {
+                // Hết hạn từ sau lần làm mới trước: dọn ô rồi báo cho UI.
+                NotifyChanged();
+                return FarmResult.OrderExpired;
+            }
             if (!CanDeliver(slot))
                 return FarmResult.NotEnoughItems;
 
@@ -74,9 +132,10 @@ namespace VeQue.Logic
                 FarmState.AddCount(State.Inventory, item.CropId, -item.Count);
             State.Coins += order.RewardCoins;
             long xp = order.RewardXp;
-            order.Clear(_clock.UtcNowSeconds);
+            RollOrderDay();
+            State.DeliveredToday++;
+            ScheduleNextOrder(order, now, false);
             AddXp(xp);
-            GenerateOrder(order);
             NotifyChanged();
             return FarmResult.Ok;
         }
@@ -90,19 +149,35 @@ namespace VeQue.Logic
             if (!order.HasOrder)
                 return FarmResult.OrderNotReady;
 
-            order.Clear(_clock.UtcNowSeconds + Definition.Orders.DiscardCooldownSeconds);
+            ScheduleNextOrder(order, _clock.UtcNowSeconds, true);
             NotifyChanged();
             return FarmResult.Ok;
         }
 
-        // Điền đơn vào các ô đã hết thời gian chờ. Lệnh nào cũng tự gọi; View gọi thêm định kỳ vì thời gian chờ
-        // có thể hết khi người chơi không làm gì. Trả về true (và báo Changed) nếu có đơn mới.
+        // Sang ngày mới, đơn khẩn cấp hết hạn, điền đơn vào các ô đã hết thời gian chờ. Lệnh nào cũng tự gọi;
+        // View gọi thêm định kỳ vì thời gian có thể trôi khi người chơi không làm gì.
+        // Trả về true (và báo Changed) nếu có gì đổi.
         public bool RefreshOrders()
         {
             if (!FillOrders())
                 return false;
             Changed?.Invoke();
             return true;
+        }
+
+        // Màn tạo nhân vật: đặt tên + ngoại hình. Kiểu / màu tóc là id của View, rỗng thì về mặc định.
+        public FarmResult SetCharacter(string name, string hairStyle, string hairColor)
+        {
+            if (!CharacterLook.TryNormalizeName(name, out string clean))
+                return FarmResult.InvalidName;
+
+            CharacterLook look = State.Character;
+            look.Name = clean;
+            look.HairStyle = string.IsNullOrEmpty(hairStyle) ? CharacterLook.DefaultHairStyle : hairStyle;
+            look.HairColor = string.IsNullOrEmpty(hairColor) ? CharacterLook.DefaultHairColor : hairColor;
+            look.Created = true;
+            Changed?.Invoke();
+            return FarmResult.Ok;
         }
 
         public FarmResult Plant(PlotId id, string cropId)
@@ -166,6 +241,7 @@ namespace VeQue.Logic
             FarmState.AddCount(State.Inventory, crop.Id, crop.HarvestYield);
             plot.Clear();
             AddXp(crop.Xp);
+            TryFindBait();
             NotifyChanged();
             return FarmResult.Ok;
         }
@@ -331,18 +407,83 @@ namespace VeQue.Logic
             if (!OrdersUnlocked)
                 return false;
 
-            bool filled = false;
+            bool changed = RollOrderDay();
             long now = _clock.UtcNowSeconds;
+            foreach (OrderState order in State.Orders)
+            {
+                if (!order.IsExpired(now))
+                    continue;
+                ScheduleNextOrder(order, now, false);
+                changed = true;
+            }
+
             foreach (OrderState order in State.Orders)
             {
                 if (order.HasOrder || order.AvailableAt > now)
                     continue;
-                filled |= GenerateOrder(order);
+                if (!CanReceiveOrderToday)
+                    break;
+                // Ô chưa từng hẹn đơn (mới mở đơn hàng, save cũ, đơn hỏng bị bỏ): hạng tung lúc sinh.
+                OrderRank rank = order.AvailableAt == 0 ? RollOrderRank() : order.Rank;
+                changed |= GenerateOrder(order, rank, now);
             }
-            return filled;
+            return changed;
         }
 
-        private bool GenerateOrder(OrderState order)
+        // Ô trống sau khi giao / bỏ / hết hạn: tung hạng đơn kế tiếp, chờ theo hạng.
+        private void ScheduleNextOrder(OrderState order, long now, bool discarded)
+        {
+            OrderDef def = Definition.Orders;
+            OrderRank rank = RollOrderRank();
+            long wait = discarded ? def.GetDiscardSeconds(rank) : def.GetRefillSeconds(rank);
+            // Luôn > 0 để phân biệt với ô chưa từng hẹn đơn (AvailableAt = 0).
+            order.Clear(Math.Max(1L, now + wait), rank);
+        }
+
+        // Không có đơn khẩn cấp thì không dùng số ngẫu nhiên (giữ chuỗi đơn như trước).
+        private OrderRank RollOrderRank()
+        {
+            int chance = Definition.Orders.UrgentChancePercent;
+            if (chance <= 0)
+                return OrderRank.Normal;
+            if (chance >= 100)
+                return OrderRank.Urgent;
+            return SeededRandom.Range(ref State.RandomState, 0, 100) < chance ? OrderRank.Urgent : OrderRank.Normal;
+        }
+
+        // Sang ngày mới (giờ địa phương) thì đếm lại số đơn đã giao. Ngày lùi (đổi múi giờ) thì giữ nguyên.
+        private bool RollOrderDay()
+        {
+            long day = CurrentDay;
+            if (State.OrderDay != 0 && day <= State.OrderDay)
+                return false;
+            bool changed = State.DeliveredToday != 0;
+            State.OrderDay = day;
+            State.DeliveredToday = 0;
+            return changed;
+        }
+
+        private int ActiveOrderCount
+        {
+            get
+            {
+                int count = 0;
+                foreach (OrderState order in State.Orders)
+                {
+                    if (order.HasOrder)
+                        count++;
+                }
+                return count;
+            }
+        }
+
+        private static long FloorDiv(long value, long divisor)
+        {
+            long quotient = value / divisor;
+            return value % divisor < 0 ? quotient - 1 : quotient;
+        }
+
+        private bool GenerateOrder(OrderState order, OrderRank rank, long now)
         {
             OrderDef def = Definition.Orders;
             var unlocked = new List<CropDef>();
@@ -376,10 +517,13 @@ namespace VeQue.Logic
             IReadOnlyList<string> names = def.CustomerNames;
             order.Customer = names.Count > 0 ? names[SeededRandom.Range(ref State.RandomState, 0, names.Count)] : null;
             order.Items = items;
-            // Làm tròn tới 5 xu gần nhất, ít nhất 5.
-            order.RewardCoins = Math.Max(5L, (coins * def.CoinPercent + 250) / 500 * 5);
-            order.RewardXp = Math.Max(1L, (xp * def.XpPercent + 50) / 100);
+            long rankPercent = rank == OrderRank.Urgent ? def.UrgentRewardPercent : 100;
+            // Làm tròn tới 5 xu gần nhất, ít nhất 5. Đơn thường: (coins × CoinPercent + 250) / 500 × 5.
+            order.RewardCoins = Math.Max(5L, (coins * def.CoinPercent * rankPercent + 25000) / 50000 * 5);
+            order.RewardXp = Math.Max(1L, (xp * def.XpPercent * rankPercent + 5000) / 10000);
             order.AvailableAt = 0;
+            order.Rank = rank;
+            order.ExpiresAt = rank == OrderRank.Urgent && def.UrgentExpireSeconds > 0 ? now + def.UrgentExpireSeconds : 0;
             return true;
         }
 
@@ -403,6 +547,7 @@ namespace VeQue.Logic
                     State.Xp = 0;
                 GrantLevelReward(State.Level);
                 State.GrantAvailableStartPlots(Definition);
+                GrantFishingStarter();
                 LeveledUp?.Invoke(State.Level);
             }
         }
@@ -509,6 +654,7 @@ namespace VeQue.Logic
             State.Seeds ??= new Dictionary<string, int>();
             State.Inventory ??= new Dictionary<string, int>();
             NormalizeOrders();
+            NormalizeFishing();
             if (State.RandomState == 0)
                 State.RandomState = SeededRandom.Seed(_clock.UtcNowSeconds);
         }
@@ -531,7 +677,7 @@ namespace VeQue.Logic
                 OrderState order = current[i] ??= new OrderState();
                 order.Items ??= Array.Empty<OrderItem>();
                 if (order.HasOrder && !IsValidOrder(order))
-                    order.Clear(0);
+                    order.Clear(0, OrderRank.Normal);
             }
             State.Orders = current;
         }

@@ -6,11 +6,12 @@ using VeQue.View.Map;
 
 namespace VeQue.View.UI
 {
-    // Xác nhận mở ô. Nút Mở mờ khi không đủ xu.
+    // Xác nhận mở ô. Nút Mở mờ khi không đủ xu. Lúc mở bảng, ô đang mua có khung chọn.
     public sealed class UnlockDialog : MonoBehaviour
     {
         [SerializeField] private GameBootstrap _game;
         [SerializeField] private FarmInteraction _interaction;
+        [SerializeField] private FarmView _farmView;
         [SerializeField] private GameObject _root;
         [SerializeField] private TMP_Text _priceText;
         [SerializeField] private Button _confirm;
@@ -24,10 +25,15 @@ namespace VeQue.View.UI
             _priceText.text = $"Giá: {UiFormat.Coins(price)} xu";
             _confirm.interactable = _game.Farm.State.Coins >= price;
             _root.SetActive(true);
+            if (_farmView != null)
+                _farmView.ShowPlotSelection(plot);
         }
 
         private void Awake()
         {
+            // Scene cũ chưa gán thì tự tìm (chỉ lúc khởi động).
+            if (_farmView == null)
+                _farmView = FindFirstObjectByType<FarmView>();
             _confirm.onClick.AddListener(Confirm);
             _cancel.onClick.AddListener(Hide);
         }
@@ -41,6 +47,8 @@ namespace VeQue.View.UI
         public void Hide()
         {
             _root.SetActive(false);
+            if (_farmView != null)
+                _farmView.HidePlotSelection();
         }
     }
 }

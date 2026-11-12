@@ -10,6 +10,7 @@ using VeQue.View.Save;
 namespace VeQue.View.UI
 {
     // Điều phối HUD, thanh tab và các bảng. Mỗi lúc chỉ mở một bảng.
+    // HUD theo vùng: ở nông trại có thanh tab, nút Nhân vật, nút Đi câu; ở vùng câu ẩn chúng, hiện tên vùng + nút Về nhà.
     public sealed class GameUI : MonoBehaviour
     {
         private const string OrdersTabText = "Đơn hàng";
@@ -32,6 +33,17 @@ namespace VeQue.View.UI
         [SerializeField] private ShopPanel _shopPanel;
         [SerializeField] private UnlockDialog _unlockDialog;
         [SerializeField] private CropProgressPopup _progressPopup;
+        [SerializeField] private CharacterCreator _characterCreator;
+        [Header("Vùng chơi")]
+        [Tooltip("Để trống thì tự tìm; không có thì ẩn nút Đi câu.")]
+        [SerializeField] private RegionTravel _travel;
+        [SerializeField] private Button _goFishing;
+        [SerializeField] private Button _goHome;
+        [SerializeField] private TMP_Text _regionLabel;
+        [Tooltip("Khung tên vùng (cha của _regionLabel), chỉ hiện ở vùng câu.")]
+        [SerializeField] private GameObject _regionPanel;
+        [Tooltip("Chỉ hiện ở nông trại (thanh tab, nút Nhân vật, nút Đi câu).")]
+        [SerializeField] private GameObject[] _farmOnly = System.Array.Empty<GameObject>();
         [Tooltip("Gán các vùng ao, chuồng, nhà kho, đất mở rộng sau khi vẽ xong Decor.")]
         [SerializeField] private ComingSoonArea[] _comingSoonAreas = System.Array.Empty<ComingSoonArea>();
 
@@ -61,9 +73,26 @@ namespace VeQue.View.UI
             _touch.TappedOutsideAreas += HandleTapOutside;
             _game.Farm.Changed += HandleFarmChanged;
             _game.Farm.Rescued += HandleRescued;
+            if (_characterCreator != null)
+                _characterCreator.Opened += CloseAll;
 
             _openZones = CountOpenZones();
             HandleFarmChanged();
+
+            if (_travel == null)
+                _travel = FindFirstObjectByType<RegionTravel>();
+            if (_travel != null)
+            {
+                _travel.RegionChanged += HandleRegionChanged;
+                _travel.TravelStarted += CloseAll;
+                _travel.Message += _toast.Show;
+                _travel.SpotReached += HandleSpotReached;
+            }
+            if (_goFishing != null)
+                _goFishing.onClick.AddListener(GoFishing);
+            if (_goHome != null)
+                _goHome.onClick.AddListener(GoHome);
+            ApplyRegionHud(false);
 
             if (_game.SavingBlocked)
                 _toast.Show(OutdatedMessage);
@@ -97,6 +126,58 @@ namespace VeQue.View.UI
                 _game.Farm.Changed -= HandleFarmChanged;
                 _game.Farm.Rescued -= HandleRescued;
             }
+            if (_characterCreator != null)
+                _characterCreator.Opened -= CloseAll;
+            if (_travel != null)
+            {
+                _travel.RegionChanged -= HandleRegionChanged;
+                _travel.TravelStarted -= CloseAll;
+                if (_toast != null)
+                    _travel.Message -= _toast.Show;
+                _travel.SpotReached -= HandleSpotReached;
+            }
+        }
+
+        private void GoFishing()
+        {
+            if (_travel != null)
+                _travel.GoFishing();
+        }
+
+        private void GoHome()
+        {
+            if (_travel != null)
+                _travel.GoHome();
+        }
+
+        private void HandleRegionChanged(PlayRegion region)
+        {
+            CloseAll();
+            ApplyRegionHud(_travel.IsFishing);
+            if (_regionLabel != null)
+                _regionLabel.text = region.DisplayName;
+        }
+
+        private void ApplyRegionHud(bool fishing)
+        {
+            for (int i = 0; i < _farmOnly.Length; i++)
+            {
+                if (_farmOnly[i] != null)
+                    _farmOnly[i].SetActive(!fishing);
+            }
+            // Không có vùng câu trong scene thì không hiện nút Đi câu.
+            if (_goFishing != null && (_travel == null || !_travel.HasFishingRegion))
+                _goFishing.gameObject.SetActive(false);
+            if (_goHome != null)
+                _goHome.gameObject.SetActive(fishing);
+            if (_regionPanel != null)
+                _regionPanel.SetActive(fishing);
+        }
+
+        // Giai đoạn 2 chỉ có di chuyển; câu cá làm ở giai đoạn 3–4.
+        private void HandleSpotReached(FishingSpot spot)
+        {
+            _toast.Show("Câu cá: sắp có");
         }
 
         private void HandleFarmChanged()

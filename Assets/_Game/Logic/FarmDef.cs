@@ -19,10 +19,11 @@ namespace VeQue.Logic
         // Cây tặng 1 hạt khi người chơi bị kẹt (hết xu, hạt, nông sản, cây); null = không cứu.
         public string RescueCropId { get; }
         public OrderDef Orders { get; }
+        public FishingDef Fishing { get; }
 
         public FarmDef(IEnumerable<ZoneDef> zones, IEnumerable<CropDef> crops, long startCoins,
             IReadOnlyDictionary<string, int> startSeeds = null, int waterReducePercent = 0,
-            LevelDef levels = null, string rescueCropId = null, OrderDef orders = null)
+            LevelDef levels = null, string rescueCropId = null, OrderDef orders = null, FishingDef fishing = null)
         {
             if (zones == null)
                 throw new ArgumentNullException(nameof(zones));
@@ -84,6 +85,7 @@ namespace VeQue.Logic
             Levels = levels ?? LevelDef.None;
             RescueCropId = rescueCropId;
             Orders = orders ?? OrderDef.None;
+            Fishing = fishing ?? FishingDef.None;
         }
 
         public bool TryGetCrop(string id, out CropDef crop)

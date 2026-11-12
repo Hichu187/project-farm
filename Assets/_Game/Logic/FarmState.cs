@@ -15,8 +15,18 @@ namespace VeQue.Logic
         public ZoneState[] Zones = Array.Empty<ZoneState>();
         // Số phần tử = OrderDef.SlotCount (Farm tự chỉnh khi nạp).
         public OrderState[] Orders = Array.Empty<OrderState>();
+        // Giới hạn đơn mỗi ngày: chỉ số ngày (giờ địa phương) và số đơn đã giao trong ngày đó.
+        // OrderDay = 0: chưa có (save cũ), Farm đặt theo hôm nay.
+        public long OrderDay;
+        public int DeliveredToday;
+        // Độ lệch múi giờ so với UTC (giây), lấy từ trình duyệt / máy mỗi lần mở game; lưu lại để dùng lúc nạp.
+        public int UtcOffsetSeconds;
         // Trạng thái SeededRandom; 0 = chưa có, Farm tự gieo từ đồng hồ.
         public uint RandomState;
+        // Tên + ngoại hình nhân vật (màn tạo nhân vật).
+        public CharacterLook Character = new CharacterLook();
+        // Câu cá: cần, mồi, giỏ, kỷ lục (Phần 10).
+        public FishingState Fishing = new FishingState();
 
         public int GetSeeds(string cropId) => GetCount(Seeds, cropId);
         public int GetItems(string cropId) => GetCount(Inventory, cropId);

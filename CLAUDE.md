@@ -28,27 +28,28 @@ Kế hoạch đầy đủ: `Docs/MVP-Plan.md` (Phần 0 → 8). Tiến độ: `D
 - Tưới: tùy chọn, mỗi lần trồng tưới được 1 lần, giảm 20% tổng thời gian lớn (lùi `PlantedAt`); không tưới cây vẫn lớn.
 - 4 cây: rau muống 2 phút, cải xanh 15 phút, cà chua 1 giờ, bí đỏ 4 giờ. Data có 25 cây với cờ `enabled`; chỉ 4 cây này bật trong MVP.
 - Giá hạt, sản lượng, giá bán, XP theo công thức cân bằng ở `Docs/MVP-Plan.md` Phần 6b; không chỉnh tay từng cây.
-- Tiến trình (Phần 6b): cấp độ (XP từ thu hoạch + đơn hàng; lên cấp mở cây mới, khu sau cần đủ cấp) và đơn hàng làng quê (3 đơn cùng lúc, thưởng cao hơn bán thẳng). Chống kẹt: hết xu, hạt, nông sản, cây thì tặng 1 hạt rau muống.
+- Tiến trình (Phần 6b): cấp độ (XP từ thu hoạch + đơn hàng; lên cấp mở cây mới, khu sau cần đủ cấp) và đơn hàng làng quê (5 đơn cùng lúc, thưởng cao hơn bán thẳng; giao xong chờ mới có đơn kế; hạng Thường / Khẩn cấp; tối đa 15 đơn/ngày). Chống kẹt: hết xu, hạt, nông sản, cây thì tặng 1 hạt rau muống.
 - Phần 6c (làm sau 6b, theo thứ tự trong `Docs/MVP-Plan.md`): báo cây chín trên tab; đơn hàng có thời gian xuất hiện, giới hạn mỗi ngày, đơn gấp; chuyện bất ngờ trên ruộng; nông sản hiếm + album; nhiệm vụ ngày + điểm danh; khách vãng lai. Chế biến, trang trí: sau MVP.
 - Cây vẫn lớn khi thoát game. Lưu tiến trình + xuất/nhập mã sao lưu.
 - Câu cá (Phần 10, trong MVP): ở **vùng câu riêng** (cùng scene, ngoài nông trại), không câu ở ao nhà. Ném cần canh perfect, giật câu, kéo cá bằng chuỗi mũi tên 4 hướng; cá có độ hiếm, cân nặng, giá, khung giờ xuất hiện; cần câu có rank, độ bền, tỉ lệ trượt, gãy phải sửa / mua mới; mồi hút loài khác nhau.
 - Nhân vật (Phần 10): điều khiển bằng **chạm để đi** (không joystick) ở cả nông trại lẫn vùng câu. Ở nông trại: gieo / tưới / thu hoạch xếp vào hàng việc, nhân vật đi tới làm **lần lượt đúng thứ tự chọn**; mở ô bằng xu và các chạm UI vẫn làm ngay; ẩn tab thì làm hết việc còn lại rồi lưu (chi tiết `Docs/MVP-Plan.md` Phần 10 mục 0b). Nhân vật hiển thị nhiều lớp đồng bộ khung để sau này thêm trang phục / phụ kiện.
 - Ao nhà: chỉ để thả cá sưu tầm (cá không lớn, không đẻ, không cho ăn, không tạo thu nhập); cá hiện bằng bóng bơi; chạm ao xem danh sách cá. Làm sau cùng trong Phần 10.
 - Chuồng, nhà kho, đất mở rộng: chỉ là art, chạm vào hiện "sắp có".
+- Tạo nhân vật (Phần 3b bước 1b): lần đầu vào game chọn tên, kiểu tóc (6 kiểu Sunnyside), màu tóc (bảng màu có sẵn, phủ bằng shader); đổi lại được qua nút "Nhân vật" trên HUD. Lưu trong save.
 - Ngoài phạm vi: nuôi cá (cá lớn / đẻ / cho ăn / tạo thu nhập), chuồng, đất mở rộng, joystick, trộm nông sản, hai ví xu, thuốc trừ sâu/phân bón. Sau MVP: cửa hàng trang phục / phụ kiện, thêm vùng chơi mới.
 
 ## Map & camera
 - Tilemap, Grid cell 1. Ground: cỏ + sân đất. Decor: hàng hoa, viền cỏ quanh luống, cây, rơm. Plots: ô đất. Không dùng `TilemapCollider2D`; xác định ô bằng `Grid.WorldToCell`.
-- Map D: 44×26 tile, trải ngang, hàng rào bao quanh. Kéo ngang là chính (~3,5 màn hình), dọc chỉ dịch nhẹ. Tọa độ chi tiết ở `Docs/MVP-Plan.md` Phần 3. Chỉ tham khảo cách sắp xếp nông trại Avatar/Teamobi, không lấy art.
+- Map D: 44×26 tile, trải ngang, hàng rào bao quanh. Kéo ngang là chính (~3,5 màn hình), dọc chỉ dịch nhẹ. Tọa độ chi tiết ở `Docs/MVP-Plan.md` Phần 3. Chỉ tham khảo cách sắp xếp nông trại Avatar/Teamobi, không lấy art. Vẽ bằng tileset Sunnyside.
 - Camera: Pixel Perfect Camera (package 2D Pixel Perfect cho Built-in), PPU 16, chỉ zoom bậc nguyên. Toàn cảnh Ref ~208×370 (≈13 tile ngang, zoom 5x trên màn 1080–1170 px). Zoom vào khu: tính Ref để bounding box khu (6×5 tile) chiếm ~85% bề ngang (~10x); camera tới tâm bounding box rồi mới đổi bậc zoom. Giới hạn trong mép map 44×26.
 - Kéo 1 ngón để di chuyển (giới hạn trong mép map); chạm khu → zoom vào; đang zoom chạm ngoài khu → về toàn cảnh; ở toàn cảnh chạm đất đi được → nhân vật đi tới. Ở nông trại camera không đi theo nhân vật. Không pinch zoom. Ngưỡng tách chạm/kéo ~10 px.
-- Cùng scene, cùng Grid có nhiều vùng: nông trại (Map D) và vùng câu (đặt ngoài cổng trái). Camera có giới hạn + zoom theo từng vùng. Ở vùng câu: chạm = đi tới / tương tác, camera đi theo nhân vật; kéo để xem xung quanh, thả tay một lúc thì camera tự quay về nhân vật.
+- Cùng scene, cùng Grid có nhiều vùng: nông trại (Map D) và vùng câu (Tilemap riêng, đặt xa nông trại; đi ra cổng trái rồi **chuyển cảnh bằng màn tối**). Camera có giới hạn theo từng vùng, zoom ở vùng câu bằng toàn cảnh nông trại. Ở vùng câu: chạm = đi tới / tương tác, camera đi theo nhân vật; kéo để xem xung quanh, thả tay một lúc thì camera tự quay về nhân vật.
 - Đường đi: A* trên lưới ô, ô đi được lấy từ Tilemap (hàng rào, nước, nhà, luống chặn).
 
 ## Art
-- Asset pack Sprout Lands. Mọi sprite: PPU 16, Filter Point, Compression None, tắt mipmap. 1 ô đất = 1 tile 16×16.
-- Cây: mỗi ô 1 `SpriteRenderer`, pivot Bottom, sắp thứ tự theo trục Y. Gom vào Sprite Atlas (padding ≥ 2).
-- Nhân vật: sheet Sprout Lands (`Basic Charakter Spritesheet`, `Basic Charakter Actions`); câu cá: Ocean Pack (`fishing animation front/back/side`, cần, nước bắn, sprite cá). Nhân vật vẽ theo trục Y cùng cây. Trang phục: thân đổi cả bộ + biến thể màu (thay bảng màu); mũ / phụ kiện là lớp riêng bám điểm neo theo khung.
+- Asset pack **Sunnyside World** (`Assets/Art/Sunnyside_World_ASSET_PACK_V2.1`, chuyển từ Sprout Lands ngày 12/11/2026). Art mới tự vẽ phải cùng phong cách Sunnyside. Sprout Lands chỉ còn tạm tới khi thay hết, sau đó xóa. Mọi sprite: PPU 16, Filter Point, Compression None, tắt mipmap. 1 ô đất = 1 tile 16×16.
+- Cây: mỗi ô 1 `SpriteRenderer`, pivot Bottom, sắp thứ tự theo trục Y. Gom vào Sprite Atlas (padding ≥ 2). Bộ cây Sunnyside (`_00` hạt, `_01`–`_04` giai đoạn, `_05` nông sản) chỉ dùng tạm; người dùng sẽ vẽ bộ cây Việt cùng phong cách.
+- Nhân vật: Sunnyside `Characters/Human`, strip khung 96×64, **2 hướng** (nhìn ngang, lật trái/phải; đi lên/xuống giữ hướng ngang gần nhất), **3 lớp đồng bộ khung**: thân (`base`), tóc (mặc định `shorthair`), dụng cụ (`tools`). Câu cá dùng `CASTING` / `WAITING` / `REELING` / `CAUGHT`. Nhân vật vẽ theo trục Y cùng cây. Trang phục sau này: thay lớp tóc / thêm lớp, biến thể màu bằng thay bảng màu.
 
 ## Bẫy Unity Web trên mobile (luôn nhắc khi liên quan)
 - Bộ nhớ WebAssembly trên iOS (Max Memory Size), thời gian tải, dung lượng build.

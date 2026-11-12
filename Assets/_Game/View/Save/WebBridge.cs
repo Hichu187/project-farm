@@ -23,7 +23,21 @@ namespace VeQue.View.Save
 
         [DllImport("__Internal")]
         private static extern void VeQue_ShowBackup(string code, ImportCallback callback);
+
+        [DllImport("__Internal")]
+        private static extern int VeQue_GetUtcOffsetMinutes();
 #endif
+
+        // Độ lệch múi giờ so với UTC (giây, dương = phía đông). Trên WebGL lấy từ trình duyệt vì múi giờ
+        // trong C# có thể sai; nơi khác lấy từ máy.
+        public static int GetUtcOffsetSeconds()
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            return VeQue_GetUtcOffsetMinutes() * 60;
+#else
+            return (int)TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).TotalSeconds;
+#endif
+        }
 
         public static void RegisterPageEvents()
         {

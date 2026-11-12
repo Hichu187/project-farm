@@ -51,7 +51,7 @@ MonoBehaviour:
   _coinsPerLevel: 20
   _unlockSeedCount: 3
   _rescueCrop: {fileID: 11400000, guid: 0d1f66a878e77a747b0410697096f0b1, type: 2}
-  _orderSlots: 3
+  _orderSlots: 5
   _orderUnlockLevel: 2
   _orderCoinPercent: 160
   _orderXpPercent: 200

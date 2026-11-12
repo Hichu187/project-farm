@@ -4,7 +4,8 @@ using UnityEngine.UI;
 
 namespace VeQue.View.UI
 {
-    // Thẻ một ô đơn: người đặt, tối đa 3 món (icon + đang có/cần), thưởng, nút Giao/Bỏ; hoặc dòng chờ đơn mới.
+    // Thẻ một ô đơn: người đặt, nhãn khẩn cấp + đếm ngược hết hạn, tối đa 3 món (icon + đang có/cần), thưởng,
+    // nút Giao/Bỏ; hoặc dòng chờ đơn mới. Đơn khẩn cấp đổi màu nền thẻ.
     public sealed class OrderCard : MonoBehaviour
     {
         [SerializeField] private GameObject _content;
@@ -19,17 +20,32 @@ namespace VeQue.View.UI
         [SerializeField] private Color _doneColor = new Color(0.25f, 0.50f, 0.15f);
         [SerializeField] private Color _missingColor = new Color(0.27f, 0.16f, 0.09f);
 
+        [Header("Đơn khẩn cấp")]
+        [SerializeField] private Image _background;
+        [Tooltip("Góc trên-phải: \"KHẨN CẤP · còn 12:34\".")]
+        [SerializeField] private TMP_Text _badge;
+        [SerializeField] private Color _normalColor = new Color(0.90f, 0.78f, 0.58f);
+        [SerializeField] private Color _urgentColor = new Color(0.96f, 0.66f, 0.52f);
+
         public Button Deliver => _deliver;
         public Button Discard => _discard;
         public int ItemSlots => _itemRoots.Length;
 
-        public void ShowOrder(string customer, string reward, bool canDeliver)
+        // badge rỗng = đơn thường.
+        public void ShowOrder(string customer, string reward, bool canDeliver, string badge)
         {
             _content.SetActive(true);
             _waiting.gameObject.SetActive(false);
             _customer.text = customer;
             _reward.text = reward;
             _deliver.interactable = canDeliver;
+            bool urgent = !string.IsNullOrEmpty(badge);
+            SetUrgent(urgent);
+            if (_badge != null)
+            {
+                _badge.gameObject.SetActive(urgent);
+                _badge.text = badge ?? "";
+            }
         }
 
         public void SetItem(int index, Sprite icon, string label, bool done)
@@ -47,11 +63,18 @@ namespace VeQue.View.UI
                 _itemRoots[i].SetActive(false);
         }
 
-        public void ShowWaiting(string text)
+        public void ShowWaiting(string text, bool urgent)
         {
             _content.SetActive(false);
             _waiting.gameObject.SetActive(true);
             _waiting.text = text;
+            SetUrgent(urgent);
+        }
+
+        private void SetUrgent(bool urgent)
+        {
+            if (_background != null)
+                _background.color = urgent ? _urgentColor : _normalColor;
         }
     }
 }

@@ -4,7 +4,8 @@ using VeQue.Logic;
 
 namespace VeQue.Tests
 {
-    // Đơn hàng làng quê: sinh đơn, giao, bỏ, làm mới, lưu; và một vòng chơi trọn vẹn.
+    // Đơn hàng làng quê: sinh đơn, giao, bỏ, làm mới, lưu; thời gian chờ, hạng khẩn cấp, giới hạn mỗi ngày;
+    // và một vòng chơi trọn vẹn.
     public class OrderTests
     {
         private const string Zone1 = "khu1";
@@ -21,6 +22,10 @@ namespace VeQue.Tests
         private const int XpPercent = 200;
         private const long Cooldown = 300;
         private const int HarvestCap = 6;
+        private const long Refill = 600;
+        private const long UrgentRefill = 1800;
+        private const long UrgentExpire = 1800;
+        private const int DailyLimit = 4;
         private static readonly string[] Names = { "Bà Tư", "Chú Ba" };
         private static readonly int[] XpToNext = { 3, 20, 50 };
 
@@ -292,9 +297,9 @@ namespace VeQue.Tests
         // ---------- Save ----------
 
         [Test]
-        public void Save_CurrentVersionIs2()
+        public void Save_CurrentVersionIs6()
         {
-            Assert.AreEqual(2, SaveData.CurrentVersion);
+            Assert.AreEqual(6, SaveData.CurrentVersion);
         }
 
         [Test]
@@ -371,6 +376,249 @@ namespace VeQue.Tests
             AssertAllSlotsFilled(reloaded);
         }
 
+        // ---------- Thời gian chờ sau khi giao ----------
+
+        [Test]
+        public void Deliver_WithRefill_SlotEmptyUntilRefill()
+        {
+            Farm farm = CreateFarm(level: OrdersLevel, def: CreateDef(refill: Refill));
+            GiveItems(farm, 0);
+            long now = _clock.UtcNowSeconds;
+
+            Assert.AreEqual(FarmResult.Ok, farm.DeliverOrder(0));
+
+            OrderState order = farm.State.Orders[0];
+            Assert.IsFalse(order.HasOrder);
+            Assert.AreEqual(now + Refill, order.AvailableAt);
+            Assert.AreEqual(OrderRank.Normal, order.Rank);
+            _clock.Advance(Refill - 1);
+            Assert.IsFalse(farm.RefreshOrders());
+            _clock.Advance(1);
+            Assert.IsTrue(farm.RefreshOrders());
+            Assert.IsTrue(order.HasOrder);
+        }
+
+        // ---------- Đơn khẩn cấp ----------
+
+        [Test]
+        public void Urgent_DoubleRewardAndExpiry()
+        {
+            Farm normal = CreateFarm(level: OrdersLevel, randomState: 777, def: CreateDef());
+            Farm urgent = CreateFarm(level: OrdersLevel, randomState: 777, def: CreateDef(urgentChance: 100));
+
+            for (int i = 0; i < Slots; i++)
+            {
+                OrderState a = normal.State.Orders[i];
+                OrderState b = urgent.State.Orders[i];
+                Assert.AreEqual(OrderRank.Normal, a.Rank);
+                Assert.AreEqual(0, a.ExpiresAt);
+                Assert.AreEqual(OrderRank.Urgent, b.Rank);
+                Assert.AreEqual(_clock.UtcNowSeconds + UrgentExpire, b.ExpiresAt);
+
+                // Tỉ lệ 100% không dùng số ngẫu nhiên nên món giống hệt; thưởng = công thức × 2.
+                Assert.AreEqual(a.Items.Length, b.Items.Length);
+                long coins = 0;
+                long xp = 0;
+                for (int j = 0; j < a.Items.Length; j++)
+                {
+                    Assert.AreEqual(a.Items[j].CropId, b.Items[j].CropId);
+                    Assert.AreEqual(a.Items[j].Count, b.Items[j].Count);
+                    Assert.IsTrue(urgent.Definition.TryGetCrop(b.Items[j].CropId, out CropDef crop));
+                    coins += (long)b.Items[j].Count * crop.SellPrice;
+                    xp += (long)(b.Items[j].Count / crop.HarvestYield) * crop.Xp;
+                }
+                long expectedCoins = System.Math.Max(5L, (long)System.Math.Round(coins * CoinPercent * 2 / 100.0 / 5.0,
+                    System.MidpointRounding.AwayFromZero) * 5);
+                Assert.AreEqual(expectedCoins, b.RewardCoins);
+                Assert.AreEqual(System.Math.Max(1L, xp * XpPercent * 2 / 100), b.RewardXp);
+            }
+        }
+
+        [Test]
+        public void Urgent_Expired_CannotDeliverAndSlotWaitsUrgentRefill()
+        {
+            Farm farm = CreateFarm(level: OrdersLevel, def: CreateDef(urgentChance: 100));
+            GiveItems(farm, 0);
+            long coins = farm.State.Coins;
+
+            _clock.Advance(UrgentExpire - 1);
+            Assert.IsTrue(farm.CanDeliver(0));
+            Assert.IsTrue(farm.TryGetOrderTimeLeft(0, out long left));
+            Assert.AreEqual(1, left);
+
+            _clock.Advance(1);
+            Assert.IsFalse(farm.CanDeliver(0));
+            Assert.AreEqual(FarmResult.OrderExpired, farm.DeliverOrder(0));
+
+            OrderState order = farm.State.Orders[0];
+            Assert.IsFalse(order.HasOrder);
+            Assert.AreEqual(_clock.UtcNowSeconds + UrgentRefill, order.AvailableAt);
+            Assert.AreEqual(coins, farm.State.Coins);
+            Assert.AreEqual(0, farm.State.DeliveredToday);
+        }
+
+        [Test]
+        public void Urgent_Expired_RefreshClearsAllExpired()
+        {
+            Farm farm = CreateFarm(level: OrdersLevel, def: CreateDef(urgentChance: 100));
+
+            _clock.Advance(UrgentExpire);
+
+            Assert.IsTrue(farm.RefreshOrders());
+            for (int i = 0; i < Slots; i++)
+                Assert.IsFalse(farm.State.Orders[i].HasOrder, $"Ô đơn {i}");
+        }
+
+        [Test]
+        public void Urgent_DeliverAndDiscard_NextWaitsUrgentRefill()
+        {
+            Farm farm = CreateFarm(level: OrdersLevel, def: CreateDef(urgentChance: 100));
+            GiveItems(farm, 0);
+            long now = _clock.UtcNowSeconds;
+
+            Assert.AreEqual(FarmResult.Ok, farm.DeliverOrder(0));
+            Assert.AreEqual(FarmResult.Ok, farm.DiscardOrder(1));
+
+            Assert.AreEqual(now + UrgentRefill, farm.State.Orders[0].AvailableAt);
+            Assert.AreEqual(OrderRank.Urgent, farm.State.Orders[0].Rank);
+            Assert.AreEqual(now + UrgentRefill, farm.State.Orders[1].AvailableAt);
+        }
+
+        [Test]
+        public void UrgentChance_MixesRanks()
+        {
+            Farm farm = CreateFarm(level: OrdersLevel, randomState: 42, def: CreateDef(urgentChance: 20));
+            int urgent = 0;
+            for (int round = 0; round < 200; round++)
+            {
+                if (farm.State.Orders[0].IsUrgent)
+                    urgent++;
+                Assert.AreEqual(FarmResult.Ok, farm.DiscardOrder(0));
+                _clock.Advance(UrgentRefill);
+                farm.RefreshOrders();
+            }
+
+            Assert.That(urgent, Is.InRange(15, 70), "Khoảng 20% đơn khẩn cấp");
+        }
+
+        // ---------- Giới hạn đơn mỗi ngày ----------
+
+        [Test]
+        public void DailyLimit_StopsNewOrdersWhenReached()
+        {
+            Farm farm = CreateFarm(level: OrdersLevel, def: CreateDef(dailyLimit: DailyLimit));
+            Assert.AreEqual(DailyLimit, farm.OrdersLeftToday);
+
+            // Đã giao 1 + 3 đơn trên bảng = 4: đơn thay thế vẫn có.
+            DeliverSlot(farm, 0);
+            Assert.IsTrue(farm.State.Orders[0].HasOrder);
+            // Đã giao 2 + 2 trên bảng = 4: không sinh thêm.
+            DeliverSlot(farm, 0);
+            Assert.IsFalse(farm.State.Orders[0].HasOrder);
+            Assert.AreEqual(2, farm.OrdersLeftToday);
+            Assert.IsFalse(farm.CanReceiveOrderToday);
+
+            DeliverSlot(farm, 1);
+            DeliverSlot(farm, 2);
+
+            Assert.AreEqual(0, farm.OrdersLeftToday);
+            for (int i = 0; i < Slots; i++)
+                Assert.IsFalse(farm.State.Orders[i].HasOrder, $"Ô đơn {i}");
+            _clock.Advance(farm.SecondsUntilNextDay - 1);
+            Assert.IsFalse(farm.RefreshOrders());
+        }
+
+        [Test]
+        public void DailyLimit_NextDay_ResetsAndRefills()
+        {
+            Farm farm = CreateFarm(level: OrdersLevel, def: CreateDef(dailyLimit: DailyLimit));
+            for (int i = 0; i < DailyLimit; i++)
+                DeliverSlot(farm, FirstFilledSlot(farm));
+            Assert.AreEqual(0, farm.OrdersLeftToday);
+
+            _clock.Advance(farm.SecondsUntilNextDay);
+
+            Assert.AreEqual(DailyLimit, farm.OrdersLeftToday);
+            Assert.IsTrue(farm.RefreshOrders());
+            AssertAllSlotsFilled(farm);
+            Assert.AreEqual(0, farm.State.DeliveredToday);
+        }
+
+        [Test]
+        public void DailyLimit_DiscardDoesNotCount()
+        {
+            Farm farm = CreateFarm(level: OrdersLevel, def: CreateDef(dailyLimit: DailyLimit));
+
+            Assert.AreEqual(FarmResult.Ok, farm.DiscardOrder(0));
+            _clock.Advance(Cooldown);
+            farm.RefreshOrders();
+
+            Assert.IsTrue(farm.State.Orders[0].HasOrder);
+            Assert.AreEqual(DailyLimit, farm.OrdersLeftToday);
+        }
+
+        [Test]
+        public void UtcOffset_ShiftsDayBoundary()
+        {
+            Farm farm = CreateFarm(level: OrdersLevel, def: CreateDef(dailyLimit: DailyLimit));
+            DeliverSlot(farm, 0);
+            long untilMidnightUtc = farm.SecondsUntilNextDay;
+
+            // Lệch +1 giờ: 0 giờ địa phương tới sớm hơn 1 giờ.
+            farm.SetUtcOffset(3600);
+            Assert.AreEqual(untilMidnightUtc - 3600, farm.SecondsUntilNextDay);
+
+            _clock.Advance(farm.SecondsUntilNextDay);
+            Assert.AreEqual(DailyLimit, farm.OrdersLeftToday);
+        }
+
+        [Test]
+        public void Save_RoundTrip_KeepsRankExpiryAndDailyCount()
+        {
+            Farm farm = CreateFarm(level: OrdersLevel, def: CreateDef(urgentChance: 100, dailyLimit: DailyLimit));
+            farm.SetUtcOffset(7 * 3600);
+            DeliverSlot(farm, 0);
+
+            Farm loaded = RoundTrip(farm);
+
+            Assert.AreEqual(farm.State.DeliveredToday, loaded.State.DeliveredToday);
+            Assert.AreEqual(farm.State.OrderDay, loaded.State.OrderDay);
+            Assert.AreEqual(7 * 3600, loaded.State.UtcOffsetSeconds);
+            for (int i = 0; i < Slots; i++)
+            {
+                AssertSameOrder(farm.State.Orders[i], loaded.State.Orders[i]);
+                Assert.AreEqual(farm.State.Orders[i].Rank, loaded.State.Orders[i].Rank);
+                Assert.AreEqual(farm.State.Orders[i].ExpiresAt, loaded.State.Orders[i].ExpiresAt);
+            }
+        }
+
+        [Test]
+        public void Save_Version3_LoadsAsNormalOrdersWithFreshDailyCount()
+        {
+            Farm farm = CreateFarm(level: OrdersLevel, def: CreateDef(dailyLimit: DailyLimit));
+            SaveData data = SaveMapper.ToSave(farm.State, farm.Definition, _clock.UtcNowSeconds);
+            data.version = 3;
+            data.orderDay = 0;
+            data.deliveredToday = 0;
+            data.utcOffsetSeconds = 0;
+            foreach (SaveOrder order in data.orders)
+            {
+                order.rank = 0;
+                order.expiresAt = 0;
+            }
+
+            Assert.AreEqual(SaveLoadResult.Ok, SaveMapper.TryFromSave(data, farm.Definition, out FarmState state));
+            var loaded = new Farm(farm.Definition, state, _clock);
+
+            Assert.AreEqual(DailyLimit, loaded.OrdersLeftToday);
+            Assert.AreEqual(loaded.CurrentDay, loaded.State.OrderDay);
+            for (int i = 0; i < Slots; i++)
+            {
+                AssertSameOrder(farm.State.Orders[i], loaded.State.Orders[i]);
+                Assert.AreEqual(OrderRank.Normal, loaded.State.Orders[i].Rank);
+            }
+        }
+
         // ---------- Vòng chơi trọn vẹn ----------
 
         // Gieo → thu hoạch → lên cấp 2 có đơn → trồng đủ hàng → giao đơn tới cấp 3 → mở hết Khu 1 → Khu 2 có ô miễn phí.
@@ -419,6 +667,29 @@ namespace VeQue.Tests
             Assert.AreEqual(FarmResult.Ok, farm.Harvest(Plot0));
         }
 
+        private static void GiveItems(Farm farm, int slot)
+        {
+            foreach (OrderItem item in farm.State.Orders[slot].Items)
+                farm.State.Inventory[item.CropId] = farm.State.GetItems(item.CropId) + item.Count;
+        }
+
+        private static void DeliverSlot(Farm farm, int slot)
+        {
+            GiveItems(farm, slot);
+            Assert.AreEqual(FarmResult.Ok, farm.DeliverOrder(slot), $"Giao ô {slot}");
+        }
+
+        private static int FirstFilledSlot(Farm farm)
+        {
+            for (int i = 0; i < farm.OrderSlotCount; i++)
+            {
+                if (farm.State.Orders[i].HasOrder)
+                    return i;
+            }
+            Assert.Fail("Không còn đơn nào");
+            return -1;
+        }
+
         private void PlantAndHarvestAndSellAll(Farm farm)
         {
             PlantAndHarvest(farm, RauMuong);
@@ -452,16 +723,16 @@ namespace VeQue.Tests
             }
         }
 
-        private Farm CreateFarm(int level = 1, uint randomState = 0)
+        private Farm CreateFarm(int level = 1, uint randomState = 0, FarmDef def = null)
         {
-            FarmDef def = CreateDef();
+            def ??= CreateDef();
             FarmState state = FarmState.CreateNew(def);
             state.Level = level;
             state.RandomState = randomState;
             return new Farm(def, state, _clock);
         }
 
-        private static FarmDef CreateDef(bool withOrders = true)
+        private static FarmDef CreateDef(bool withOrders = true, long refill = 0, int urgentChance = 0, int dailyLimit = 0)
         {
             var zones = new[]
             {
@@ -476,7 +747,8 @@ namespace VeQue.Tests
             };
             var levels = new LevelDef(XpToNext, 10, 2);
             OrderDef orders = withOrders
-                ? new OrderDef(Slots, OrdersLevel, CoinPercent, XpPercent, Cooldown, Names, HarvestCap)
+                ? new OrderDef(Slots, OrdersLevel, CoinPercent, XpPercent, Cooldown, Names, HarvestCap,
+                    refill, UrgentRefill, urgentChance, 200, UrgentExpire, dailyLimit)
                 : null;
             var seeds = new Dictionary<string, int> { { RauMuong, 5 } };
             return new FarmDef(zones, crops, 100, seeds, 0, levels, RauMuong, orders);
