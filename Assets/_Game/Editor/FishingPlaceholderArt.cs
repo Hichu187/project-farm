@@ -6,7 +6,7 @@ using VeQue.View.Data;
 
 namespace VeQue.EditorTools
 {
-    // Art tạm cho câu cá (gói Sunnyside chưa có cá, phao): phao 8×8, dấu "!" 5×8 và icon cá 16×16 tô màu theo độ hiếm
+    // Art tạm cho câu cá (gói Sunnyside chưa có cá, phao): phao 8×8, dấu "!" 5×8, ổ khóa ô giỏ 10×12 và icon cá 16×16 tô màu theo độ hiếm
     // → Assets/_Game/Art/Fishing/. Gán icon cho cá chưa có icon (hoặc đang dùng icon tạm). Thay bằng art thật sau.
     public static class FishingPlaceholderArt
     {
@@ -61,6 +61,25 @@ namespace VeQue.EditorTools
         };
 
         public const string AlertPath = Folder + "/alert.png";
+        public const string LockPath = Folder + "/lock.png";
+
+        // Ổ khóa cho ô giỏ chưa mở (Sunnyside / Sprout Lands không có icon khóa): 's' quai thép, 'y' thân vàng, 'o' viền / lỗ khóa.
+        private static readonly string[] LockPattern =
+        {
+            "...ssss...",
+            "..s....s..",
+            "..s....s..",
+            "..s....s..",
+            ".oooooooo.",
+            ".oyyyyyyo.",
+            ".oyyooyyo.",
+            ".oyyooyyo.",
+            ".oyyyoyyo.",
+            ".oyyyyyyo.",
+            ".oooooooo.",
+            "..........",
+        };
+        private static readonly Color32 Steel = new Color32(0x9a, 0xa4, 0xb0, 0xff);
 
         private static readonly Color32 Yellow = new Color32(0xf8, 0xd8, 0x48, 0xff);
         private static readonly Color32 Outline = new Color32(0x2b, 0x2b, 0x3a, 0xff);
@@ -80,12 +99,13 @@ namespace VeQue.EditorTools
 
         private static readonly string[] RarityNames = { "common", "uncommon", "rare", "epic", "legendary" };
 
-        [MenuItem("Về Quê/Câu cá: tạo art tạm")]
+        [MenuItem("Về Quê/Import art/Art câu cá tạm", priority = 304)]
         private static void Generate()
         {
             EnsureFolder(Folder);
             Save(Draw(BobberPattern, c => c == 'r' ? Red : c == 'w' ? White : Outline), BobberPath, new Vector2(0.5f, 0.25f));
             Save(Draw(AlertPattern, c => c == 'y' ? Yellow : Outline), AlertPath, new Vector2(0.5f, 0f));
+            Save(Draw(LockPattern, c => c == 'y' ? Yellow : c == 's' ? Steel : Outline), LockPath, new Vector2(0.5f, 0.5f));
 
             var icons = new Sprite[RarityColors.Length];
             for (int r = 0; r < RarityColors.Length; r++)
@@ -108,8 +128,7 @@ namespace VeQue.EditorTools
                     var so = new SerializedObject(fish);
                     SerializedProperty icon = so.FindProperty("_icon");
                     // Chỉ thay icon trống hoặc icon tạm; art thật đã gán thì giữ.
-                    if (icon.objectReferenceValue != null
-                        && !AssetDatabase.GetAssetPath(icon.objectReferenceValue).StartsWith(Folder + "/"))
+                    if (icon.objectReferenceValue != null && !IsPlaceholderIcon(AssetDatabase.GetAssetPath(icon.objectReferenceValue)))
                         continue;
                     icon.objectReferenceValue = icons[(int)fish.Rarity];
                     so.ApplyModifiedPropertiesWithoutUndo();
@@ -120,7 +139,18 @@ namespace VeQue.EditorTools
 
             Debug.Log(fishing != null
                 ? $"Về Quê: đã tạo art tạm câu cá, gán icon cho {assigned} cá → {Folder}"
-                : $"Về Quê: đã tạo art tạm câu cá → {Folder}. Chưa có {FishingDataGenerator.FishingPath}: chạy Tạo data câu cá rồi chạy lại menu này để gán icon.");
+                : $"Về Quê: đã tạo art tạm câu cá → {Folder}. Chưa có {FishingDataGenerator.FishingPath}: chạy Về Quê → Data → Tạo data câu cá rồi chạy lại menu này để gán icon.");
+        }
+
+        // Icon tạm = fish_<độ hiếm>.png ngay trong Folder (icon thật ở Folder/fish/ không tính).
+        private static bool IsPlaceholderIcon(string path)
+        {
+            foreach (string rarity in RarityNames)
+            {
+                if (path == $"{Folder}/fish_{rarity}.png")
+                    return true;
+            }
+            return false;
         }
 
         private static Texture2D Draw(string[] pattern, System.Func<char, Color32> colorOf)

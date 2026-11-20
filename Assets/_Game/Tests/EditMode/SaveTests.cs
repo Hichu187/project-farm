@@ -19,6 +19,8 @@ namespace VeQue.Tests
         private const int WaterReducePercent = 20;
         private const int Zone1StartOpen = 2;
         private const string NewerSave = "{\"version\":99,\"coins\":1,\"zones\":[]}";
+        // Save bản trước Đợt 2 Phần 4 (version 7): hợp lệ về cấu trúc nhưng không còn dùng được.
+        private const string OldSave = "{\"version\":7,\"coins\":999,\"zones\":[{\"zoneId\":\"khu1\",\"openCount\":6}]}";
 
         private static readonly PlotId Plot0 = new PlotId(Zone1, 0, 0, 0);
         private static readonly PlotId Plot1 = new PlotId(Zone1, 0, 1, 0);
@@ -206,8 +208,9 @@ namespace VeQue.Tests
 
         [TestCase("{{{khong phai json")]
         [TestCase("{}")]
-        [TestCase("{\"version\":1,\"coins\":-5,\"zones\":[]}")]
-        [TestCase("{\"version\":1,\"coins\":5}")]
+        [TestCase("{\"version\":13,\"coins\":-5,\"zones\":[]}")]
+        [TestCase("{\"version\":13,\"coins\":5}")]
+        [TestCase("{\"version\":7,\"coins\":5,\"zones\":[{\"zoneId\":\"khu1\",\"openCount\":6}]}")]
         public void Load_MainInvalid_UsesPreviousSave(string corrupt)
         {
             Session first = Open();
@@ -248,6 +251,32 @@ namespace VeQue.Tests
             second.Save.Save();
 
             Assert.AreEqual(good, _store.Read(SaveService.PreviousKey));
+        }
+
+        [Test]
+        public void Load_OldVersion_StartsNewGameAndReportsDiscarded()
+        {
+            _store.Write(SaveService.MainKey, OldSave);
+            _store.Write(SaveService.PreviousKey, OldSave);
+
+            Session session = Open();
+
+            Assert.AreEqual(StartCoins, session.Farm.State.Coins);
+            Assert.IsTrue(session.Save.OldSaveDiscarded);
+            Assert.IsFalse(session.Save.SavingBlocked);
+            session.Save.Save();
+            Assert.AreNotEqual(OldSave, _store.Read(SaveService.MainKey));
+        }
+
+        [Test]
+        public void Load_CurrentSave_NotReportedAsDiscarded()
+        {
+            Session first = Open();
+            first.Save.Save();
+
+            Session second = Open();
+
+            Assert.IsFalse(second.Save.OldSaveDiscarded);
         }
 
         [Test]
@@ -417,6 +446,17 @@ namespace VeQue.Tests
             Assert.AreEqual(SaveLoadResult.Invalid, session.Save.Import("khong phai ma"));
             Assert.AreEqual(SaveLoadResult.Invalid, session.Save.Import(BackupCode.Encode("{}")));
             Assert.AreEqual(saved, _store.Read(SaveService.MainKey));
+        }
+
+        [Test]
+        public void Import_OldVersion_IsRejectedAndKeepsCurrentSave()
+        {
+            Session session = Open();
+            session.Save.Save();
+            string current = _store.Read(SaveService.MainKey);
+
+            Assert.AreEqual(SaveLoadResult.Outdated, session.Save.Import(BackupCode.Encode(OldSave)));
+            Assert.AreEqual(current, _store.Read(SaveService.MainKey));
         }
 
         [Test]

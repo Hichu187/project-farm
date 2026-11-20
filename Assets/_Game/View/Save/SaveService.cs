@@ -44,12 +44,18 @@ namespace VeQue.View.Save
         // Save do bản game mới hơn tạo (bản cũ còn trong cache): không ghi để khỏi mất tiến trình đó.
         public bool SavingBlocked { get; private set; }
 
+        // Save của bản cũ (version < MinSupportedVersion) bị bỏ và đã tạo save mới: GameUI báo cho người chơi.
+        public bool OldSaveDiscarded { get; private set; }
+
+        private bool _sawOutdated;
+
         public FarmState Load()
         {
             long lastSeenAt = 0;
             if (!TryLoad(MainKey, ref lastSeenAt) && !SavingBlocked)
                 TryLoad(PreviousKey, ref lastSeenAt);
 
+            OldSaveDiscarded = _state == null && _sawOutdated;
             _state ??= FarmState.CreateNew(_def);
             Clock = new MonotonicClock(_systemClock, lastSeenAt);
             return _state;
@@ -98,6 +104,10 @@ namespace VeQue.View.Save
                 case SaveLoadResult.NewerVersion:
                     SavingBlocked = true;
                     Debug.LogWarning($"Save '{key}' do bản game mới hơn tạo, tạm không ghi đè.");
+                    return false;
+                case SaveLoadResult.Outdated:
+                    _sawOutdated = true;
+                    Debug.LogWarning($"Save '{key}' của bản cũ (version {data.version}), không còn dùng được.");
                     return false;
                 default:
                     Debug.LogWarning($"Save '{key}' bị hỏng, bỏ qua.");

@@ -6,16 +6,25 @@ using VeQue.View.Data;
 
 namespace VeQue.View.UI
 {
-    // Một icon hạt trong thanh chọn hạt: chạm = gieo ô đang chọn, kéo = gieo các ô trống đi qua.
+    // Một icon hạt trong thanh chọn hạt: chạm = gieo ô đang chọn.
+    // Kéo: lúc bắt đầu kéo ngang nhiều hơn dọc thì cả lượt kéo chuyển cho ScrollRect để cuộn thanh;
+    // ngược lại (kéo xuống ruộng) = gieo các ô trống đi qua.
     public sealed class SeedPickerItem : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
+        private enum DragMode
+        {
+            None,
+            Plant,
+            Scroll,
+        }
+
         [SerializeField] private Image _icon;
         [SerializeField] private TMP_Text _count;
         [SerializeField] private CanvasGroup _group;
         [SerializeField] private float _dimAlpha = 0.45f;
 
         private SeedPicker _owner;
-        private bool _dragging;
+        private DragMode _drag;
 
         public CropDefinition Crop { get; private set; }
 
@@ -42,21 +51,33 @@ namespace VeQue.View.UI
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            _dragging = _owner.BeginDrag(this, eventData.position);
+            Vector2 moved = eventData.position - eventData.pressPosition;
+            ScrollRect scroll = _owner.Scroll;
+            if (scroll != null && Mathf.Abs(moved.x) > Mathf.Abs(moved.y))
+            {
+                _drag = DragMode.Scroll;
+                scroll.OnBeginDrag(eventData);
+                return;
+            }
+            _drag = _owner.BeginDrag(this, eventData.position) ? DragMode.Plant : DragMode.None;
         }
 
         public void OnDrag(PointerEventData eventData)
         {
-            if (_dragging)
+            if (_drag == DragMode.Scroll)
+                _owner.Scroll.OnDrag(eventData);
+            else if (_drag == DragMode.Plant)
                 _owner.Drag(eventData.position);
         }
 
         public void OnEndDrag(PointerEventData eventData)
         {
-            if (!_dragging)
-                return;
-            _dragging = false;
-            _owner.EndDrag();
+            DragMode mode = _drag;
+            _drag = DragMode.None;
+            if (mode == DragMode.Scroll)
+                _owner.Scroll.OnEndDrag(eventData);
+            else if (mode == DragMode.Plant)
+                _owner.EndDrag();
         }
     }
 }

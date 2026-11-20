@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.FishDefinition
   _id: ca_bong_tuong
   _displayName: "C\xE1 b\u1ED1ng t\u01B0\u1EE3ng"
-  _icon: {fileID: 21300000, guid: 3e2316e7dc2c0114a9eace0dc3c9506d, type: 3}
+  _icon: {fileID: 21300000, guid: ef86e351bfb685144b6b223f1ca9bebb, type: 3}
   _rarity: 3
   _minGrams: 300
   _maxGrams: 1500
@@ -31,9 +31,11 @@ MonoBehaviour:
   _depths: 6
   _preferredBaits:
   - {fileID: 11400000, guid: faa4f59eca662784ebde4db1be560fe9, type: 2}
-  _minArrows: 6
-  _maxArrows: 8
+  - {fileID: 11400000, guid: a8fa1dbeb646c0c4fa0f6333924c0e12, type: 2}
+  - {fileID: 11400000, guid: ef62e8e1576cc124d9f0dff08f7b7209, type: 2}
+  _minArrows: 7
+  _maxArrows: 9
   _pullSeconds: 3.2
-  _hookWindowSeconds: 0.5
+  _hookWindowSeconds: 1
   _slipPercent: 18
   _redArrows: 0

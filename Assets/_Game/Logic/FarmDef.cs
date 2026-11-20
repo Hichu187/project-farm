@@ -20,10 +20,15 @@ namespace VeQue.Logic
         public string RescueCropId { get; }
         public OrderDef Orders { get; }
         public FishingDef Fishing { get; }
+        // Bảng âm lịch cho GameCalendar (Đợt 2 Phần 2); Empty = không có.
+        public LunarTable Lunar { get; }
+        // Thư theo bản build (Đợt 2 Phần 3).
+        public IReadOnlyList<BuildMailDef> BuildMails { get; }
 
         public FarmDef(IEnumerable<ZoneDef> zones, IEnumerable<CropDef> crops, long startCoins,
             IReadOnlyDictionary<string, int> startSeeds = null, int waterReducePercent = 0,
-            LevelDef levels = null, string rescueCropId = null, OrderDef orders = null, FishingDef fishing = null)
+            LevelDef levels = null, string rescueCropId = null, OrderDef orders = null, FishingDef fishing = null,
+            LunarTable lunar = null, IEnumerable<BuildMailDef> buildMails = null)
         {
             if (zones == null)
                 throw new ArgumentNullException(nameof(zones));
@@ -86,6 +91,48 @@ namespace VeQue.Logic
             RescueCropId = rescueCropId;
             Orders = orders ?? OrderDef.None;
             Fishing = fishing ?? FishingDef.None;
+            Lunar = lunar ?? LunarTable.Empty;
+
+            // Quà trong thư theo build phải trỏ tới cây / mồi có thật (sai data thì báo ngay lúc nạp).
+            var mails = new List<BuildMailDef>();
+            var mailIds = new HashSet<string>();
+            if (buildMails != null)
+            {
+                foreach (BuildMailDef mail in buildMails)
+                {
+                    if (mail == null)
+                        throw new ArgumentException("Có thư null.", nameof(buildMails));
+                    if (!mailIds.Add(mail.Id))
+                        throw new ArgumentException($"Trùng id thư '{mail.Id}'.", nameof(buildMails));
+                    foreach (Reward reward in mail.Rewards)
+                    {
+                        if (!IsValidReward(reward, out string error))
+                            throw new ArgumentException($"Thư '{mail.Id}': {error}", nameof(buildMails));
+                    }
+                    mails.Add(mail);
+                }
+            }
+            BuildMails = mails.AsReadOnly();
+        }
+
+        // Quà hợp lệ: số lượng > 0, loại biết, id trỏ tới cây (hạt / nông sản) hoặc mồi có thật.
+        public bool IsValidReward(Reward reward, out string error)
+        {
+            error = null;
+            if (reward == null)
+                error = "quà null.";
+            else if (reward.Amount <= 0)
+                error = "số lượng quà phải > 0.";
+            else if (!Enum.IsDefined(typeof(RewardKind), reward.Kind))
+                error = $"loại quà lạ {(int)reward.Kind}.";
+            else if ((reward.Kind == RewardKind.Seeds || reward.Kind == RewardKind.Produce) && !_crops.ContainsKey(reward.Id ?? ""))
+                error = $"cây '{reward.Id}' không có.";
+            else if (reward.Kind == RewardKind.Bait && !Fishing.TryGetBait(reward.Id, out _))
+                error = $"mồi '{reward.Id}' không có.";
+            else if ((reward.Kind == RewardKind.Seeds || reward.Kind == RewardKind.Produce || reward.Kind == RewardKind.Bait)
+                && reward.Amount > int.MaxValue)
+                error = "số lượng quà quá lớn.";
+            return error == null;
         }
 
         public bool TryGetCrop(string id, out CropDef crop)

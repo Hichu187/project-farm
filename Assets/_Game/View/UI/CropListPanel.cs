@@ -6,7 +6,7 @@ using VeQue.View.Map;
 
 namespace VeQue.View.UI
 {
-    // Khung chung của Kho, Cửa hàng, bảng chọn hạt: mỗi cây đang bật một dòng, làm mới khi Farm đổi.
+    // Khung chung của Kho, Cửa hàng: mỗi cây đang bật một dòng, xếp theo cấp mở; làm mới khi Farm đổi.
     public abstract class CropListPanel : MonoBehaviour
     {
         private sealed class Entry
@@ -49,9 +49,9 @@ namespace VeQue.View.UI
 
         private void Start()
         {
-            foreach (CropDefinition crop in _game.Definition.Crops)
+            foreach (CropDefinition crop in CropsByUnlockLevel())
             {
-                if (crop == null || !crop.Enabled || !Farm.Definition.TryGetCrop(crop.Id, out CropDef def))
+                if (!Farm.Definition.TryGetCrop(crop.Id, out CropDef def))
                     continue;
 
                 CropRow row = Instantiate(_rowTemplate, _content);
@@ -63,6 +63,31 @@ namespace VeQue.View.UI
 
             Farm.Changed += Refresh;
             Refresh();
+        }
+
+        // Cây đang bật, xếp theo cấp mở tăng dần; cùng cấp giữ thứ tự trong data (cây lớn nhanh trước).
+        private List<CropDefinition> CropsByUnlockLevel()
+        {
+            var crops = new List<CropDefinition>();
+            foreach (CropDefinition crop in _game.Definition.Crops)
+            {
+                if (crop != null && crop.Enabled)
+                    crops.Add(crop);
+            }
+
+            // Sắp xếp chèn: ổn định, danh sách nhỏ (≤ 25 cây), chỉ chạy một lần lúc mở game.
+            for (int i = 1; i < crops.Count; i++)
+            {
+                CropDefinition current = crops[i];
+                int j = i - 1;
+                while (j >= 0 && crops[j].UnlockLevel > current.UnlockLevel)
+                {
+                    crops[j + 1] = crops[j];
+                    j--;
+                }
+                crops[j + 1] = current;
+            }
+            return crops;
         }
 
         private void OnDestroy()

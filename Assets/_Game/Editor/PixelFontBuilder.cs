@@ -63,7 +63,7 @@ namespace VeQue.EditorTools
             public GlyphRect Rect;
         }
 
-        [MenuItem("Về Quê/Font: tạo font pixel tiếng Việt")]
+        [MenuItem("Về Quê/Import art/Font pixel tiếng Việt", priority = 305)]
         private static void Build()
         {
             var font = AssetDatabase.LoadAssetAtPath<Font>(FontPath);

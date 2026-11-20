@@ -23,13 +23,12 @@ namespace VeQue.View.Data
         [Min(1)] [SerializeField] private int _maxDurability = 30;
         [Min(0)] [SerializeField] private int _price;
         [Min(1)] [SerializeField] private int _unlockLevel = 1;
-        [Min(0)] [SerializeField] private int _repairPrice;
 
         public string Id => _id;
         public string DisplayName => _displayName;
         public Sprite Icon => _icon;
 
         public RodDef ToDef() => new RodDef(_id, _rank, _perfectHalfWidth, _barPeriodSeconds, _bonusTimePercent,
-            _slipReductionPercent, _rareBonusPercent, _maxDurability, _price, _unlockLevel, _repairPrice);
+            _slipReductionPercent, _rareBonusPercent, _maxDurability, _price, _unlockLevel);
     }
 }

@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.RodDefinition
   _id: can_tre
   _displayName: "C\u1EA7n tre"
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 17ea064eaec03344ab06bd20562f2891, type: 3}
   _rank: 1
   _perfectHalfWidth: 0.03
   _barPeriodSeconds: 1.2
-  _lineStrength: 100
+  _bonusTimePercent: 0
   _slipReductionPercent: 0
   _rareBonusPercent: 0
   _maxDurability: 30

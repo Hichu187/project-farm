@@ -19,29 +19,29 @@ MonoBehaviour:
   _crops:
   - {fileID: 11400000, guid: 0d1f66a878e77a747b0410697096f0b1, type: 2}
   - {fileID: 11400000, guid: 21478a3096c04724b8d63c86b461b443, type: 2}
-  - {fileID: 11400000, guid: 169f92101fac20c4aba79bb5bbb37370, type: 2}
-  - {fileID: 11400000, guid: 67376a1f0848b374a944c67bba8510e4, type: 2}
-  - {fileID: 11400000, guid: 9f482f5321053bd4e860d2889985dd43, type: 2}
-  - {fileID: 11400000, guid: d4901de2b8203b64391a5f34d90a1809, type: 2}
-  - {fileID: 11400000, guid: 2b80b99f74dda3e42a0cd71beab7d25a, type: 2}
-  - {fileID: 11400000, guid: bddb89a8722407540aef76bb5cdb3bd2, type: 2}
-  - {fileID: 11400000, guid: 91fc3692e83af044895572e63d2a5085, type: 2}
-  - {fileID: 11400000, guid: ed1d95877c004c84f80bb32b87713cf2, type: 2}
-  - {fileID: 11400000, guid: c1fdabc4c90b5824e99fd8fbb8b8500f, type: 2}
-  - {fileID: 11400000, guid: e559f381b74f7704f93ab0db303f3a69, type: 2}
-  - {fileID: 11400000, guid: 804e9241c4852bb42b99f37138144436, type: 2}
-  - {fileID: 11400000, guid: bafea3d1db40451459afeaa59f9b1ce7, type: 2}
-  - {fileID: 11400000, guid: 7694b80f83886e843a83e9a3c6c0cd59, type: 2}
-  - {fileID: 11400000, guid: 3494fcf9f4fd11f41bb75e6b13423ccf, type: 2}
-  - {fileID: 11400000, guid: 19ae4dc53decd4747853167369f53767, type: 2}
-  - {fileID: 11400000, guid: dfabf9ad0e521694c8c0075658f2dc57, type: 2}
-  - {fileID: 11400000, guid: 4cc274d5b3a04e3498c8c69be8d9ddc9, type: 2}
-  - {fileID: 11400000, guid: c0f9cbd73f2fab546baa3ce622831899, type: 2}
-  - {fileID: 11400000, guid: 540da6599f140e24e8ccaa680cbf8b0f, type: 2}
-  - {fileID: 11400000, guid: 4e2f3bde2e34f7744b48e39c6309054f, type: 2}
-  - {fileID: 11400000, guid: 212fab794074b02428fe1f71d14aa15e, type: 2}
-  - {fileID: 11400000, guid: 96514196ffd62d14bad436fd9dba6322, type: 2}
-  - {fileID: 11400000, guid: 9bb66d80ef59d8247a1aaa90dd7f579c, type: 2}
+  - {fileID: 11400000, guid: 5b62f168b333964429cbf03ca601a690, type: 2}
+  - {fileID: 11400000, guid: e13447951d3ac7444918b5b5b418ac7e, type: 2}
+  - {fileID: 11400000, guid: d019e23598bdfef458d44ace06c7030f, type: 2}
+  - {fileID: 11400000, guid: 81ea838de00067047bc2a0f69071b550, type: 2}
+  - {fileID: 11400000, guid: dfb443707df0c1b44bd4954bbe010458, type: 2}
+  - {fileID: 11400000, guid: b875ce5d60546b7458126863e7226a1e, type: 2}
+  - {fileID: 11400000, guid: 7264002c307c0cd4ebaffa6479e8806c, type: 2}
+  - {fileID: 11400000, guid: b1c530c123d4ce644b124f776393eed0, type: 2}
+  - {fileID: 11400000, guid: 2c5924e0cca6e2b40811018974e23594, type: 2}
+  - {fileID: 11400000, guid: 2a5f14d1f8d9d2b4c9bdab53f4e57832, type: 2}
+  - {fileID: 11400000, guid: 8e0949ddb8504f041abc38aa1585f8b6, type: 2}
+  - {fileID: 11400000, guid: c0d81e9cf96a02743937f07301a78a3d, type: 2}
+  - {fileID: 11400000, guid: 2190a1422a9f0c143a423d4e9bed7414, type: 2}
+  - {fileID: 11400000, guid: c552d28609cb01249b6eb9820b1ada6a, type: 2}
+  - {fileID: 11400000, guid: 1b945483dffd4074eab7a43871364640, type: 2}
+  - {fileID: 11400000, guid: 82174feef749b7d4d88d5780dc54e125, type: 2}
+  - {fileID: 11400000, guid: 525fd282a95a13f45914398135f823af, type: 2}
+  - {fileID: 11400000, guid: ed1251bb9677dde4b8828ddf1ad23cc0, type: 2}
+  - {fileID: 11400000, guid: 4c71fe75d5e774e498d4e1b84e97c3dd, type: 2}
+  - {fileID: 11400000, guid: c80e56ae09acecf41b9b9ee8026836b8, type: 2}
+  - {fileID: 11400000, guid: 55cc8055240269343951cf64159b13df, type: 2}
+  - {fileID: 11400000, guid: dd93d5dc7cd4d984ebf391735818e658, type: 2}
+  - {fileID: 11400000, guid: c61f7f856c321fb4da8d4bd3c823f623, type: 2}
   _startCoins: 60
   _startSeeds:
   - Crop: {fileID: 11400000, guid: 0d1f66a878e77a747b0410697096f0b1, type: 2}
@@ -63,13 +63,16 @@ MonoBehaviour:
   _orderUrgentRewardPercent: 200
   _orderUrgentExpireMinutes: 30
   _orderDailyLimit: 15
-  _customerNames:
-  - "B\xE0 T\u01B0"
-  - "Ch\xFA Ba"
-  - "C\xF4 N\u0103m"
-  - "B\xE1c Hai"
-  - "D\xEC S\xE1u"
-  - "\xD4ng B\u1EA3y"
-  - "Ch\u1ECB \xDAt"
-  - "Anh T\xE1m"
+  _npcsJson: {fileID: 4900000, guid: 6c5911bc62e229145806e4e62167a9c0, type: 3}
+  _orderLinesCsv: {fileID: 4900000, guid: 883efd8aa1588484a9e00375f07124e4, type: 3}
+  _dishesJson: {fileID: 4900000, guid: de8943ec85a8a934da5b295eadaef6e4, type: 3}
+  _npcPortraits: []
+  _lunarTable: {fileID: 4900000, guid: 9308ea92269b65b4fb267636c7ade9bc, type: 3}
+  _buildMails: {fileID: 4900000, guid: 7faa121ea96c1cd4e9003d7ec9ba7c49, type: 3}
+  _fishOrderMinPercent: 10
+  _fishOrderMaxPercent: 20
+  _fishOrderMaxRarity: 1
+  _fishOrderMinSlots: 3
+  _fishOrderMaxCount: 3
+  _fishOrderLevelsPerFish: 3
   _fishing: {fileID: 11400000, guid: 9b5cfcb318d716f4ab05d275b1825331, type: 2}

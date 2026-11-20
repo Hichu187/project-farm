@@ -1,0 +1,49 @@
+{
+  "npcs": [
+    {
+      "id": "ba_lua",
+      "name": "Bà Lụa",
+      "title": "bà",
+      "role": "Hàng xóm, hay kể chuyện ngày xưa",
+      "crops": ["rau_day", "mong_toi", "bi_ngo"],
+      "weight": 3,
+      "fishWeight": 1
+    },
+    {
+      "id": "chu_thanh",
+      "name": "Chú Thành",
+      "title": "chú",
+      "role": "Trưởng thôn, nói như loa xã",
+      "crops": ["lua", "ngo_nep", "lac"],
+      "weight": 3,
+      "fishWeight": 0
+    },
+    {
+      "id": "co_hanh",
+      "name": "Cô Hạnh",
+      "title": "cô",
+      "role": "Bán bún đầu chợ",
+      "crops": ["rau_muong", "hanh_la", "ca_chua"],
+      "weight": 3,
+      "fishWeight": 2
+    },
+    {
+      "id": "cu_ti",
+      "name": "Cu Tí",
+      "title": "em",
+      "role": "Trẻ chăn trâu, mê câu cá",
+      "crops": ["dua_hau", "ngo_nep"],
+      "weight": 2,
+      "fishWeight": 6
+    },
+    {
+      "id": "bac_ca",
+      "name": "Bác Cả",
+      "title": "bác",
+      "role": "Trưởng họ, nhà hay có giỗ chạp",
+      "crops": ["dau_xanh", "lua", "su_hao"],
+      "weight": 2,
+      "fishWeight": 0
+    }
+  ]
+}

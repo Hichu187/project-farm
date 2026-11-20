@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d79a68c2214c76c4cb9a6ea0e8fa6ff8, type: 3}
+  m_Name: 11_su_hao
+  m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.CropDefinition
+  _id: su_hao
+  _displayName: "Su h\xE0o"
+  _enabled: 1
+  _growMinutes: 120
+  _buyPrice: 58
+  _sellPrice: 190
+  _harvestYield: 1
+  _xp: 14
+  _unlockLevel: 8
+  _group: 2
+  _seedSprite: {fileID: 21300000, guid: 22daa4286551479faa0dd5f9c21c57e6, type: 3}
+  _stageSprites:
+  - {fileID: 21300000, guid: 90ee8d7c95374315938fb94587bf18c6, type: 3}
+  - {fileID: 21300000, guid: d6870e2077c14bb59ca06c512e07afaa, type: 3}
+  - {fileID: 21300000, guid: 860832d67f8a40629663ce645d6f05ee, type: 3}
+  - {fileID: 21300000, guid: 3f2849c270e4477a8a2bb6326e905691, type: 3}
+  _produceIcon: {fileID: 21300000, guid: 32ffe1cbc8d648cdb2bfac6f88ac669c, type: 3}

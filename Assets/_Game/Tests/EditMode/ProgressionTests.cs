@@ -184,7 +184,7 @@ namespace VeQue.Tests
         {
             FarmDef baseDef = CreateDef();
             var def = new FarmDef(baseDef.Zones, baseDef.Crops, StartCoins, null, 0, baseDef.Levels, RauMuong,
-                new OrderDef(3, CaiXanhLevel, 160, 200, 300, new[] { "Bà Tư" }));
+                new OrderDef(3, CaiXanhLevel, 160, 200, 300, null));
             var farm = new Farm(def, FarmState.CreateNew(def), _clock);
 
             Assert.IsTrue(farm.GetUnlocksAtLevel(CaiXanhLevel).OrdersUnlocked);
@@ -294,6 +294,17 @@ namespace VeQue.Tests
 
             Assert.AreEqual(RauMuong, rescued);
             Assert.AreEqual(1, farm.State.GetSeeds(RauMuong));
+        }
+
+        [Test]
+        public void Rescue_FishInBasket_DoesNotRescue()
+        {
+            FarmState state = StuckCandidate(coins: 0);
+            state.Fishing.Basket.Add(new CaughtFish { FishId = "ca_ro", Grams = 200 });
+
+            Farm farm = CreateFarm(state);
+
+            Assert.AreEqual(0, farm.State.GetSeeds(RauMuong));
         }
 
         [Test]

@@ -15,11 +15,13 @@ namespace VeQue.View.Data
         [SerializeField] private bool _buyable = true;
         [Tooltip("Thưởng tỉ lệ cá Hiếm trở lên (%).")]
         [Min(0)] [SerializeField] private int _rareBonusPercent;
+        [Tooltip("Cấp tối thiểu để mua.")]
+        [Min(1)] [SerializeField] private int _unlockLevel = 1;
 
         public string Id => _id;
         public string DisplayName => _displayName;
         public Sprite Icon => _icon;
 
-        public BaitDef ToDef() => new BaitDef(_id, _price, _rareBonusPercent, _buyable);
+        public BaitDef ToDef() => new BaitDef(_id, _price, _rareBonusPercent, _buyable, _unlockLevel);
     }
 }

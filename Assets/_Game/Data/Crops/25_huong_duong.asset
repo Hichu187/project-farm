@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d79a68c2214c76c4cb9a6ea0e8fa6ff8, type: 3}
+  m_Name: 25_huong_duong
+  m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.CropDefinition
+  _id: huong_duong
+  _displayName: "H\u01B0\u1EDBng d\u01B0\u01A1ng"
+  _enabled: 0
+  _growMinutes: 240
+  _buyPrice: 92
+  _sellPrice: 161
+  _harvestYield: 2
+  _xp: 22
+  _unlockLevel: 1
+  _group: 1
+  _seedSprite: {fileID: 21300000, guid: 0699e9efe1de497c906a7b607472fa87, type: 3}
+  _stageSprites:
+  - {fileID: 21300000, guid: e332304729db4064867e2ecfd58599dc, type: 3}
+  - {fileID: 21300000, guid: eef5f2bd6bc743539775488a4de0a861, type: 3}
+  - {fileID: 21300000, guid: a76823eb4da84118b43a1f6c546ea103, type: 3}
+  - {fileID: 21300000, guid: 601d74afb28448f5a955e720dc8325f7, type: 3}
+  _produceIcon: {fileID: 21300000, guid: 73f41c617bdd4791a809194b4b5fd2c1, type: 3}

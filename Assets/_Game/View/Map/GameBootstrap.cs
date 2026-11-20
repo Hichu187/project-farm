@@ -34,6 +34,7 @@ namespace VeQue.View.Map
         // Báo ngay trước khi lưu lúc tab bị ẩn / app tạm dừng / thoát: nhân vật làm hết việc còn lại ở đây.
         public event System.Action PageHiding;
         public bool SavingBlocked => _save.SavingBlocked;
+        public bool OldSaveDiscarded => _save.OldSaveDiscarded;
 
         public long TimeOffsetSeconds => _clock.OffsetSeconds;
         // Giờ của game (đã tính khoảng tua và chống lùi giờ).
@@ -57,9 +58,8 @@ namespace VeQue.View.Map
             _clock = new OffsetClock(new SystemClock(), LoadTimeOffset());
             _save = new SaveService(new PlayerPrefsStore(), def, _clock);
             FarmState state = _save.Load();
+            // Ngày, khung giờ, giới hạn đơn: giờ VN cố định (GameCalendar, Đợt 2 Phần 2) – không đọc múi giờ máy.
             Farm = new Farm(def, state, _save.Clock);
-            // Ngày của giới hạn đơn tính theo giờ địa phương.
-            Farm.SetUtcOffset(WebBridge.GetUtcOffsetSeconds());
             Farm.Changed += ScheduleSave;
             Farm.LeveledUp += LogLevelUp;
             Farm.Rescued += LogRescued;
@@ -82,17 +82,36 @@ namespace VeQue.View.Map
             {
                 _nextOrderRefresh = now + OrderRefreshInterval;
                 Farm.RefreshOrders();
+                // Sang ngày mới: dọn thư, phát thư theo build (Đợt 2 Phần 3).
+                Farm.RefreshMail();
             }
 
             if (_saveAt != NoPendingSave && now >= _saveAt)
                 FlushSave();
         }
 
+        // Nhận quà trong thư: cộng quà + đánh dấu đã nhận rồi LƯU NGAY (tải lại trang giữa chừng không nhận trùng).
+        public FarmResult ClaimMail(string id, out IReadOnlyList<Reward> granted)
+        {
+            FarmResult result = Farm.ClaimMail(id, out granted);
+            if (result == FarmResult.Ok)
+                FlushSave();
+            return result;
+        }
+
+        public FarmResult ClaimAllMail(out List<Reward> granted)
+        {
+            FarmResult result = Farm.ClaimAllMail(out granted);
+            if (result == FarmResult.Ok)
+                FlushSave();
+            return result;
+        }
+
         // Giao đơn qua đây để có log; UI (Đợt 4) cũng gọi hàm này.
         public FarmResult DeliverOrder(int slot)
         {
             Farm.TryGetOrder(slot, out OrderState order);
-            string customer = order?.Customer;
+            string customer = order?.NpcId;
             long coins = order?.RewardCoins ?? 0;
             long xp = order?.RewardXp ?? 0;
 

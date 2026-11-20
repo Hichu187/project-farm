@@ -14,18 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.CropDefinition
   _id: hanh_la
   _displayName: "H\xE0nh l\xE1"
-  _enabled: 0
+  _enabled: 1
   _growMinutes: 5
   _buyPrice: 8
   _sellPrice: 9
   _harvestYield: 2
   _xp: 2
-  _unlockLevel: 1
-  _seedSprite: {fileID: -954408889308097241, guid: 2b14b476cb186dc40be0333032322aa0,
-    type: 3}
+  _unlockLevel: 2
+  _group: 0
+  _seedSprite: {fileID: 21300000, guid: b0b7aa33e1ab41b3b57db7bfb8e2957d, type: 3}
   _stageSprites:
-  - {fileID: 3241171354240984050, guid: c38df66d4e6f3f7438966976d2a436e7, type: 3}
-  - {fileID: 5747444155278217162, guid: c38df66d4e6f3f7438966976d2a436e7, type: 3}
-  - {fileID: 7223159392769027466, guid: c38df66d4e6f3f7438966976d2a436e7, type: 3}
-  _produceIcon: {fileID: -8838883900046738716, guid: 2b14b476cb186dc40be0333032322aa0,
-    type: 3}
+  - {fileID: 21300000, guid: 22e656e9cebb44b58ef2131884aba139, type: 3}
+  - {fileID: 21300000, guid: 4291c3e31d064b67b36a6fdf9a673911, type: 3}
+  - {fileID: 21300000, guid: ac6e8220169b4922b04bda9803a3e168, type: 3}
+  - {fileID: 21300000, guid: eb91a94ccc7d49a5bb1148c5a04b9e39, type: 3}
+  _produceIcon: {fileID: 21300000, guid: 33bec46765d1452289c1f30020a3309f, type: 3}

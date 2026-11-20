@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a46c0dc10537bb547bf1bf8af255a122, type: 3}
+  m_Name: ShinyPalette
+  m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.ShinyPalette
+  _entries:
+  - _kind: 1
+    _displayName: "Ho\xE0ng kim"
+    _material: {fileID: 2100000, guid: a1cc6d48ee820ba4daad7fd6e75a9c29, type: 2}
+    _sparkleColor: {r: 1, g: 0.8235294, b: 0.22745098, a: 1}
+  - _kind: 2
+    _displayName: "C\u1EF1c quang"
+    _material: {fileID: 2100000, guid: 85fc2d3e4bdc2c14ba09de2d774143a6, type: 2}
+    _sparkleColor: {r: 0.627451, g: 1, b: 0.9411765, a: 1}
+  - _kind: 3
+    _displayName: "B\u0103ng tinh"
+    _material: {fileID: 2100000, guid: 2ddf5aa22565c86458bfeafa17c94668, type: 2}
+    _sparkleColor: {r: 0.47843137, g: 0.8784314, b: 1, a: 1}
+  - _kind: 4
+    _displayName: "Tinh v\xE2n"
+    _material: {fileID: 2100000, guid: 277e4eea56674264e830be4a5908cea9, type: 2}
+    _sparkleColor: {r: 1, g: 0.5411765, b: 0.8784314, a: 1}
+  - _kind: 5
+    _displayName: "H\u1ED3ng ng\u1ECDc"
+    _material: {fileID: 2100000, guid: 0f63dcdef3ac4804a97629d05716aaa6, type: 2}
+    _sparkleColor: {r: 1, g: 0.6901961, b: 0.22745098, a: 1}
+  - _kind: 6
+    _displayName: "H\u01B0 kh\xF4ng"
+    _material: {fileID: 2100000, guid: 5e029f103e474d3498a72e7938161d51, type: 2}
+    _sparkleColor: {r: 0.78431374, g: 0.78431374, b: 0.9098039, a: 1}
+  - _kind: 7
+    _displayName: "B\u1EA1c"
+    _material: {fileID: 2100000, guid: f07db575378e43547a6d29c90b293d4b, type: 2}
+    _sparkleColor: {r: 0.8627451, g: 0.9019608, b: 1, a: 1}
+  - _kind: 8
+    _displayName: "Tinh d\u1EA1"
+    _material: {fileID: 2100000, guid: 4a9328f413fc00142ac4c71b1abb3326, type: 2}
+    _sparkleColor: {r: 0.627451, g: 1, b: 0.9411765, a: 1}

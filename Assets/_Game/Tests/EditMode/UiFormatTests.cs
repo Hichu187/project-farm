@@ -58,13 +58,67 @@ namespace VeQue.Tests
             Assert.AreEqual(expected, UiFormat.SlotStatus(slot, seconds));
         }
 
-        [TestCase(CastQuality.Perfect, FishDepth.Far, "Perfect! · Phao: Xa")]
-        [TestCase(CastQuality.Good, FishDepth.Far, "Tốt · Phao: Xa")]
-        [TestCase(CastQuality.Normal, FishDepth.Mid, "Thường · Phao: Vừa")]
-        [TestCase(CastQuality.Weak, FishDepth.Near, "Ném hỏng · Phao: Gần")]
-        public void CastResult_QualityAndDepth(CastQuality quality, FishDepth depth, string expected)
+        // 0 UTC + 7 giờ = 07:00; 15:42 UTC+7 = 08:42 UTC; qua nửa đêm; múi giờ âm.
+        [TestCase(0L, 7 * 3600, "07:00")]
+        [TestCase(8 * 3600L + 42 * 60, 7 * 3600, "15:42")]
+        [TestCase(23 * 3600L + 30 * 60, 7 * 3600, "06:30")]
+        [TestCase(3600L, -5 * 3600, "20:00")]
+        public void Clock_LocalTime(long utc, int offset, string expected)
         {
-            Assert.AreEqual(expected, UiFormat.CastResult(quality, depth));
+            Assert.AreEqual(expected, UiFormat.Clock(utc, offset));
+        }
+
+        [TestCase(FarmResult.NotEnoughCoins, "Không đủ xu")]
+        [TestCase(FarmResult.LevelTooLow, "Chưa đủ cấp")]
+        [TestCase(FarmResult.RodNotDamaged, "Cần còn đầy độ bền")]
+        [TestCase(FarmResult.UnknownRod, "Không mua được")]
+        public void ShopBlocked_Messages(FarmResult result, string expected)
+        {
+            Assert.AreEqual(expected, UiFormat.ShopBlocked(result));
+        }
+
+        [TestCase(CastQuality.Perfect, "Hoàn hảo!")]
+        [TestCase(CastQuality.Good, "Tuyệt!")]
+        [TestCase(CastQuality.Normal, "Tốt")]
+        [TestCase(CastQuality.Weak, "Yếu")]
+        public void CastQualityName_PopText(CastQuality quality, string expected)
+        {
+            Assert.AreEqual(expected, UiFormat.CastQualityName(quality));
+        }
+
+        // Đợt E: dòng kỷ lục trong bảng cá vừa câu.
+        [TestCase(false, 0, "")]
+        [TestCase(false, 1250, "")]
+        [TestCase(true, 0, "Loài mới!")]
+        [TestCase(true, 1250, "Kỷ lục mới! (cũ 1,25 kg)")]
+        [TestCase(true, 300, "Kỷ lục mới! (cũ 300 g)")]
+        public void CatchRecord_Lines(bool isNewRecord, int previousGrams, string expected)
+        {
+            Assert.AreEqual(expected, UiFormat.CatchRecord(isNewRecord, previousGrams));
+        }
+
+        // Đợt 2 Phần 18: dòng cá shiny.
+        [TestCase(false, "Đột biến: Tinh dạ!")]
+        [TestCase(true, "Đột biến: Tinh dạ! Lần đầu!")]
+        public void ShinyCatch_Lines(bool firstTime, string expected)
+        {
+            Assert.AreEqual(expected, UiFormat.ShinyCatch("Tinh dạ", firstTime));
+        }
+
+        [Test]
+        public void ShinyDetail_Line()
+        {
+            Assert.AreEqual("Đột biến: Hư không", UiFormat.ShinyDetail("Hư không"));
+        }
+
+        [TestCase(FishRarity.Common, "Thường")]
+        [TestCase(FishRarity.Uncommon, "Khá")]
+        [TestCase(FishRarity.Rare, "Hiếm")]
+        [TestCase(FishRarity.Epic, "Quý")]
+        [TestCase(FishRarity.Legendary, "Huyền thoại")]
+        public void RarityName_AllRarities(FishRarity rarity, string expected)
+        {
+            Assert.AreEqual(expected, UiFormat.RarityName(rarity));
         }
 
         [TestCase(5, "5 g")]
@@ -79,16 +133,15 @@ namespace VeQue.Tests
         }
 
         [Test]
-        public void CaughtText_NameWeightGradeXp()
+        public void CatchDetail_GradeAndXp()
         {
-            Assert.AreEqual("Câu được Cá rô 350 g! Perfect! · +2 XP", UiFormat.CaughtText("Cá rô", 350, PullGrade.Perfect, 2));
-            Assert.AreEqual("Câu được Cá chép 1,5 kg! Tốt · +3 XP", UiFormat.CaughtText("Cá chép", 1500, PullGrade.Good, 3));
+            Assert.AreEqual("Perfect! · +2 XP", UiFormat.CatchDetail(PullGrade.Perfect, 2));
+            Assert.AreEqual("Tốt · +3 XP", UiFormat.CatchDetail(PullGrade.Good, 3));
         }
 
         [TestCase(FishingOutcome.Scared)]
         [TestCase(FishingOutcome.BaitStolen)]
         [TestCase(FishingOutcome.Slipped)]
-        [TestCase(FishingOutcome.LineSnapped)]
         [TestCase(FishingOutcome.Escaped)]
         public void FishingOutcomeText_HasMessageForEveryMiss(FishingOutcome outcome)
         {

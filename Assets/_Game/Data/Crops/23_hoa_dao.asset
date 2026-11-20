@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d79a68c2214c76c4cb9a6ea0e8fa6ff8, type: 3}
+  m_Name: 23_hoa_dao
+  m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.CropDefinition
+  _id: hoa_dao
+  _displayName: "Hoa \u0111\xE0o"
+  _enabled: 0
+  _growMinutes: 240
+  _buyPrice: 92
+  _sellPrice: 322
+  _harvestYield: 1
+  _xp: 22
+  _unlockLevel: 1
+  _group: 1
+  _seedSprite: {fileID: 21300000, guid: 5e0f39b1d0fe4d86bc5eea97cf0ec6cb, type: 3}
+  _stageSprites:
+  - {fileID: 21300000, guid: 63c02a4d1e2144c987c13456f1532d1f, type: 3}
+  - {fileID: 21300000, guid: 28a53b30edcb44178479ff3826d27519, type: 3}
+  - {fileID: 21300000, guid: 73c23f820f654dc78e71ccc48649f2a2, type: 3}
+  - {fileID: 21300000, guid: 85c1dbfdcb764191aa39217a94a7cb55, type: 3}
+  _produceIcon: {fileID: 21300000, guid: e113789341ce44458f7088599e84d5cb, type: 3}

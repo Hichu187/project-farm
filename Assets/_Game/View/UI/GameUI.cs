@@ -20,7 +20,6 @@ namespace VeQue.View.UI
         [SerializeField] private CameraTouchInput _touch;
         [SerializeField] private TMP_Text _coins;
         [SerializeField] private Button _backup;
-        [SerializeField] private Button _farmTab;
         [SerializeField] private Button _ordersTab;
         [SerializeField] private TMP_Text _ordersTabLabel;
         [SerializeField] private Button _storageTab;
@@ -44,10 +43,14 @@ namespace VeQue.View.UI
         [SerializeField] private GameObject _regionPanel;
         [Tooltip("Chỉ hiện ở nông trại (thanh tab, nút Nhân vật, nút Đi câu).")]
         [SerializeField] private GameObject[] _farmOnly = System.Array.Empty<GameObject>();
+        [Header("Hộp thư (Đợt 2 Phần 3)")]
+        [SerializeField] private MailPanel _mailPanel;
+        [SerializeField] private Button _mailButton;
         [Tooltip("Gán các vùng ao, chuồng, nhà kho, đất mở rộng sau khi vẽ xong Decor.")]
         [SerializeField] private ComingSoonArea[] _comingSoonAreas = System.Array.Empty<ComingSoonArea>();
 
         private const string OutdatedMessage = "Có bản game mới, hãy tải lại trang";
+        private const string OldSaveMessage = "Bản lưu cũ không còn dùng được, bắt đầu lại từ đầu";
 
         // Số khu đã có ô mở, để báo "Đã mở Khu N!" khi tăng.
         private int _openZones;
@@ -56,7 +59,6 @@ namespace VeQue.View.UI
         private void Start()
         {
             _backup.onClick.AddListener(OpenBackup);
-            _farmTab.onClick.AddListener(CloseAll);
             _ordersTab.onClick.AddListener(OpenOrders);
             _storageTab.onClick.AddListener(() => OpenOnly(_storagePanel));
             _shopTab.onClick.AddListener(() => OpenOnly(_shopPanel));
@@ -66,6 +68,10 @@ namespace VeQue.View.UI
             _gesture.Message += _toast.Show;
             _interaction.Tapped += _seedPicker.Hide;
             _orderPanel.Message += _toast.Show;
+            if (_mailPanel != null)
+                _mailPanel.Message += _toast.Show;
+            if (_mailButton != null)
+                _mailButton.onClick.AddListener(OpenMail);
             _storagePanel.Message += _toast.Show;
             _interaction.SeedRequested += OpenSeedPicker;
             _interaction.UnlockRequested += _unlockDialog.Show;
@@ -95,6 +101,8 @@ namespace VeQue.View.UI
 
             if (_game.SavingBlocked)
                 _toast.Show(OutdatedMessage);
+            else if (_game.OldSaveDiscarded)
+                _toast.Show(OldSaveMessage);
         }
 
         private void OnDestroy()
@@ -270,12 +278,22 @@ namespace VeQue.View.UI
             panel.Open();
         }
 
+        private void OpenMail()
+        {
+            if (_mailPanel == null || _mailPanel.IsOpen)
+                return;
+            CloseAll();
+            _mailPanel.Open();
+        }
+
         private void CloseAll()
         {
             _progressPopup.Hide();
             _unlockDialog.Hide();
             _seedPicker.Hide();
             _orderPanel.Close();
+            if (_mailPanel != null)
+                _mailPanel.Close();
             _storagePanel.Close();
             _shopPanel.Close();
         }

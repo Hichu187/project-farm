@@ -40,18 +40,49 @@ namespace VeQue.View.UI
 
         public static string SlotName(DaySlot slot) => SlotNames[(int)slot];
 
+        // Đồng hồ chung trên HUD (giờ địa phương theo độ lệch múi giờ đã lưu): "15:42". Tên khung giờ hiện dòng dưới (SlotName).
+        // Ngày âm lịch: "Mùng 1 tháng 11", "Rằm tháng Chạp", "20 tháng Giêng", tháng nhuận thêm " nhuận".
+        public static string LunarDay(LunarDate date)
+        {
+            string day = date.Day <= 10 ? $"Mùng {date.Day}" : date.Day == 15 ? "Rằm" : date.Day.ToString();
+            string month = date.Month == 1 ? "Giêng" : date.Month == 12 ? "Chạp" : date.Month.ToString();
+            return $"{day} tháng {month}{(date.IsLeapMonth ? " nhuận" : "")}";
+        }
+
+        public static string Clock(long utcSeconds, int utcOffsetSeconds)
+        {
+            long local = utcSeconds + utcOffsetSeconds;
+            long ofDay = ((local % 86400) + 86400) % 86400;
+            long hour = ofDay / 3600;
+            long minute = ofDay % 3600 / 60;
+            return $"{hour:00}:{minute:00}";
+        }
+
         // "Hoàng hôn 17–19h · còn 1:24".
         public static string SlotStatus(DaySlot slot, long secondsLeft) =>
             $"{SlotName(slot)} {DaySlots.StartHour(slot)}–{DaySlots.EndHour(slot)}h · còn {Countdown(secondsLeft)}";
 
+        // Chữ nổi trên đầu nhân vật sau khi ném (chốt 13/11/2026).
         public static string CastQualityName(CastQuality quality)
         {
             switch (quality)
             {
-                case CastQuality.Perfect: return "Perfect!";
-                case CastQuality.Good: return "Tốt";
-                case CastQuality.Normal: return "Thường";
-                default: return "Ném hỏng";
+                case CastQuality.Perfect: return "Hoàn hảo!";
+                case CastQuality.Good: return "Tuyệt!";
+                case CastQuality.Normal: return "Tốt";
+                default: return "Yếu";
+            }
+        }
+
+        public static string RarityName(FishRarity rarity)
+        {
+            switch (rarity)
+            {
+                case FishRarity.Uncommon: return "Khá";
+                case FishRarity.Rare: return "Hiếm";
+                case FishRarity.Epic: return "Quý";
+                case FishRarity.Legendary: return "Huyền thoại";
+                default: return "Thường";
             }
         }
 
@@ -64,9 +95,6 @@ namespace VeQue.View.UI
                 default: return "Gần";
             }
         }
-
-        // "Perfect! · Phao: Xa".
-        public static string CastResult(CastQuality quality, FishDepth depth) => $"{CastQualityName(quality)} · Phao: {DepthName(depth)}";
 
         // Dưới 1 kg: "350 g"; từ 1 kg: "1,25 kg" (tối đa 2 số lẻ, dấu phẩy).
         public static string Weight(int grams)
@@ -86,21 +114,49 @@ namespace VeQue.View.UI
             }
         }
 
-        // Tạm thời bằng thông báo; Đợt E thay bằng hộp kết quả. "Câu được Cá rô 350 g! Perfect! · +2 XP".
-        public static string CaughtText(string fishName, int grams, PullGrade grade, int xp) =>
-            $"Câu được {fishName} {Weight(grams)}! {PullGradeName(grade)} · +{xp} XP";
+        // Bảng cá vừa câu: "Perfect! · +2 XP".
+        public static string CatchDetail(PullGrade grade, int xp) => $"{PullGradeName(grade)} · +{xp} XP";
 
-        // Kết quả không ra cá (cá ra thì hộp kết quả riêng – Đợt E).
+        // Dòng kỷ lục trong bảng cá vừa câu (Đợt E): lần đầu câu loài → "Loài mới!"; nặng hơn kỷ lục cũ → "Kỷ lục mới! (cũ …)";
+        // không phá kỷ lục → "" (ẩn dòng).
+        // Cá shiny (Đợt 2 Phần 18): dòng trên bảng cá vừa câu.
+        public static string ShinyCatch(string kindName, bool firstTime)
+            => firstTime ? $"Đột biến: {kindName}! Lần đầu!" : $"Đột biến: {kindName}!";
+
+        // Cá shiny: dòng trong chi tiết cá ở giỏ.
+        public static string ShinyDetail(string kindName) => $"Đột biến: {kindName}";
+
+        public static string CatchRecord(bool isNewRecord, int previousRecordGrams)
+        {
+            if (!isNewRecord)
+                return "";
+            return previousRecordGrams <= 0 ? "Loài mới!" : $"Kỷ lục mới! (cũ {Weight(previousRecordGrams)})";
+        }
+
+        // Kết quả không ra cá: chữ ngắn nổi trên đầu nhân vật (chốt 13/11/2026). Cá ra thì bảng cá vừa câu.
         public static string FishingOutcomeText(FishingOutcome outcome)
         {
             switch (outcome)
             {
-                case FishingOutcome.Scared: return "Giật sớm quá, cá sợ bỏ đi";
-                case FishingOutcome.BaitStolen: return "Cá ăn mất mồi rồi";
-                case FishingOutcome.Slipped: return "Trượt lưỡi, cá sổng mất!";
-                case FishingOutcome.LineSnapped: return "Bấm sai, đứt dây rồi!";
-                case FishingOutcome.Escaped: return "Chậm quá, cá thoát mất!";
+                case FishingOutcome.Scared: return "Sớm quá!";
+                case FishingOutcome.BaitStolen: return "Mất mồi!";
+                case FishingOutcome.Slipped: return "Trượt lưỡi!";
+                case FishingOutcome.Escaped: return "Cá thoát!";
                 default: return "";
+            }
+        }
+
+        // Lý do không mua / sửa được đồ câu (Farm.BuyRod / BuyBait / RepairRod).
+        public static string ShopBlocked(FarmResult result)
+        {
+            switch (result)
+            {
+                case FarmResult.NotEnoughCoins: return "Không đủ xu";
+                case FarmResult.LevelTooLow: return "Chưa đủ cấp";
+                case FarmResult.AlreadyOwned: return "Đã có cần này";
+                case FarmResult.RodNotDamaged: return "Cần còn đầy độ bền";
+                case FarmResult.FishingLocked: return "Chưa mở câu cá";
+                default: return "Không mua được";
             }
         }
 

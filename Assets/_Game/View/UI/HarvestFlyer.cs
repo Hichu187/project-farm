@@ -9,6 +9,7 @@ using VeQue.View.Map;
 namespace VeQue.View.UI
 {
     // Thu hoạch: 1–3 icon nông sản bay cong từ ô đất về tab Kho; tới nơi tab nảy lên và hiện "+N [icon]" trên tab.
+    // Thu hoạch đào được mồi (giun): thêm nhãn "+N [icon mồi]" chồng trên nhãn nông sản (19/11/2026, thay chữ nổi trên đầu nhân vật).
     // Canvas Screen Space Overlay: đổi world → màn hình bằng camera map, rồi màn hình → toạ độ của lớp bay.
     public sealed class HarvestFlyer : MonoBehaviour
     {
@@ -22,6 +23,8 @@ namespace VeQue.View.UI
             public string CropId;
             public int Count;
             public Sprite Sprite;
+            public string BaitId;
+            public int BaitCount;
         }
 
         [SerializeField] private FarmInteraction _interaction;
@@ -37,6 +40,10 @@ namespace VeQue.View.UI
         [SerializeField] private GameObject _badge;
         [SerializeField] private Image _badgeIcon;
         [SerializeField] private TMP_Text _badgeText;
+        [Tooltip("Nhãn mồi đào được, đặt trên nhãn nông sản.")]
+        [SerializeField] private GameObject _baitBadge;
+        [SerializeField] private Image _baitBadgeIcon;
+        [SerializeField] private TMP_Text _baitBadgeText;
 
         [Header("Bay")]
         [SerializeField] private int _maxIconsPerHarvest = 3;
@@ -60,6 +67,15 @@ namespace VeQue.View.UI
         private int _badgeCount;
         private CanvasGroup _badgeGroup;
 
+        // Mồi đào được trong lần thu hoạch đang xử lý (BaitFound gọi trước Harvested).
+        private string _pendingBaitId;
+        private int _pendingBaitCount;
+        private float _baitShownAt = -1f;
+        private string _baitBadgeId;
+        private int _baitBadgeCount;
+        private CanvasGroup _baitGroup;
+        private bool _baitSubscribed;
+
         private void Awake()
         {
             _flights = new Flight[_icons.Length];
@@ -73,6 +89,33 @@ namespace VeQue.View.UI
             if (_badgeGroup == null)
                 _badgeGroup = _badge.AddComponent<CanvasGroup>();
             _badge.SetActive(false);
+
+            _baitGroup = GetGroup(_baitBadge);
+            if (_baitBadge != null)
+                _baitBadge.SetActive(false);
+        }
+
+        private static CanvasGroup GetGroup(GameObject target)
+        {
+            if (target == null)
+                return null;
+            CanvasGroup group = target.GetComponent<CanvasGroup>();
+            return group != null ? group : target.AddComponent<CanvasGroup>();
+        }
+
+        private void Start()
+        {
+            if (_game != null && _game.Farm != null)
+            {
+                _game.Farm.BaitFound += HandleBaitFound;
+                _baitSubscribed = true;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (_baitSubscribed && _game != null && _game.Farm != null)
+                _game.Farm.BaitFound -= HandleBaitFound;
         }
 
         private void OnEnable()
@@ -85,13 +128,27 @@ namespace VeQue.View.UI
             _interaction.Harvested -= HandleHarvested;
         }
 
+        private void HandleBaitFound(string baitId, int amount)
+        {
+            if (amount <= 0)
+                return;
+            if (_pendingBaitId != baitId)
+                _pendingBaitCount = 0;
+            _pendingBaitId = baitId;
+            _pendingBaitCount += amount;
+        }
+
         private void HandleHarvested(PlotId plot, string cropId, int count)
         {
             Sprite sprite = _game.TryGetCrop(cropId, out CropDefinition crop) ? crop.ProduceIcon : null;
+            string baitId = _pendingBaitId;
+            int baitCount = _pendingBaitCount;
+            _pendingBaitId = null;
+            _pendingBaitCount = 0;
             if (!_view.TryGetPlotCenter(plot, out Vector3 world) || !TryWorldToLayer(world, out Vector2 from))
             {
                 // Không bay được (ô ngoài màn hình): vẫn báo trên tab Kho.
-                Arrive(cropId, count, sprite);
+                Arrive(cropId, count, sprite, baitId, baitCount);
                 return;
             }
 
@@ -108,6 +165,8 @@ namespace VeQue.View.UI
                 flight.CropId = cropId;
                 flight.Count = count;
                 flight.Sprite = sprite;
+                flight.BaitId = baitId;
+                flight.BaitCount = baitCount;
 
                 flight.Icon.sprite = sprite;
                 flight.Icon.enabled = sprite != null;
@@ -157,7 +216,8 @@ namespace VeQue.View.UI
             foreach (Flight flight in _flights)
                 AnimateFlight(flight, now, to);
             AnimatePunch(now);
-            AnimateBadge(now);
+            FadeBadge(_badge, _badgeGroup, ref _badgeShownAt, now);
+            FadeBadge(_baitBadge, _baitGroup, ref _baitShownAt, now);
         }
 
         private void AnimateFlight(Flight flight, float now, Vector2 to)
@@ -173,7 +233,7 @@ namespace VeQue.View.UI
                 flight.Start = -1f;
                 flight.Icon.gameObject.SetActive(false);
                 if (flight.Last)
-                    Arrive(flight.CropId, flight.Count, flight.Sprite);
+                    Arrive(flight.CropId, flight.Count, flight.Sprite, flight.BaitId, flight.BaitCount);
                 return;
             }
 
@@ -188,7 +248,7 @@ namespace VeQue.View.UI
         }
 
         // Cùng loại cây khi nhãn còn hiện thì cộng dồn, khác loại thì thay.
-        private void Arrive(string cropId, int count, Sprite sprite)
+        private void Arrive(string cropId, int count, Sprite sprite, string baitId, int baitCount)
         {
             float now = Time.unscaledTime;
             _punchStart = now;
@@ -203,6 +263,32 @@ namespace VeQue.View.UI
             _badgeIcon.enabled = sprite != null;
             _badgeGroup.alpha = 1f;
             _badge.SetActive(true);
+
+            if (baitCount > 0)
+                ShowBait(baitId, baitCount, now);
+        }
+
+        // Nhãn mồi: cùng loại khi nhãn còn hiện thì cộng dồn.
+        private void ShowBait(string baitId, int count, float now)
+        {
+            if (_baitBadge == null)
+                return;
+
+            bool visible = _baitShownAt >= 0f && now - _baitShownAt < _badgeHold + _badgeFade;
+            _baitBadgeCount = visible && _baitBadgeId == baitId ? _baitBadgeCount + count : count;
+            _baitBadgeId = baitId;
+            _baitShownAt = now;
+
+            Sprite icon = null;
+            FishingDefinition data = _game.Definition != null ? _game.Definition.Fishing : null;
+            if (data != null && data.TryGetBait(baitId, out BaitDefinition bait))
+                icon = bait.Icon;
+
+            _baitBadgeText.text = $"+{_baitBadgeCount}";
+            _baitBadgeIcon.sprite = icon;
+            _baitBadgeIcon.enabled = icon != null;
+            _baitGroup.alpha = 1f;
+            _baitBadge.SetActive(true);
         }
 
         private void AnimatePunch(float now)
@@ -222,20 +308,20 @@ namespace VeQue.View.UI
             _target.localScale = Vector3.one * (1f - Ease.DampedWave(t) * _punchAmount);
         }
 
-        private void AnimateBadge(float now)
+        private void FadeBadge(GameObject badge, CanvasGroup group, ref float shownAt, float now)
         {
-            if (_badgeShownAt < 0f)
+            if (shownAt < 0f || badge == null)
                 return;
 
-            float elapsed = now - _badgeShownAt;
+            float elapsed = now - shownAt;
             if (elapsed >= _badgeHold + _badgeFade)
             {
-                _badgeShownAt = -1f;
-                _badge.SetActive(false);
+                shownAt = -1f;
+                badge.SetActive(false);
                 return;
             }
             if (elapsed > _badgeHold)
-                _badgeGroup.alpha = 1f - (elapsed - _badgeHold) / _badgeFade;
+                group.alpha = 1f - (elapsed - _badgeHold) / _badgeFade;
         }
     }
 }

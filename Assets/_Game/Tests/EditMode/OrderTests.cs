@@ -26,7 +26,7 @@ namespace VeQue.Tests
         private const long UrgentRefill = 1800;
         private const long UrgentExpire = 1800;
         private const int DailyLimit = 4;
-        private static readonly string[] Names = { "Bà Tư", "Chú Ba" };
+        private static readonly string[] Names = { "Bà Lụa", "Chú Thành" };
         private static readonly int[] XpToNext = { 3, 20, 50 };
 
         private static readonly PlotId Plot0 = new PlotId(Zone1, 0, 0, 0);
@@ -122,9 +122,9 @@ namespace VeQue.Tests
                 var seen = new HashSet<string>();
                 foreach (OrderItem item in order.Items)
                 {
-                    Assert.IsTrue(seen.Add(item.CropId), "Một đơn không lặp loại cây");
-                    Assert.IsTrue(farm.IsCropUnlocked(item.CropId), item.CropId);
-                    Assert.IsTrue(farm.Definition.TryGetCrop(item.CropId, out CropDef crop));
+                    Assert.IsTrue(seen.Add(item.Id), "Một đơn không lặp loại cây");
+                    Assert.IsTrue(farm.IsCropUnlocked(item.Id), item.Id);
+                    Assert.IsTrue(farm.Definition.TryGetCrop(item.Id, out CropDef crop));
                     Assert.AreEqual(0, item.Count % crop.HarvestYield);
                     int harvests = item.Count / crop.HarvestYield;
                     Assert.That(harvests, Is.InRange(1, def.GetMaxHarvests(level)));
@@ -136,7 +136,7 @@ namespace VeQue.Tests
                     System.MidpointRounding.AwayFromZero) * 5);
                 Assert.AreEqual(expectedCoins, order.RewardCoins);
                 Assert.AreEqual(System.Math.Max(1L, xp * XpPercent / 100), order.RewardXp);
-                CollectionAssert.Contains(Names, order.Customer);
+                CollectionAssert.Contains(Names, order.NpcId);
 
                 Assert.AreEqual(FarmResult.Ok, farm.DiscardOrder(0));
                 _clock.Advance(Cooldown);
@@ -197,7 +197,7 @@ namespace VeQue.Tests
             long rewardXp = order.RewardXp;
             OrderItem[] items = order.Items;
             foreach (OrderItem item in items)
-                farm.State.Inventory[item.CropId] = item.Count + 1;
+                farm.State.Inventory[item.Id] = item.Count + 1;
             long coins = farm.State.Coins;
             int changed = 0;
             int leveled = 0;
@@ -211,7 +211,7 @@ namespace VeQue.Tests
             long levelCoins = leveled > 0 ? 10 * (OrdersLevel + 1) : 0;
             Assert.AreEqual(coins + reward + levelCoins, farm.State.Coins);
             foreach (OrderItem item in items)
-                Assert.AreEqual(1, farm.State.GetItems(item.CropId));
+                Assert.AreEqual(1, farm.State.GetItems(item.Id));
             Assert.AreEqual(rewardXp, farm.State.Xp + (leveled > 0 ? XpToNext[1] : 0));
             Assert.IsTrue(farm.State.Orders[0].HasOrder);
             Assert.AreNotSame(items, farm.State.Orders[0].Items);
@@ -225,7 +225,7 @@ namespace VeQue.Tests
             OrderState order = farm.State.Orders[0];
             farm.State.Xp = System.Math.Max(0, XpToNext[1] - order.RewardXp);
             foreach (OrderItem item in order.Items)
-                farm.State.Inventory[item.CropId] = item.Count;
+                farm.State.Inventory[item.Id] = item.Count;
             int leveled = 0;
             farm.LeveledUp += level => leveled = level;
 
@@ -297,9 +297,10 @@ namespace VeQue.Tests
         // ---------- Save ----------
 
         [Test]
-        public void Save_CurrentVersionIs6()
+        public void Save_CurrentVersionIs13()
         {
-            Assert.AreEqual(6, SaveData.CurrentVersion);
+            Assert.AreEqual(13, SaveData.CurrentVersion);
+            Assert.AreEqual(13, SaveData.MinSupportedVersion);
         }
 
         [Test]
@@ -331,23 +332,6 @@ namespace VeQue.Tests
         }
 
         [Test]
-        public void Save_Version1WithoutOrders_LoadsAndGeneratesOrders()
-        {
-            FarmDef def = CreateDef();
-            FarmState state = FarmState.CreateNew(def);
-            state.Level = OrdersLevel;
-            SaveData data = SaveMapper.ToSave(state, def, _clock.UtcNowSeconds);
-            data.version = 1;
-            data.orders = null;
-            data.randomState = 0;
-
-            Assert.AreEqual(SaveLoadResult.Ok, SaveMapper.TryFromSave(data, def, out FarmState loaded));
-            var farm = new Farm(def, loaded, _clock);
-
-            AssertAllSlotsFilled(farm);
-        }
-
-        [Test]
         public void Save_OrderWithUnknownCrop_IsReplaced()
         {
             Farm farm = CreateFarm(level: OrdersLevel);
@@ -358,7 +342,7 @@ namespace VeQue.Tests
             var reloaded = new Farm(farm.Definition, loaded, _clock);
 
             Assert.IsTrue(reloaded.State.Orders[0].HasOrder);
-            Assert.AreNotEqual("khong_co", reloaded.State.Orders[0].Items[0].CropId);
+            Assert.AreNotEqual("khong_co", reloaded.State.Orders[0].Items[0].Id);
         }
 
         [Test]
@@ -421,9 +405,9 @@ namespace VeQue.Tests
                 long xp = 0;
                 for (int j = 0; j < a.Items.Length; j++)
                 {
-                    Assert.AreEqual(a.Items[j].CropId, b.Items[j].CropId);
+                    Assert.AreEqual(a.Items[j].Id, b.Items[j].Id);
                     Assert.AreEqual(a.Items[j].Count, b.Items[j].Count);
-                    Assert.IsTrue(urgent.Definition.TryGetCrop(b.Items[j].CropId, out CropDef crop));
+                    Assert.IsTrue(urgent.Definition.TryGetCrop(b.Items[j].Id, out CropDef crop));
                     coins += (long)b.Items[j].Count * crop.SellPrice;
                     xp += (long)(b.Items[j].Count / crop.HarvestYield) * crop.Xp;
                 }
@@ -558,17 +542,17 @@ namespace VeQue.Tests
         }
 
         [Test]
-        public void UtcOffset_ShiftsDayBoundary()
+        public void DayBoundary_IsVietnamMidnight()
         {
+            // Đợt 2 Phần 2: ngày đổi lúc 0 giờ VN = 17:00 UTC, không theo múi giờ máy.
+            const long Utc1659 = 1798736340; // 31/12/2026 16:59 UTC = 23:59 giờ VN
+            _clock.UtcNowSeconds = Utc1659;
             Farm farm = CreateFarm(level: OrdersLevel, def: CreateDef(dailyLimit: DailyLimit));
             DeliverSlot(farm, 0);
-            long untilMidnightUtc = farm.SecondsUntilNextDay;
+            Assert.AreEqual(60, farm.SecondsUntilNextDay);
+            Assert.AreEqual(DailyLimit - 1, farm.OrdersLeftToday);
 
-            // Lệch +1 giờ: 0 giờ địa phương tới sớm hơn 1 giờ.
-            farm.SetUtcOffset(3600);
-            Assert.AreEqual(untilMidnightUtc - 3600, farm.SecondsUntilNextDay);
-
-            _clock.Advance(farm.SecondsUntilNextDay);
+            _clock.Advance(60);
             Assert.AreEqual(DailyLimit, farm.OrdersLeftToday);
         }
 
@@ -576,46 +560,18 @@ namespace VeQue.Tests
         public void Save_RoundTrip_KeepsRankExpiryAndDailyCount()
         {
             Farm farm = CreateFarm(level: OrdersLevel, def: CreateDef(urgentChance: 100, dailyLimit: DailyLimit));
-            farm.SetUtcOffset(7 * 3600);
             DeliverSlot(farm, 0);
 
             Farm loaded = RoundTrip(farm);
 
             Assert.AreEqual(farm.State.DeliveredToday, loaded.State.DeliveredToday);
             Assert.AreEqual(farm.State.OrderDay, loaded.State.OrderDay);
-            Assert.AreEqual(7 * 3600, loaded.State.UtcOffsetSeconds);
+            Assert.AreEqual(farm.State.LastSeenDayKey, loaded.State.LastSeenDayKey);
             for (int i = 0; i < Slots; i++)
             {
                 AssertSameOrder(farm.State.Orders[i], loaded.State.Orders[i]);
                 Assert.AreEqual(farm.State.Orders[i].Rank, loaded.State.Orders[i].Rank);
                 Assert.AreEqual(farm.State.Orders[i].ExpiresAt, loaded.State.Orders[i].ExpiresAt);
-            }
-        }
-
-        [Test]
-        public void Save_Version3_LoadsAsNormalOrdersWithFreshDailyCount()
-        {
-            Farm farm = CreateFarm(level: OrdersLevel, def: CreateDef(dailyLimit: DailyLimit));
-            SaveData data = SaveMapper.ToSave(farm.State, farm.Definition, _clock.UtcNowSeconds);
-            data.version = 3;
-            data.orderDay = 0;
-            data.deliveredToday = 0;
-            data.utcOffsetSeconds = 0;
-            foreach (SaveOrder order in data.orders)
-            {
-                order.rank = 0;
-                order.expiresAt = 0;
-            }
-
-            Assert.AreEqual(SaveLoadResult.Ok, SaveMapper.TryFromSave(data, farm.Definition, out FarmState state));
-            var loaded = new Farm(farm.Definition, state, _clock);
-
-            Assert.AreEqual(DailyLimit, loaded.OrdersLeftToday);
-            Assert.AreEqual(loaded.CurrentDay, loaded.State.OrderDay);
-            for (int i = 0; i < Slots; i++)
-            {
-                AssertSameOrder(farm.State.Orders[i], loaded.State.Orders[i]);
-                Assert.AreEqual(OrderRank.Normal, loaded.State.Orders[i].Rank);
             }
         }
 
@@ -636,8 +592,8 @@ namespace VeQue.Tests
             {
                 foreach (OrderItem item in farm.State.Orders[0].Items)
                 {
-                    while (farm.State.GetItems(item.CropId) < item.Count)
-                        PlantAndHarvest(farm, item.CropId);
+                    while (farm.State.GetItems(item.Id) < item.Count)
+                        PlantAndHarvest(farm, item.Id);
                 }
                 long coins = farm.State.Coins;
                 Assert.AreEqual(FarmResult.Ok, farm.DeliverOrder(0));
@@ -670,7 +626,7 @@ namespace VeQue.Tests
         private static void GiveItems(Farm farm, int slot)
         {
             foreach (OrderItem item in farm.State.Orders[slot].Items)
-                farm.State.Inventory[item.CropId] = farm.State.GetItems(item.CropId) + item.Count;
+                farm.State.Inventory[item.Id] = farm.State.GetItems(item.Id) + item.Count;
         }
 
         private static void DeliverSlot(Farm farm, int slot)
@@ -711,14 +667,17 @@ namespace VeQue.Tests
 
         private static void AssertSameOrder(OrderState expected, OrderState actual)
         {
-            Assert.AreEqual(expected.Customer, actual.Customer);
+            Assert.AreEqual(expected.NpcId, actual.NpcId);
+            Assert.AreEqual(expected.Line, actual.Line);
+            Assert.AreEqual(expected.Seed, actual.Seed);
+            Assert.AreEqual(expected.Kind, actual.Kind);
             Assert.AreEqual(expected.RewardCoins, actual.RewardCoins);
             Assert.AreEqual(expected.RewardXp, actual.RewardXp);
             Assert.AreEqual(expected.AvailableAt, actual.AvailableAt);
             Assert.AreEqual(expected.Items.Length, actual.Items.Length);
             for (int i = 0; i < expected.Items.Length; i++)
             {
-                Assert.AreEqual(expected.Items[i].CropId, actual.Items[i].CropId);
+                Assert.AreEqual(expected.Items[i].Id, actual.Items[i].Id);
                 Assert.AreEqual(expected.Items[i].Count, actual.Items[i].Count);
             }
         }
@@ -730,6 +689,15 @@ namespace VeQue.Tests
             state.Level = level;
             state.RandomState = randomState;
             return new Farm(def, state, _clock);
+        }
+
+        // Mỗi tên là 1 người làng (không có câu thoại) – đơn vẫn gắn người như tên khách cũ.
+        private static OrderDialogue Dialogue()
+        {
+            var npcs = new List<NpcDef>();
+            foreach (string name in Names)
+                npcs.Add(new NpcDef(name, name, "", null, 1));
+            return new OrderDialogue(npcs, null, null);
         }
 
         private static FarmDef CreateDef(bool withOrders = true, long refill = 0, int urgentChance = 0, int dailyLimit = 0)
@@ -747,7 +715,7 @@ namespace VeQue.Tests
             };
             var levels = new LevelDef(XpToNext, 10, 2);
             OrderDef orders = withOrders
-                ? new OrderDef(Slots, OrdersLevel, CoinPercent, XpPercent, Cooldown, Names, HarvestCap,
+                ? new OrderDef(Slots, OrdersLevel, CoinPercent, XpPercent, Cooldown, Dialogue(), HarvestCap,
                     refill, UrgentRefill, urgentChance, 200, UrgentExpire, dailyLimit)
                 : null;
             var seeds = new Dictionary<string, int> { { RauMuong, 5 } };

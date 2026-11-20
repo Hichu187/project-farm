@@ -1,0 +1,18 @@
+{
+  "_ghiChu": "Thư theo bản build (Đợt 2 Phần 3). Mỗi thư phát MỘT LẦN theo id cho người chơi mở game trong khoảng start–end (yyyy-MM-dd, giờ VN, gồm cả hai ngày). Không đổi id thư đã phát hành. kind: Coins, Xp, Seeds, Produce, Bait (Seeds/Produce: id cây, Bait: id mồi). expireDays: thư tự hết hạn sau bấy nhiêu ngày kể từ lúc nhận (0 = không hết hạn).",
+  "mails": [
+    {
+      "id": "chao_mung",
+      "start": "2026-11-01",
+      "end": "2099-12-31",
+      "sender": "Mẹ",
+      "title": "Con về quê rồi à?",
+      "body": "Mẹ nghe bà Lụa bảo con về quê làm vườn. Mẹ gửi con ít tiền tiêu với mấy hạt rau muống, gieo lứa đầu cho nhanh có ăn. Nhớ giữ sức khỏe nhé con!",
+      "expireDays": 0,
+      "rewards": [
+        { "kind": "Coins", "id": "", "amount": 50 },
+        { "kind": "Seeds", "id": "rau_muong", "amount": 5 }
+      ]
+    }
+  ]
+}

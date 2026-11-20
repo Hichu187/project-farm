@@ -19,7 +19,7 @@ namespace VeQue.EditorTools
 
         private GameBootstrap _game;
 
-        [MenuItem("Về Quê/Tua thời gian")]
+        [MenuItem("Về Quê/Tua thời gian", priority = 0)]
         private static void Open()
         {
             GetWindow<TimeTravelWindow>("Tua thời gian");
@@ -95,7 +95,7 @@ namespace VeQue.EditorTools
                         continue;
                     }
 
-                    EditorGUILayout.LabelField($"Ô {slot + 1} · {order.Customer}", EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField($"Ô {slot + 1} · {order.NpcId}", EditorStyles.boldLabel);
                     EditorGUILayout.LabelField(DescribeItems(order));
                     EditorGUILayout.LabelField($"Thưởng: +{order.RewardCoins:N0} xu, +{order.RewardXp:N0} XP");
                     using (new EditorGUILayout.HorizontalScope())
@@ -118,8 +118,8 @@ namespace VeQue.EditorTools
             for (int i = 0; i < order.Items.Length; i++)
             {
                 OrderItem item = order.Items[i];
-                string name = _game.TryGetCrop(item.CropId, out var crop) ? crop.DisplayName : item.CropId;
-                parts[i] = $"{name} {_game.Farm.State.GetItems(item.CropId)}/{item.Count}";
+                string name = !order.IsFish && _game.TryGetCrop(item.Id, out var crop) ? crop.DisplayName : item.Id;
+                parts[i] = $"{name} {_game.Farm.GetOrderItemHave(order, item)}/{item.Count}";
             }
             return string.Join(" · ", parts);
         }

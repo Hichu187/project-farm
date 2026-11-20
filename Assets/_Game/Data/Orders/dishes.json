@@ -1,0 +1,26 @@
+{
+  "dishes": [
+    { "crop": "rau_muong", "names": ["canh cua rau muống", "rau muống xào tỏi", "rau muống luộc"] },
+    { "crop": "hanh_la", "names": ["trứng rán hành", "bát canh hành"] },
+    { "crop": "cai_xanh", "names": ["canh cải nấu gừng", "cải xào tỏi"] },
+    { "crop": "rau_day", "names": ["canh cua rau đay"] },
+    { "crop": "mong_toi", "names": ["canh mồng tơi nấu tôm", "canh cua mồng tơi"] },
+    { "crop": "dua_chuot", "names": ["nộm dưa chuột", "dưa chuột chấm muối"] },
+    { "crop": "muop", "names": ["canh mướp nấu tôm", "mướp xào"] },
+    { "crop": "dau_dua", "names": ["đậu đũa xào", "đậu đũa luộc"] },
+    { "crop": "bau", "names": ["canh bầu nấu tôm"] },
+    { "crop": "muop_dang", "names": ["mướp đắng nhồi thịt", "mướp đắng xào trứng"] },
+    { "crop": "su_hao", "names": ["nộm su hào", "su hào xào"] },
+    { "crop": "ngo_nep", "names": ["ngô luộc", "xôi ngô"] },
+    { "crop": "dua_hau", "names": ["mâm hoa quả"] },
+    { "crop": "dau_xanh", "names": ["xôi đậu xanh", "chè đậu xanh"] },
+    { "crop": "ca_phao", "names": ["cà pháo muối", "cà pháo chấm mắm tôm"] },
+    { "crop": "ca_chua", "names": ["bún riêu", "canh chua"] },
+    { "crop": "lac", "names": ["lạc rang muối", "muối vừng lạc"] },
+    { "crop": "ot", "names": ["tương ớt"] },
+    { "crop": "bi_ngo", "names": ["canh bí ngô", "chè bí ngô"] },
+    { "crop": "lua", "names": ["nồi cơm mới", "bánh chưng"] },
+    { "crop": "khoai_lang", "names": ["khoai lang luộc", "khoai nướng"] },
+    { "crop": "khoai_so", "names": ["canh khoai sọ nấu sườn"] }
+  ]
+}

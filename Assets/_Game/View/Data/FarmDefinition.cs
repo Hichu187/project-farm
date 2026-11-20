@@ -59,7 +59,47 @@ namespace VeQue.View.Data
         [Min(0)] [SerializeField] private int _orderUrgentExpireMinutes = 30;
         [Tooltip("Số đơn giao được mỗi ngày (giờ địa phương). Bỏ đơn không tính. 0 = không giới hạn.")]
         [Min(0)] [SerializeField] private int _orderDailyLimit = 15;
-        [SerializeField] private string[] _customerNames = Array.Empty<string>();
+
+        [Header("Đơn hàng có thoại (Đợt 2 Phần 11)")]
+        [Tooltip("Data/Orders/npcs.json: người làng (tên, cách xưng, cây hay đặt, trọng số).")]
+        [SerializeField] private TextAsset _npcsJson;
+        [Tooltip("Data/Orders/order_lines.csv: câu thoại (npcId, kind, text, cropTag).")]
+        [SerializeField] private TextAsset _orderLinesCsv;
+        [Tooltip("Data/Orders/dishes.json: món theo cây cho chỗ trống {dish}.")]
+        [SerializeField] private TextAsset _dishesJson;
+
+        [Tooltip("Chân dung 16×16 theo id người làng; người chưa có thì thẻ đơn hiện khung tròn + chữ cái đầu tên.")]
+        [SerializeField] private NpcPortrait[] _npcPortraits = Array.Empty<NpcPortrait>();
+
+        [Serializable]
+        public sealed class NpcPortrait
+        {
+            [SerializeField] private string _npcId;
+            [SerializeField] private Sprite _sprite;
+
+            public string NpcId => _npcId;
+            public Sprite Sprite => _sprite;
+        }
+
+        [Header("Lịch (Đợt 2 Phần 2)")]
+        [Tooltip("Data/Calendar/lunar_2026_2040.json – sinh bằng Tools/lunar_table.py. Trống = không có âm lịch.")]
+        [SerializeField] private TextAsset _lunarTable;
+
+        [Header("Hộp thư (Đợt 2 Phần 3)")]
+        [Tooltip("Data/Mail/build_mails.json: thư phát theo bản build (một lần theo id).")]
+        [SerializeField] private TextAsset _buildMails;
+
+        [Header("Đơn cá")]
+        [Tooltip("Tỉ lệ đơn cá (%) ở cấp mở câu cá; mỗi cấp sau +1%, tối đa Max. 0 = không có đơn cá.")]
+        [Range(0, 100)] [SerializeField] private int _fishOrderMinPercent = 10;
+        [Range(0, 100)] [SerializeField] private int _fishOrderMaxPercent = 20;
+        [Tooltip("Chỉ đặt loài có độ hiếm từ mức này trở xuống.")]
+        [SerializeField] private FishRarity _fishOrderMaxRarity = FishRarity.Uncommon;
+        [Tooltip("Chỉ đặt loài câu được ở ít nhất bấy nhiêu khung giờ.")]
+        [Min(1)] [SerializeField] private int _fishOrderMinSlots = 3;
+        [Tooltip("Số con tối đa một đơn; 1 con ở cấp mở câu cá, +1 mỗi LevelsPerFish cấp.")]
+        [Min(1)] [SerializeField] private int _fishOrderMaxCount = 3;
+        [Min(1)] [SerializeField] private int _fishOrderLevelsPerFish = 3;
 
         [Header("Câu cá")]
         [Tooltip("Bỏ trống = chưa có câu cá.")]
@@ -67,6 +107,19 @@ namespace VeQue.View.Data
 
         public IReadOnlyList<ZoneDefinition> Zones => _zones;
         public IReadOnlyList<CropDefinition> Crops => _crops;
+
+        // Chân dung người làng; chưa có → null.
+        public Sprite GetNpcPortrait(string npcId)
+        {
+            if (npcId == null || _npcPortraits == null)
+                return null;
+            foreach (NpcPortrait portrait in _npcPortraits)
+            {
+                if (portrait != null && portrait.NpcId == npcId)
+                    return portrait.Sprite;
+            }
+            return null;
+        }
         public FishingDefinition Fishing => _fishing;
 
         public FarmDef ToDef()
@@ -100,11 +153,14 @@ namespace VeQue.View.Data
             var levels = new LevelDef(_xpToNext ?? Array.Empty<int>(), _coinsPerLevel, _unlockSeedCount);
             string rescueId = _rescueCrop != null && _rescueCrop.Enabled ? _rescueCrop.Id : null;
             var orders = new OrderDef(_orderSlots, _orderUnlockLevel, _orderCoinPercent, _orderXpPercent,
-                _orderDiscardMinutes * 60L, _customerNames, _orderHarvestCap,
+                _orderDiscardMinutes * 60L, OrderDialogueLoader.Load(_npcsJson, _orderLinesCsv, _dishesJson), _orderHarvestCap,
                 _orderRefillMinutes * 60L, _orderUrgentRefillMinutes * 60L, _orderUrgentChancePercent,
-                _orderUrgentRewardPercent, _orderUrgentExpireMinutes * 60L, _orderDailyLimit);
+                _orderUrgentRewardPercent, _orderUrgentExpireMinutes * 60L, _orderDailyLimit,
+                _fishOrderMinPercent, Mathf.Max(_fishOrderMinPercent, _fishOrderMaxPercent), _fishOrderMaxRarity,
+                _fishOrderMinSlots, _fishOrderMaxCount, _fishOrderLevelsPerFish);
             FishingDef fishing = _fishing != null ? _fishing.ToDef() : null;
-            return new FarmDef(zones, crops, _startCoins, seeds, _waterReducePercent, levels, rescueId, orders, fishing);
+            return new FarmDef(zones, crops, _startCoins, seeds, _waterReducePercent, levels, rescueId, orders, fishing,
+                LunarTableLoader.Load(_lunarTable), BuildMailLoader.Load(_buildMails));
         }
     }
 }

@@ -212,20 +212,21 @@ namespace VeQue.Tests
         // ---------- Lớn ----------
 
         [Test]
-        public void GetStage_OverTime_AdvancesThroughThreeStagesThenRipe()
+        // 3 giai đoạn: 0, 1 chia đều thời gian lớn; giai đoạn cuối (2) chỉ khi chín.
+        public void GetStage_OverTime_LastStageOnlyWhenRipe()
         {
             Farm farm = CreateFarm(1, 4, 5);
             PlotId plot = new PlotId(Zone1, 0, 0, 0);
             farm.Plant(plot, RauMuong);
-            long third = RauMuongSeconds / CropDef.DefaultStageCount;
+            long half = RauMuongSeconds / (CropDef.DefaultStageCount - 1);
 
             Assert.AreEqual(0, farm.GetStage(plot));
-            _clock.Advance(third);
+            _clock.Advance(half);
             Assert.AreEqual(1, farm.GetStage(plot));
-            _clock.Advance(third);
-            Assert.AreEqual(2, farm.GetStage(plot));
+            _clock.Advance(RauMuongSeconds - half - 1);
+            Assert.AreEqual(1, farm.GetStage(plot));
             Assert.IsFalse(farm.IsRipe(plot));
-            _clock.Advance(third);
+            _clock.Advance(1);
             Assert.AreEqual(2, farm.GetStage(plot));
             Assert.IsTrue(farm.IsRipe(plot));
         }
@@ -238,14 +239,30 @@ namespace VeQue.Tests
             Assert.AreEqual(FarmResult.Ok, farm.BuySeeds(FiveStageCrop, 1));
             farm.Plant(plot, FiveStageCrop);
 
-            for (int stage = 0; stage < 5; stage++)
+            // 4 giai đoạn đang lớn chia đều thời gian; giai đoạn 4 chỉ khi chín.
+            long step = FiveStageSeconds / 4;
+            for (int stage = 0; stage < 4; stage++)
             {
                 Assert.AreEqual(stage, farm.GetStage(plot));
-                _clock.Advance(FiveStageSeconds / 5);
+                _clock.Advance(step);
             }
 
             Assert.AreEqual(4, farm.GetStage(plot));
             Assert.IsTrue(farm.IsRipe(plot));
+        }
+
+        [Test]
+        public void GetStage_JustBeforeRipe_NotLastStage()
+        {
+            Farm farm = CreateFarm(1, 4, 5);
+            PlotId plot = new PlotId(Zone1, 0, 0, 0);
+            Assert.AreEqual(FarmResult.Ok, farm.BuySeeds(FiveStageCrop, 1));
+            farm.Plant(plot, FiveStageCrop);
+
+            _clock.Advance(FiveStageSeconds - 1);
+
+            Assert.AreEqual(3, farm.GetStage(plot));
+            Assert.IsFalse(farm.IsRipe(plot));
         }
 
         [Test]
@@ -542,7 +559,8 @@ namespace VeQue.Tests
             Farm farm = CreateFarm(1, 4, 5);
             PlotId plot = new PlotId(Zone1, 0, 0, 0);
             farm.Plant(plot, RauMuong);
-            _clock.Advance(20);
+            // 120 giây, 3 giai đoạn: giai đoạn 1 từ giây 60. Tưới lùi 20% = 24 giây → 40 + 24 = 64.
+            _clock.Advance(40);
             Assert.AreEqual(0, farm.GetStage(plot));
 
             farm.Water(plot);

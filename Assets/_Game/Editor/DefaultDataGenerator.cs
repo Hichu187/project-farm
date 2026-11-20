@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using VeQue.Logic;
 using VeQue.View.Data;
 
 namespace VeQue.EditorTools
@@ -40,10 +42,18 @@ namespace VeQue.EditorTools
         private const int OrderUrgentRewardPercent = 200;
         private const int OrderUrgentExpireMinutes = 30;
         private const int OrderDailyLimit = 15;
-        private static readonly string[] CustomerNames =
-        {
-            "Bà Tư", "Chú Ba", "Cô Năm", "Bác Hai", "Dì Sáu", "Ông Bảy", "Chị Út", "Anh Tám",
-        };
+        // Đơn hàng có thoại (Đợt 2 Phần 11): người làng, câu thoại, món nằm trong 3 file data, sửa trực tiếp file.
+        private const string OrdersFolder = DataFolder + "/Orders";
+        private const string NpcsPath = OrdersFolder + "/npcs.json";
+        private const string OrderLinesPath = OrdersFolder + "/order_lines.csv";
+        private const string DishesPath = OrdersFolder + "/dishes.json";
+        // Bảng âm lịch (Đợt 2 Phần 2), sinh bằng Tools/lunar_table.py.
+        private const string LunarTablePath = DataFolder + "/Calendar/lunar_2026_2040.json";
+        // Thư theo build (Đợt 2 Phần 3).
+        private const string BuildMailsPath = DataFolder + "/Mail/build_mails.json";
+        // Đơn cá: 10% ở cấp mở câu cá, +1%/cấp, tối đa 20% (chốt 20/11/2026).
+        private const int FishOrderMinPercent = 10;
+        private const int FishOrderMaxPercent = 20;
 
         // Công thức cân bằng cây (MVP-Plan Phần 6b), T = phút lớn:
         //   lãi mỗi lần thu = 5 × (T/2)^0,8; thu/giá hạt = 2 + 1,5 × ln(T/2) / ln(120) (2,0 ở 2 phút → 3,5 ở 4 giờ);
@@ -56,11 +66,12 @@ namespace VeQue.EditorTools
             public readonly int Yield;
             public readonly int UnlockLevel;
             public readonly bool Enabled;
+            public readonly CropGroup Group;
             public readonly int SeedPrice;
             public readonly int SellPrice;
             public readonly int Xp;
 
-            public CropRow(string id, string name, int minutes, int yield, int unlockLevel, bool enabled)
+            public CropRow(string id, string name, CropGroup group, int minutes, int yield, int unlockLevel, bool enabled = true)
             {
                 Id = id;
                 Name = name;
@@ -68,6 +79,7 @@ namespace VeQue.EditorTools
                 Yield = yield;
                 UnlockLevel = unlockLevel;
                 Enabled = enabled;
+                Group = group;
 
                 double t = minutes / 2.0;
                 double profit = 5.0 * System.Math.Pow(t, 0.8);
@@ -98,36 +110,47 @@ namespace VeQue.EditorTools
             }
         }
 
-        // (id, tên, phút lớn, sản lượng, cấp mở, bật). Giá và XP tính theo công thức ở CropRow.
-        // MVP chỉ bật 4 cây: rau muống (cấp 1), cải xanh (2), cà chua (4), bí đỏ (6). Cấp mở của cây đang tắt là tạm.
+        private const CropGroup RauLa = CropGroup.LeafyGreen;
+        private const CropGroup Qua = CropGroup.Fruit;
+        private const CropGroup CuHat = CropGroup.RootGrain;
+
+        // Bộ 25 cây thuần Việt, tên giọng Bắc (Đợt 2 Phần 4, Docs/thiet-ke-dot-2.md mục 1).
+        // (id, tên, nhóm giá, phút lớn, sản lượng, cấp mở, bật). Giá và XP tính theo công thức ở CropRow.
+        // Thứ tự theo thời gian lớn ngoài đời; cây sau không chín nhanh hơn cây trước.
         private static readonly CropRow[] Crops =
         {
-            new CropRow("rau_muong", "Rau muống", 2, 2, 1, true),
-            new CropRow("hanh_la", "Hành lá", 5, 2, 1, false),
-            new CropRow("xa_lach", "Xà lách", 10, 1, 2, false),
-            new CropRow("cai_xanh", "Cải xanh", 15, 2, 2, true),
-            new CropRow("rau_den", "Rau dền", 20, 2, 3, false),
-            new CropRow("mong_toi", "Mồng tơi", 30, 2, 3, false),
-            new CropRow("cu_cai_trang", "Củ cải trắng", 45, 1, 4, false),
-            new CropRow("ca_chua", "Cà chua", 60, 3, 4, true),
-            new CropRow("dua_leo", "Dưa leo", 90, 3, 5, false),
-            new CropRow("dau_dua", "Đậu đũa", 120, 4, 5, false),
-            new CropRow("ca_rot", "Cà rốt", 150, 2, 6, false),
-            new CropRow("ot", "Ớt", 180, 5, 6, false),
-            new CropRow("bi_do", "Bí đỏ", 240, 1, 6, true),
-            new CropRow("khoai_lang", "Khoai lang", 300, 3, 7, false),
-            new CropRow("ca_tim", "Cà tím", 360, 3, 8, false),
-            new CropRow("bap", "Bắp", 480, 2, 9, false),
-            new CropRow("kho_qua", "Khổ qua", 600, 4, 10, false),
-            new CropRow("dau_phong", "Đậu phộng", 720, 5, 11, false),
-            new CropRow("dua_hau", "Dưa hấu", 960, 1, 12, false),
-            new CropRow("khoai_mon", "Khoai môn", 1200, 2, 13, false),
-            new CropRow("bi_dao", "Bí đao", 1440, 2, 14, false),
-            new CropRow("gung", "Gừng", 1800, 3, 15, false),
-            new CropRow("nghe", "Nghệ", 2160, 3, 16, false),
-            new CropRow("dau_tay", "Dâu tây", 2520, 5, 17, false),
-            new CropRow("dua_luoi", "Dưa lưới", 2880, 2, 18, false),
+            new CropRow("rau_muong", "Rau muống", RauLa, 2, 2, 1),
+            new CropRow("hanh_la", "Hành lá", RauLa, 5, 2, 2),
+            new CropRow("cai_xanh", "Cải xanh", RauLa, 15, 2, 2),
+            new CropRow("rau_day", "Rau đay", RauLa, 20, 2, 4),
+            new CropRow("mong_toi", "Mồng tơi", RauLa, 30, 2, 3),
+            new CropRow("dua_chuot", "Dưa chuột", Qua, 30, 3, 5),
+            new CropRow("muop", "Mướp", Qua, 45, 3, 6),
+            new CropRow("dau_dua", "Đậu đũa", Qua, 60, 4, 3),
+            new CropRow("bau", "Bầu", Qua, 90, 1, 7),
+            new CropRow("muop_dang", "Mướp đắng", Qua, 90, 3, 9),
+            new CropRow("su_hao", "Su hào", CuHat, 120, 1, 8),
+            new CropRow("ngo_nep", "Ngô nếp", CuHat, 150, 2, 6),
+            new CropRow("dua_hau", "Dưa hấu", Qua, 180, 1, 11),
+            new CropRow("dau_xanh", "Đậu xanh", CuHat, 180, 4, 8),
+            new CropRow("ca_phao", "Cà pháo", Qua, 210, 5, 10),
+            new CropRow("ca_chua", "Cà chua", Qua, 240, 3, 5),
+            new CropRow("lac", "Lạc", CuHat, 300, 5, 10),
+            new CropRow("ot", "Ớt", Qua, 360, 5, 12),
+            new CropRow("bi_ngo", "Bí ngô", CuHat, 360, 1, 7),
+            new CropRow("lua", "Lúa", CuHat, 480, 2, 4),
+            new CropRow("khoai_lang", "Khoai lang", CuHat, 600, 3, 9),
+            new CropRow("khoai_so", "Khoai sọ", CuHat, 720, 3, 13),
+            // Cây sự kiện (eventOnly, Phần 7–8): tắt; thời gian, sản lượng, cấp là số tạm, chốt sau (Docs/note.md).
+            new CropRow("hoa_dao", "Hoa đào", Qua, 240, 1, 1, false),
+            new CropRow("hoa_cuc", "Hoa cúc", Qua, 240, 2, 1, false),
+            new CropRow("huong_duong", "Hướng dương", Qua, 240, 2, 1, false),
         };
+
+        // Art cây: crop_{id}_{seed|stage1|stage2|stage3|icon|packet}.png.
+        // Ruộng: seed → stage1 → stage2 → stage3 (stage3 chỉ hiện khi chín); hạt (UI): packet; nông sản: icon.
+        private const string CropArtFolder = "Assets/_Game/Art/Crops";
+        private static readonly string[] CropStageParts = { "seed", "stage1", "stage2", "stage3" };
 
         // Mỗi khu 2 luống 6×2 = 24 ô; origin là vị trí tham chiếu của Map D (luống trên trước).
         // Giá mở ô ≈ 40 × 1.102^(n−1), làm tròn. Khu 1 mở sẵn 6 ô (18 giá); Khu 2, 3 mở miễn phí 1 ô (23 giá).
@@ -150,12 +173,12 @@ namespace VeQue.EditorTools
             }),
         };
 
-        [MenuItem("Về Quê/Tạo data mặc định")]
+        [MenuItem("Về Quê/Data/Tạo data mặc định", priority = 200)]
         private static void Generate()
         {
             if (AssetDatabase.LoadAssetAtPath<FarmDefinition>(FarmPath) != null
                 && !EditorUtility.DisplayDialog("Tạo data mặc định",
-                    "Data đã có. Ghi đè số liệu bằng bảng mặc định (cả câu cá)? Sprite / icon đã gán và origin luống đã có được giữ nguyên.", "Ghi đè", "Hủy"))
+                    "Data đã có. Ghi đè số liệu bằng bảng mặc định (cả câu cá)? Sprite cây lấy lại từ Art/Crops; icon câu cá và origin luống đã có được giữ nguyên.", "Ghi đè", "Hủy"))
                 return;
 
             EnsureFolder(DataFolder);
@@ -163,12 +186,15 @@ namespace VeQue.EditorTools
             EnsureFolder(ZonesFolder);
 
             var crops = new CropDefinition[Crops.Length];
+            var cropPaths = new HashSet<string>();
             CropDefinition startSeedCrop = null;
             CropDefinition rescueCrop = null;
             for (int i = 0; i < Crops.Length; i++)
             {
                 CropRow row = Crops[i];
-                crops[i] = LoadOrCreate<CropDefinition>($"{CropsFolder}/{i + 1:00}_{row.Id}.asset");
+                string cropPath = $"{CropsFolder}/{i + 1:00}_{row.Id}.asset";
+                cropPaths.Add(cropPath);
+                crops[i] = LoadOrCreate<CropDefinition>(cropPath);
                 var so = new SerializedObject(crops[i]);
                 so.FindProperty("_id").stringValue = row.Id;
                 so.FindProperty("_displayName").stringValue = row.Name;
@@ -179,6 +205,7 @@ namespace VeQue.EditorTools
                 so.FindProperty("_harvestYield").intValue = row.Yield;
                 so.FindProperty("_xp").intValue = row.Xp;
                 so.FindProperty("_unlockLevel").intValue = row.UnlockLevel;
+                so.FindProperty("_group").enumValueIndex = (int)row.Group;
                 so.ApplyModifiedPropertiesWithoutUndo();
 
                 if (row.Id == StartSeedCropId)
@@ -186,6 +213,9 @@ namespace VeQue.EditorTools
                 if (row.Id == RescueCropId)
                     rescueCrop = crops[i];
             }
+
+            int removed = DeleteStaleCrops(cropPaths);
+            int missingArt = AssignCropArt(crops);
 
             var zones = new ZoneDefinition[Zones.Length];
             for (int i = 0; i < Zones.Length; i++)
@@ -242,17 +272,81 @@ namespace VeQue.EditorTools
             farmSo.FindProperty("_orderUrgentRewardPercent").intValue = OrderUrgentRewardPercent;
             farmSo.FindProperty("_orderUrgentExpireMinutes").intValue = OrderUrgentExpireMinutes;
             farmSo.FindProperty("_orderDailyLimit").intValue = OrderDailyLimit;
-            SerializedProperty names = farmSo.FindProperty("_customerNames");
-            names.arraySize = CustomerNames.Length;
-            for (int i = 0; i < CustomerNames.Length; i++)
-                names.GetArrayElementAtIndex(i).stringValue = CustomerNames[i];
+            farmSo.FindProperty("_npcsJson").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TextAsset>(NpcsPath);
+            farmSo.FindProperty("_orderLinesCsv").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TextAsset>(OrderLinesPath);
+            farmSo.FindProperty("_dishesJson").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TextAsset>(DishesPath);
+            farmSo.FindProperty("_fishOrderMinPercent").intValue = FishOrderMinPercent;
+            farmSo.FindProperty("_fishOrderMaxPercent").intValue = FishOrderMaxPercent;
+            farmSo.FindProperty("_lunarTable").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TextAsset>(LunarTablePath);
+            farmSo.FindProperty("_buildMails").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TextAsset>(BuildMailsPath);
             farmSo.ApplyModifiedPropertiesWithoutUndo();
+            if (AssetDatabase.LoadAssetAtPath<TextAsset>(NpcsPath) == null)
+                Debug.LogWarning($"Về Quê: thiếu {NpcsPath} – đơn hàng sẽ không có người đặt / thoại.");
 
             FishingDataGenerator.Generate(farm);
 
             AssetDatabase.SaveAssets();
             Selection.activeObject = farm;
-            Debug.Log($"Về Quê: đã tạo {crops.Length} cây, {zones.Length} khu → {FarmPath}", farm);
+            Debug.Log($"Về Quê: đã tạo {crops.Length} cây ({removed} asset cây cũ đã xóa, {missingArt} cây thiếu art), "
+                + $"{zones.Length} khu → {FarmPath}", farm);
+        }
+
+        // Xóa asset cây không còn trong bảng (bộ cây cũ, hoặc cây đổi số thứ tự).
+        private static int DeleteStaleCrops(HashSet<string> keep)
+        {
+            int removed = 0;
+            foreach (string guid in AssetDatabase.FindAssets("t:CropDefinition", new[] { CropsFolder }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (keep.Contains(path))
+                    continue;
+                if (AssetDatabase.DeleteAsset(path))
+                    removed++;
+                else
+                    Debug.LogWarning($"Về Quê: không xóa được {path}.");
+            }
+            return removed;
+        }
+
+        // Gán art từ CropArtFolder theo tên file. Cây đủ 6 file thì ghi đè sprite cũ; thiếu file thì giữ nguyên và báo.
+        private static int AssignCropArt(CropDefinition[] crops)
+        {
+            int missing = 0;
+            foreach (CropDefinition crop in crops)
+            {
+                var stages = new Sprite[CropStageParts.Length];
+                var absent = new List<string>();
+                for (int i = 0; i < CropStageParts.Length; i++)
+                    stages[i] = LoadCropSprite(crop.Id, CropStageParts[i], absent);
+                Sprite packet = LoadCropSprite(crop.Id, "packet", absent);
+                Sprite icon = LoadCropSprite(crop.Id, "icon", absent);
+
+                if (absent.Count > 0)
+                {
+                    missing++;
+                    Debug.LogWarning($"Về Quê: cây '{crop.Id}' thiếu art ({string.Join(", ", absent)}) trong {CropArtFolder}, giữ sprite cũ.", crop);
+                    continue;
+                }
+
+                var so = new SerializedObject(crop);
+                so.FindProperty("_seedSprite").objectReferenceValue = packet;
+                so.FindProperty("_produceIcon").objectReferenceValue = icon;
+                SerializedProperty stageProp = so.FindProperty("_stageSprites");
+                stageProp.arraySize = stages.Length;
+                for (int i = 0; i < stages.Length; i++)
+                    stageProp.GetArrayElementAtIndex(i).objectReferenceValue = stages[i];
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
+            return missing;
+        }
+
+        private static Sprite LoadCropSprite(string cropId, string part, List<string> absent)
+        {
+            string file = $"crop_{cropId}_{part}.png";
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{CropArtFolder}/{file}");
+            if (sprite == null)
+                absent.Add(file);
+            return sprite;
         }
 
         private static T LoadOrCreate<T>(string path) where T : ScriptableObject

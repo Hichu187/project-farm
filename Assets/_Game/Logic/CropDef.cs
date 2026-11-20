@@ -2,6 +2,14 @@ using System;
 
 namespace VeQue.Logic
 {
+    // Nhóm giá của cây, dùng cho giá chợ trong ngày (Đợt 2 Phần 9): rau lá đổi theo chợ sáng / khuya.
+    public enum CropGroup
+    {
+        LeafyGreen = 0,
+        Fruit = 1,
+        RootGrain = 2,
+    }
+
     // Định nghĩa một loại cây. Lớn qua StageCount giai đoạn đều nhau, chín khi đủ GrowSeconds.
     public sealed class CropDef
     {
@@ -17,9 +25,10 @@ namespace VeQue.Logic
         public int Xp { get; }
         // Cấp cần để gieo và mua hạt.
         public int UnlockLevel { get; }
+        public CropGroup Group { get; }
 
         public CropDef(string id, long growSeconds, int buyPrice, int sellPrice, int harvestYield,
-            int stageCount = DefaultStageCount, int xp = 0, int unlockLevel = 1)
+            int stageCount = DefaultStageCount, int xp = 0, int unlockLevel = 1, CropGroup group = CropGroup.LeafyGreen)
         {
             if (string.IsNullOrEmpty(id))
                 throw new ArgumentException("Crop id rỗng.", nameof(id));
@@ -46,6 +55,7 @@ namespace VeQue.Logic
             StageCount = stageCount;
             Xp = xp;
             UnlockLevel = unlockLevel;
+            Group = group;
         }
     }
 }

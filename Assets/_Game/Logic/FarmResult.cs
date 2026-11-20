@@ -37,13 +37,19 @@ namespace VeQue.Logic
         NoRod,
         RodBroken,
         RodNotDamaged,
-        // Đã sửa quá nhiều (độ bền tối đa dưới mức tối thiểu): phải mua lại cần.
-        RodWornOut,
         NotEnoughBait,
         BasketFull,
         BasketMaxed,
         AlreadyOwned,
         FishingNotFinished,
         FishingAlreadyApplied,
+        // Thả cá: vị trí trong giỏ không có.
+        UnknownFish,
+        // Hộp thư (Đợt 2 Phần 3).
+        UnknownMail,
+        MailAlreadyClaimed,
+        MailExpired,
+        // Không có quà để nhận (thư không kèm quà / Nhận tất cả khi không còn thư nào).
+        NoMailToClaim,
     }
 }

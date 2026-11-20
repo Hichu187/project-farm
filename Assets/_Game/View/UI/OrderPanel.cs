@@ -46,13 +46,17 @@ namespace VeQue.View.UI
             }
 
             _game.Farm.Changed += Refresh;
+            _game.Farm.OrderDelivered += OnOrderDelivered;
             Refresh();
         }
 
         private void OnDestroy()
         {
             if (_game != null && _game.Farm != null)
+            {
                 _game.Farm.Changed -= Refresh;
+                _game.Farm.OrderDelivered -= OnOrderDelivered;
+            }
         }
 
         private void Update()
@@ -68,7 +72,7 @@ namespace VeQue.View.UI
             if (!_game.Farm.TryGetOrder(slot, out OrderState order) || !order.HasOrder)
                 return;
 
-            string customer = order.Customer;
+            string customer = NpcName(order);
             string reward = UiFormat.Reward(order.RewardCoins, order.RewardXp);
             FarmResult result = _game.DeliverOrder(slot);
             if (result == FarmResult.Ok)
@@ -108,18 +112,109 @@ namespace VeQue.View.UI
                 string badge = null;
                 if (order.IsUrgent)
                     badge = farm.TryGetOrderTimeLeft(i, out long left) ? $"KHẨN CẤP · còn {UiFormat.Countdown(left)}" : "KHẨN CẤP";
-                card.ShowOrder(order.Customer, UiFormat.Reward(order.RewardCoins, order.RewardXp), farm.CanDeliver(i), badge);
+                card.ShowOrder(NpcName(order), UiFormat.Reward(order.RewardCoins, order.RewardXp), farm.CanDeliver(i), badge);
+                ShowSpeaker(card, order);
                 int shown = Math.Min(order.Items.Length, card.ItemSlots);
                 for (int j = 0; j < shown; j++)
                 {
                     OrderItem item = order.Items[j];
-                    int have = farm.State.GetItems(item.CropId);
-                    Sprite icon = _game.TryGetCrop(item.CropId, out CropDefinition crop) ? crop.ProduceIcon : null;
-                    string name = crop != null ? crop.DisplayName : item.CropId;
+                    int have = farm.GetOrderItemHave(order, item);
+                    ItemLook(order, item, out Sprite icon, out string name);
                     // Hai dòng: tên dài vẫn đủ chỗ cho số lượng (font pixel rộng).
                     card.SetItem(j, icon, $"{name}\n{Math.Min(have, item.Count)}/{item.Count}", have >= item.Count);
                 }
                 card.HideItemsFrom(shown);
+            }
+        }
+
+        // Người đặt + câu đặt đơn (điền món đầu: số lượng, tên viết thường, món theo seed của đơn).
+        private void ShowSpeaker(OrderCard card, OrderState order)
+        {
+            OrderDialogue dialogue = _game.Farm.Definition.Orders.Dialogue;
+            if (!dialogue.TryGetNpc(order.NpcId, out NpcDef npc))
+            {
+                card.SetSpeaker(null, null, null, null, Color.white);
+                return;
+            }
+            string speech = null;
+            if (dialogue.TryGetLine(order.Line, out OrderLineDef line) && order.Items.Length > 0)
+            {
+                OrderItem first = order.Items[0];
+                ItemLook(order, first, out _, out string itemName);
+                string dish = order.IsFish ? null : dialogue.PickDish(first.Id, order.Seed);
+                speech = OrderDialogue.Format(line.Text, npc.Title, first.Count, itemName.ToLowerInvariant(), dish);
+            }
+            card.SetSpeaker(npc.DisplayName, speech, _game.Definition.GetNpcPortrait(npc.Id), Initial(npc.DisplayName), NpcColor(npc.Id));
+        }
+
+        // Giao xong: bong bóng câu cảm ơn 2 giây trên thẻ của ô đó.
+        private void OnOrderDelivered(OrderDelivery delivery)
+        {
+            if (delivery.Slot < 0 || delivery.Slot >= _cards.Length)
+                return;
+            OrderDialogue dialogue = _game.Farm.Definition.Orders.Dialogue;
+            if (!dialogue.TryGetLine(delivery.ThanksLine, out OrderLineDef line))
+                return;
+            string title = dialogue.TryGetNpc(delivery.NpcId, out NpcDef npc) ? npc.Title : "";
+            string text = OrderDialogue.Format(line.Text, title, 0, "", null);
+            string who = npc != null ? $"{npc.DisplayName}: " : "";
+            _cards[delivery.Slot].ShowBubble(who + text, ThanksSeconds);
+        }
+
+        private const float ThanksSeconds = 2f;
+
+        // Chữ cái đầu của tên gọi (từ cuối): "Bà Lụa" → "L", "Cu Tí" → "T".
+        private static string Initial(string displayName)
+        {
+            if (string.IsNullOrEmpty(displayName))
+                return "";
+            string trimmed = displayName.Trim();
+            int space = trimmed.LastIndexOf(' ');
+            string word = space >= 0 ? trimmed.Substring(space + 1) : trimmed;
+            return word.Length > 0 ? word.Substring(0, 1).ToUpperInvariant() : "";
+        }
+
+        private static readonly Color[] NpcColors =
+        {
+            new Color(0.95f, 0.72f, 0.55f),
+            new Color(0.62f, 0.80f, 0.55f),
+            new Color(0.58f, 0.75f, 0.92f),
+            new Color(0.92f, 0.62f, 0.70f),
+            new Color(0.80f, 0.70f, 0.92f),
+            new Color(0.95f, 0.85f, 0.50f),
+        };
+
+        // Màu khung tròn cố định theo id người.
+        private static Color NpcColor(string npcId)
+        {
+            int hash = 17;
+            foreach (char c in npcId)
+                hash = hash * 31 + c;
+            return NpcColors[(hash & int.MaxValue) % NpcColors.Length];
+        }
+
+        // Tên người đặt (null nếu đơn không gắn người).
+        private string NpcName(OrderState order)
+            => _game.Farm.Definition.Orders.Dialogue.TryGetNpc(order.NpcId, out NpcDef npc) ? npc.DisplayName : null;
+
+        // Icon + tên món: nông sản (Kho) hoặc cá (giỏ).
+        private void ItemLook(OrderState order, OrderItem item, out Sprite icon, out string name)
+        {
+            icon = null;
+            name = item.Id;
+            if (order.IsFish)
+            {
+                FishingDefinition fishing = _game.Definition.Fishing;
+                if (fishing != null && fishing.TryGetFish(item.Id, out FishDefinition fish))
+                {
+                    icon = fish.Icon;
+                    name = fish.DisplayName;
+                }
+            }
+            else if (_game.TryGetCrop(item.Id, out CropDefinition crop))
+            {
+                icon = crop.ProduceIcon;
+                name = crop.DisplayName;
             }
         }
 

@@ -150,6 +150,8 @@ mergeInto(LibraryManager.library, {
         close();
       } else if (result === 2) {
         status.textContent = 'Mã từ bản game mới hơn. Hãy tải lại trang rồi thử lại.';
+      } else if (result === 3) {
+        status.textContent = 'Mã của bản cũ, không còn dùng được.';
       } else {
         status.textContent = 'Mã không hợp lệ. Hãy kiểm tra lại đã chép đủ mã chưa.';
       }

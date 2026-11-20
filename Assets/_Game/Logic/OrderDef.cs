@@ -11,7 +11,7 @@ namespace VeQue.Logic
     public sealed class OrderDef
     {
         // Không có đơn hàng.
-        public static readonly OrderDef None = new OrderDef(0, 1, 100, 100, 0, Array.Empty<string>());
+        public static readonly OrderDef None = new OrderDef(0, 1, 100, 100, 0, null);
 
         public int SlotCount { get; }
         public int UnlockLevel { get; }
@@ -19,7 +19,8 @@ namespace VeQue.Logic
         public int XpPercent { get; }
         // Bỏ đơn thường thì ô trống bao lâu mới có đơn mới.
         public long DiscardCooldownSeconds { get; }
-        public IReadOnlyList<string> CustomerNames { get; }
+        // Người làng + câu thoại (Đợt 2 Phần 11). Empty = đơn không gắn người.
+        public OrderDialogue Dialogue { get; }
         public int MaxHarvestsCap { get; }
         // Giao xong (hoặc đơn khẩn cấp hết hạn) thì ô trống bao lâu mới có đơn thường / khẩn cấp.
         public long RefillSeconds { get; }
@@ -32,10 +33,23 @@ namespace VeQue.Logic
         // Số đơn giao được mỗi ngày (giờ địa phương); 0 = không giới hạn.
         public int DailyLimit { get; }
 
+        // Đơn cá (Đợt 2 Phần 11, chốt 20/11/2026): chỉ khi đã mở câu cá, chỉ đơn hạng Thường.
+        // Tỉ lệ = FishOrderMinPercent% ở cấp mở câu cá, +1% mỗi cấp, tối đa FishOrderMaxPercent%. 0 = không có đơn cá.
+        public int FishOrderMinPercent { get; }
+        public int FishOrderMaxPercent { get; }
+        // Chỉ đặt loài có độ hiếm ≤ FishOrderMaxRarity và câu được ở ≥ FishOrderMinSlots khung giờ.
+        public FishRarity FishOrderMaxRarity { get; }
+        public int FishOrderMinSlots { get; }
+        // Số con: 1 ở cấp mở câu cá, +1 mỗi FishOrderLevelsPerFish cấp, tối đa FishOrderMaxCount.
+        public int FishOrderMaxCount { get; }
+        public int FishOrderLevelsPerFish { get; }
+
         public OrderDef(int slotCount, int unlockLevel, int coinPercent, int xpPercent, long discardCooldownSeconds,
-            IReadOnlyList<string> customerNames, int maxHarvestsCap = 6,
+            OrderDialogue dialogue, int maxHarvestsCap = 6,
             long refillSeconds = 0, long urgentRefillSeconds = 0, int urgentChancePercent = 0,
-            int urgentRewardPercent = 200, long urgentExpireSeconds = 0, int dailyLimit = 0)
+            int urgentRewardPercent = 200, long urgentExpireSeconds = 0, int dailyLimit = 0,
+            int fishOrderMinPercent = 0, int fishOrderMaxPercent = 0, FishRarity fishOrderMaxRarity = FishRarity.Uncommon,
+            int fishOrderMinSlots = 3, int fishOrderMaxCount = 3, int fishOrderLevelsPerFish = 3)
         {
             if (slotCount < 0)
                 throw new ArgumentOutOfRangeException(nameof(slotCount));
@@ -62,22 +76,17 @@ namespace VeQue.Logic
             if (dailyLimit < 0)
                 throw new ArgumentOutOfRangeException(nameof(dailyLimit));
 
-            var names = new List<string>();
-            if (customerNames != null)
-            {
-                foreach (string name in customerNames)
-                {
-                    if (!string.IsNullOrEmpty(name))
-                        names.Add(name);
-                }
-            }
+            if (fishOrderMinPercent < 0 || fishOrderMaxPercent < fishOrderMinPercent || fishOrderMaxPercent > 100)
+                throw new ArgumentOutOfRangeException(nameof(fishOrderMaxPercent), "Tỉ lệ đơn cá phải trong 0–100, min ≤ max.");
+            if (fishOrderMinSlots < 1 || fishOrderMaxCount < 1 || fishOrderLevelsPerFish < 1)
+                throw new ArgumentOutOfRangeException(nameof(fishOrderMaxCount));
 
             SlotCount = slotCount;
             UnlockLevel = unlockLevel;
             CoinPercent = coinPercent;
             XpPercent = xpPercent;
             DiscardCooldownSeconds = discardCooldownSeconds;
-            CustomerNames = names.AsReadOnly();
+            Dialogue = dialogue ?? OrderDialogue.Empty;
             MaxHarvestsCap = maxHarvestsCap;
             RefillSeconds = refillSeconds;
             UrgentRefillSeconds = urgentRefillSeconds;
@@ -85,7 +94,20 @@ namespace VeQue.Logic
             UrgentRewardPercent = urgentRewardPercent;
             UrgentExpireSeconds = urgentExpireSeconds;
             DailyLimit = dailyLimit;
+            FishOrderMinPercent = fishOrderMinPercent;
+            FishOrderMaxPercent = fishOrderMaxPercent;
+            FishOrderMaxRarity = fishOrderMaxRarity;
+            FishOrderMinSlots = fishOrderMinSlots;
+            FishOrderMaxCount = fishOrderMaxCount;
+            FishOrderLevelsPerFish = fishOrderLevelsPerFish;
         }
+
+        // levelsAbove = số cấp trên cấp mở câu cá (≥ 0).
+        public int GetFishOrderPercent(int levelsAbove)
+            => FishOrderMaxPercent <= 0 ? 0 : Math.Min(FishOrderMaxPercent, FishOrderMinPercent + Math.Max(0, levelsAbove));
+
+        public int GetFishOrderMaxCount(int levelsAbove)
+            => Math.Min(FishOrderMaxCount, 1 + Math.Max(0, levelsAbove) / FishOrderLevelsPerFish);
 
         // Cấp dưới 4: 1 loại; cấp 4–6: tối đa 2; từ cấp 7: tối đa 3.
         public int GetMaxItemTypes(int level) => level < 4 ? 1 : level < 7 ? 2 : 3;

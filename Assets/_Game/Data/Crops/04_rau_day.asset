@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d79a68c2214c76c4cb9a6ea0e8fa6ff8, type: 3}
+  m_Name: 04_rau_day
+  m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.CropDefinition
+  _id: rau_day
+  _displayName: "Rau \u0111ay"
+  _enabled: 1
+  _growMinutes: 20
+  _buyPrice: 18
+  _sellPrice: 25
+  _harvestYield: 2
+  _xp: 4
+  _unlockLevel: 4
+  _group: 0
+  _seedSprite: {fileID: 21300000, guid: 548a23a7caac49f9ad064365e69f6906, type: 3}
+  _stageSprites:
+  - {fileID: 21300000, guid: 8ac5df0a12ef49f58a81183f1d3d2cf1, type: 3}
+  - {fileID: 21300000, guid: e040229f289d414bad785dbd7b37eed8, type: 3}
+  - {fileID: 21300000, guid: cd42665843ab483f92edec0ade2d23bb, type: 3}
+  - {fileID: 21300000, guid: 48f4b1eb5f544d579abcc1699ecf723b, type: 3}
+  _produceIcon: {fileID: 21300000, guid: ffc15c2490934f209f9f5ca95d934817, type: 3}

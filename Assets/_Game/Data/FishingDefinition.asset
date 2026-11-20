@@ -26,24 +26,41 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 1f4f32ebb8df16e4d8a9733d3185a8fd, type: 2}
   - {fileID: 11400000, guid: a793f7902e240e5408aab41438b5ee35, type: 2}
   - {fileID: 11400000, guid: 52131d074ac167e4f9b63745d26986d2, type: 2}
+  - {fileID: 11400000, guid: 48e605e31145e9646b7cd3a3c931728e, type: 2}
+  - {fileID: 11400000, guid: 543a3a3c250dfac45bb215a92b8e04f6, type: 2}
+  - {fileID: 11400000, guid: 6ce73e3a063bc90478d07b7d83157536, type: 2}
+  - {fileID: 11400000, guid: 1eb630062f7913a4ea184833c7ddc095, type: 2}
+  - {fileID: 11400000, guid: 649ed60b778310e4696312dbe5f0b9a7, type: 2}
+  - {fileID: 11400000, guid: 2e0f1d0ad7a15ca4991db0eb0aed27a7, type: 2}
+  - {fileID: 11400000, guid: c2ff42c76f01ebb4fbee4cdb11863218, type: 2}
   _rods:
   - {fileID: 11400000, guid: fa47610c6b527824eb5818204630fa7c, type: 2}
+  - {fileID: 11400000, guid: be3b9c737cd42c84eb8d274b2422205c, type: 2}
   - {fileID: 11400000, guid: 2c893fba0f6ae3149a7593a397d06497, type: 2}
+  - {fileID: 11400000, guid: ff3988b624a440d42841ed5b859d25d5, type: 2}
   - {fileID: 11400000, guid: edeae24243a876b4aa0739df298e4f2c, type: 2}
+  - {fileID: 11400000, guid: b43a786a4c565b44784b585f3371134c, type: 2}
   - {fileID: 11400000, guid: 732a47dded544b246a73cf2017a86f8d, type: 2}
+  - {fileID: 11400000, guid: 0fd3861224d331c43857a76b8c763cdb, type: 2}
   - {fileID: 11400000, guid: 9f63c1e15e5d8c8478c8d01ad758e33b, type: 2}
+  - {fileID: 11400000, guid: d3eb095d35a5a07499ccaa716b25edff, type: 2}
   _baits:
   - {fileID: 11400000, guid: ae5b8469ca5dc774cac64a70424f31aa, type: 2}
   - {fileID: 11400000, guid: 51b664b5c271ddc4ca29439bda86037c, type: 2}
+  - {fileID: 11400000, guid: dd77e91db0c85214f9fcaa2f8e4d2da7, type: 2}
   - {fileID: 11400000, guid: faa4f59eca662784ebde4db1be560fe9, type: 2}
+  - {fileID: 11400000, guid: 5d550c90e75dcf5438f02c51ebcab79e, type: 2}
+  - {fileID: 11400000, guid: a8fa1dbeb646c0c4fa0f6333924c0e12, type: 2}
   - {fileID: 11400000, guid: f114cf97b9817b54baca17554ab00f44, type: 2}
   - {fileID: 11400000, guid: be700492586dd7742b43b0336e20781b, type: 2}
+  - {fileID: 11400000, guid: ef62e8e1576cc124d9f0dff08f7b7209, type: 2}
+  - {fileID: 11400000, guid: 57e2b4e6274c74d46a10e01cd729a009, type: 2}
   _unlockLevel: 1
   _starterRod: {fileID: 11400000, guid: fa47610c6b527824eb5818204630fa7c, type: 2}
   _starterBait: {fileID: 11400000, guid: ae5b8469ca5dc774cac64a70424f31aa, type: 2}
   _starterBaitCount: 10
-  _basketCapacities: 080000000a0000000c0000001000000014000000
-  _basketUpgradePrices: 00000000000000002c01000000000000e803000000000000b80b000000000000401f000000000000
+  _basketStartSlots: 8
+  _basketSlotPrices: 64000000000000008200000000000000aa00000000000000dc0000000000000022010000000000007201000000000000e0010000000000007602000000000000340300000000000024040000000000006405000000000000fe060000000000001a09000000000000d60b000000000000640f0000000000000014000000000000fa19000000000000
   _wormBait: {fileID: 11400000, guid: ae5b8469ca5dc774cac64a70424f31aa, type: 2}
   _wormChancePercent: 10
   _wormMin: 1
@@ -58,8 +75,8 @@ MonoBehaviour:
     PreferredBaitMultiplier: 3
     PerfectRareBonusPercent: 50
     GoodRareBonusPercent: 15
-    BiteMinSeconds: 3
-    BiteMaxSeconds: 15
+    BiteMinSeconds: 2
+    BiteMaxSeconds: 8
     PreferredBiteFactor: 0.7
     PerfectBiteFactor: 0.7
     MaxNibbles: 3
@@ -71,11 +88,18 @@ MonoBehaviour:
     GoodWeightExponent: 2
     NormalWeightExponent: 3
     RedArrowPercent: 25
+    MinPullArrows: 4
+    PullPreviewSeconds: 1.2
+    PullSecondsPerArrow: 0.45
     CastDurabilityCost: 1
-    SnapDurabilityCost: 0
-    SnapBreakMinPercent: 20
-    SnapBreakMaxPercent: 60
-    RepairMaxLossPercent: 10
-    RepairMinPercent: 15
+    RepairPricePercent: 30
+    LowDurabilityPercent: 10
     WeightValueMinPercent: 60
     WeightValueMaxPercent: 140
+    ShinyChancePer10000: 100
+    ShinyRareTierPercent: 3.2
+    ShinyCommonKinds: 010000000300000004000000050000000600000007000000
+    ShinyRareKinds: 0200000008000000
+    ShinyCommonPriceMultiplier: 3
+    ShinyRarePriceMultiplier: 10
+  _shinyPalette: {fileID: 11400000, guid: 98b0303d0ce8c4b41808cf1b8b64f6ae, type: 2}

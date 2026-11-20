@@ -68,7 +68,7 @@ namespace VeQue.EditorTools
             ("spikeyhair", "Tóc dựng"),
         };
 
-        [MenuItem("Về Quê/Nhân vật Sunnyside: import + gán sprite")]
+        [MenuItem("Về Quê/Import art/Nhân vật Sunnyside (import + gán sprite)", priority = 302)]
         private static void Run()
         {
             var prefixes = new List<string> { "base", "tools" };

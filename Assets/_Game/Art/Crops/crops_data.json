@@ -1,0 +1,516 @@
+{
+  "cellSize": [
+    16,
+    32
+  ],
+  "columns": [
+    "seed",
+    "stage1",
+    "stage2",
+    "stage3",
+    "icon",
+    "packet"
+  ],
+  "crops": [
+    {
+      "id": "rau_muong",
+      "name": "Rau muống",
+      "group": "rau lá",
+      "growSeconds": 120,
+      "level": 1,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt rau muống",
+      "sprites": {
+        "seed": "crop_rau_muong_seed.png",
+        "stage1": "crop_rau_muong_stage1.png",
+        "stage2": "crop_rau_muong_stage2.png",
+        "stage3": "crop_rau_muong_stage3.png",
+        "icon": "crop_rau_muong_icon.png",
+        "packet": "crop_rau_muong_packet.png"
+      },
+      "yield": 2
+    },
+    {
+      "id": "cai_xanh",
+      "name": "Cải xanh",
+      "group": "rau lá",
+      "growSeconds": 900,
+      "level": 2,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt cải xanh",
+      "sprites": {
+        "seed": "crop_cai_xanh_seed.png",
+        "stage1": "crop_cai_xanh_stage1.png",
+        "stage2": "crop_cai_xanh_stage2.png",
+        "stage3": "crop_cai_xanh_stage3.png",
+        "icon": "crop_cai_xanh_icon.png",
+        "packet": "crop_cai_xanh_packet.png"
+      },
+      "yield": 2
+    },
+    {
+      "id": "ca_chua",
+      "name": "Cà chua",
+      "group": "quả",
+      "growSeconds": 14400,
+      "level": 5,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt cà chua",
+      "sprites": {
+        "seed": "crop_ca_chua_seed.png",
+        "stage1": "crop_ca_chua_stage1.png",
+        "stage2": "crop_ca_chua_stage2.png",
+        "stage3": "crop_ca_chua_stage3.png",
+        "icon": "crop_ca_chua_icon.png",
+        "packet": "crop_ca_chua_packet.png"
+      },
+      "yield": 3
+    },
+    {
+      "id": "bi_ngo",
+      "name": "Bí ngô",
+      "group": "củ hạt",
+      "growSeconds": 21600,
+      "level": 7,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt bí ngô",
+      "sprites": {
+        "seed": "crop_bi_ngo_seed.png",
+        "stage1": "crop_bi_ngo_stage1.png",
+        "stage2": "crop_bi_ngo_stage2.png",
+        "stage3": "crop_bi_ngo_stage3.png",
+        "icon": "crop_bi_ngo_icon.png",
+        "packet": "crop_bi_ngo_packet.png"
+      },
+      "yield": 1
+    },
+    {
+      "id": "hanh_la",
+      "name": "Hành lá",
+      "group": "rau lá",
+      "growSeconds": 300,
+      "level": 2,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "cu",
+      "plantMaterialName": "Củ hành giống",
+      "sprites": {
+        "seed": "crop_hanh_la_seed.png",
+        "stage1": "crop_hanh_la_stage1.png",
+        "stage2": "crop_hanh_la_stage2.png",
+        "stage3": "crop_hanh_la_stage3.png",
+        "icon": "crop_hanh_la_icon.png",
+        "packet": "crop_hanh_la_packet.png"
+      },
+      "yield": 2
+    },
+    {
+      "id": "rau_day",
+      "name": "Rau đay",
+      "group": "rau lá",
+      "growSeconds": 1200,
+      "level": 4,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt rau đay",
+      "sprites": {
+        "seed": "crop_rau_day_seed.png",
+        "stage1": "crop_rau_day_stage1.png",
+        "stage2": "crop_rau_day_stage2.png",
+        "stage3": "crop_rau_day_stage3.png",
+        "icon": "crop_rau_day_icon.png",
+        "packet": "crop_rau_day_packet.png"
+      },
+      "yield": 2
+    },
+    {
+      "id": "mong_toi",
+      "name": "Mồng tơi",
+      "group": "rau lá",
+      "growSeconds": 1800,
+      "level": 3,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt mồng tơi",
+      "sprites": {
+        "seed": "crop_mong_toi_seed.png",
+        "stage1": "crop_mong_toi_stage1.png",
+        "stage2": "crop_mong_toi_stage2.png",
+        "stage3": "crop_mong_toi_stage3.png",
+        "icon": "crop_mong_toi_icon.png",
+        "packet": "crop_mong_toi_packet.png"
+      },
+      "yield": 2
+    },
+    {
+      "id": "dua_chuot",
+      "name": "Dưa chuột",
+      "group": "quả",
+      "growSeconds": 1800,
+      "level": 5,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt dưa chuột",
+      "sprites": {
+        "seed": "crop_dua_chuot_seed.png",
+        "stage1": "crop_dua_chuot_stage1.png",
+        "stage2": "crop_dua_chuot_stage2.png",
+        "stage3": "crop_dua_chuot_stage3.png",
+        "icon": "crop_dua_chuot_icon.png",
+        "packet": "crop_dua_chuot_packet.png"
+      },
+      "yield": 3
+    },
+    {
+      "id": "muop",
+      "name": "Mướp",
+      "group": "quả",
+      "growSeconds": 2700,
+      "level": 6,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt mướp",
+      "sprites": {
+        "seed": "crop_muop_seed.png",
+        "stage1": "crop_muop_stage1.png",
+        "stage2": "crop_muop_stage2.png",
+        "stage3": "crop_muop_stage3.png",
+        "icon": "crop_muop_icon.png",
+        "packet": "crop_muop_packet.png"
+      },
+      "yield": 3
+    },
+    {
+      "id": "dau_dua",
+      "name": "Đậu đũa",
+      "group": "quả",
+      "growSeconds": 3600,
+      "level": 3,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt đậu đũa",
+      "sprites": {
+        "seed": "crop_dau_dua_seed.png",
+        "stage1": "crop_dau_dua_stage1.png",
+        "stage2": "crop_dau_dua_stage2.png",
+        "stage3": "crop_dau_dua_stage3.png",
+        "icon": "crop_dau_dua_icon.png",
+        "packet": "crop_dau_dua_packet.png"
+      },
+      "yield": 4
+    },
+    {
+      "id": "bau",
+      "name": "Bầu",
+      "group": "quả",
+      "growSeconds": 5400,
+      "level": 7,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt bầu",
+      "sprites": {
+        "seed": "crop_bau_seed.png",
+        "stage1": "crop_bau_stage1.png",
+        "stage2": "crop_bau_stage2.png",
+        "stage3": "crop_bau_stage3.png",
+        "icon": "crop_bau_icon.png",
+        "packet": "crop_bau_packet.png"
+      },
+      "yield": 1
+    },
+    {
+      "id": "muop_dang",
+      "name": "Mướp đắng",
+      "group": "quả",
+      "growSeconds": 5400,
+      "level": 9,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt mướp đắng",
+      "sprites": {
+        "seed": "crop_muop_dang_seed.png",
+        "stage1": "crop_muop_dang_stage1.png",
+        "stage2": "crop_muop_dang_stage2.png",
+        "stage3": "crop_muop_dang_stage3.png",
+        "icon": "crop_muop_dang_icon.png",
+        "packet": "crop_muop_dang_packet.png"
+      },
+      "yield": 3
+    },
+    {
+      "id": "su_hao",
+      "name": "Su hào",
+      "group": "củ hạt",
+      "growSeconds": 7200,
+      "level": 8,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt su hào",
+      "sprites": {
+        "seed": "crop_su_hao_seed.png",
+        "stage1": "crop_su_hao_stage1.png",
+        "stage2": "crop_su_hao_stage2.png",
+        "stage3": "crop_su_hao_stage3.png",
+        "icon": "crop_su_hao_icon.png",
+        "packet": "crop_su_hao_packet.png"
+      },
+      "yield": 1
+    },
+    {
+      "id": "ngo_nep",
+      "name": "Ngô nếp",
+      "group": "củ hạt",
+      "growSeconds": 9000,
+      "level": 6,
+      "tallStage3": true,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt ngô nếp",
+      "sprites": {
+        "seed": "crop_ngo_nep_seed.png",
+        "stage1": "crop_ngo_nep_stage1.png",
+        "stage2": "crop_ngo_nep_stage2.png",
+        "stage3": "crop_ngo_nep_stage3.png",
+        "icon": "crop_ngo_nep_icon.png",
+        "packet": "crop_ngo_nep_packet.png"
+      },
+      "yield": 2
+    },
+    {
+      "id": "dua_hau",
+      "name": "Dưa hấu",
+      "group": "quả",
+      "growSeconds": 10800,
+      "level": 11,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt dưa hấu",
+      "sprites": {
+        "seed": "crop_dua_hau_seed.png",
+        "stage1": "crop_dua_hau_stage1.png",
+        "stage2": "crop_dua_hau_stage2.png",
+        "stage3": "crop_dua_hau_stage3.png",
+        "icon": "crop_dua_hau_icon.png",
+        "packet": "crop_dua_hau_packet.png"
+      },
+      "yield": 1
+    },
+    {
+      "id": "dau_xanh",
+      "name": "Đậu xanh",
+      "group": "củ hạt",
+      "growSeconds": 10800,
+      "level": 8,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt đậu xanh",
+      "sprites": {
+        "seed": "crop_dau_xanh_seed.png",
+        "stage1": "crop_dau_xanh_stage1.png",
+        "stage2": "crop_dau_xanh_stage2.png",
+        "stage3": "crop_dau_xanh_stage3.png",
+        "icon": "crop_dau_xanh_icon.png",
+        "packet": "crop_dau_xanh_packet.png"
+      },
+      "yield": 4
+    },
+    {
+      "id": "ca_phao",
+      "name": "Cà pháo",
+      "group": "quả",
+      "growSeconds": 12600,
+      "level": 10,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt cà pháo",
+      "sprites": {
+        "seed": "crop_ca_phao_seed.png",
+        "stage1": "crop_ca_phao_stage1.png",
+        "stage2": "crop_ca_phao_stage2.png",
+        "stage3": "crop_ca_phao_stage3.png",
+        "icon": "crop_ca_phao_icon.png",
+        "packet": "crop_ca_phao_packet.png"
+      },
+      "yield": 5
+    },
+    {
+      "id": "lac",
+      "name": "Lạc",
+      "group": "củ hạt",
+      "growSeconds": 18000,
+      "level": 10,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt lạc",
+      "sprites": {
+        "seed": "crop_lac_seed.png",
+        "stage1": "crop_lac_stage1.png",
+        "stage2": "crop_lac_stage2.png",
+        "stage3": "crop_lac_stage3.png",
+        "icon": "crop_lac_icon.png",
+        "packet": "crop_lac_packet.png"
+      },
+      "yield": 5
+    },
+    {
+      "id": "ot",
+      "name": "Ớt",
+      "group": "quả",
+      "growSeconds": 21600,
+      "level": 12,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt ớt",
+      "sprites": {
+        "seed": "crop_ot_seed.png",
+        "stage1": "crop_ot_stage1.png",
+        "stage2": "crop_ot_stage2.png",
+        "stage3": "crop_ot_stage3.png",
+        "icon": "crop_ot_icon.png",
+        "packet": "crop_ot_packet.png"
+      },
+      "yield": 5
+    },
+    {
+      "id": "lua",
+      "name": "Lúa",
+      "group": "củ hạt",
+      "growSeconds": 28800,
+      "level": 4,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt lúa",
+      "sprites": {
+        "seed": "crop_lua_seed.png",
+        "stage1": "crop_lua_stage1.png",
+        "stage2": "crop_lua_stage2.png",
+        "stage3": "crop_lua_stage3.png",
+        "icon": "crop_lua_icon.png",
+        "packet": "crop_lua_packet.png"
+      },
+      "yield": 2
+    },
+    {
+      "id": "khoai_lang",
+      "name": "Khoai lang",
+      "group": "củ hạt",
+      "growSeconds": 36000,
+      "level": 9,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "hom",
+      "plantMaterialName": "Hom khoai lang",
+      "sprites": {
+        "seed": "crop_khoai_lang_seed.png",
+        "stage1": "crop_khoai_lang_stage1.png",
+        "stage2": "crop_khoai_lang_stage2.png",
+        "stage3": "crop_khoai_lang_stage3.png",
+        "icon": "crop_khoai_lang_icon.png",
+        "packet": "crop_khoai_lang_packet.png"
+      },
+      "yield": 3
+    },
+    {
+      "id": "khoai_so",
+      "name": "Khoai sọ",
+      "group": "củ hạt",
+      "growSeconds": 43200,
+      "level": 13,
+      "tallStage3": false,
+      "event": null,
+      "plantMaterial": "cu",
+      "plantMaterialName": "Củ khoai sọ giống",
+      "sprites": {
+        "seed": "crop_khoai_so_seed.png",
+        "stage1": "crop_khoai_so_stage1.png",
+        "stage2": "crop_khoai_so_stage2.png",
+        "stage3": "crop_khoai_so_stage3.png",
+        "icon": "crop_khoai_so_icon.png",
+        "packet": "crop_khoai_so_packet.png"
+      },
+      "yield": 3
+    },
+    {
+      "id": "hoa_dao",
+      "name": "Hoa đào",
+      "group": "sự kiện",
+      "growSeconds": null,
+      "level": null,
+      "tallStage3": true,
+      "event": "Chợ Tết",
+      "plantMaterial": "cay_giong",
+      "plantMaterialName": "Cây đào giống",
+      "sprites": {
+        "seed": "crop_hoa_dao_seed.png",
+        "stage1": "crop_hoa_dao_stage1.png",
+        "stage2": "crop_hoa_dao_stage2.png",
+        "stage3": "crop_hoa_dao_stage3.png",
+        "icon": "crop_hoa_dao_icon.png",
+        "packet": "crop_hoa_dao_packet.png"
+      },
+      "yield": null
+    },
+    {
+      "id": "hoa_cuc",
+      "name": "Hoa cúc",
+      "group": "sự kiện",
+      "growSeconds": null,
+      "level": null,
+      "tallStage3": false,
+      "event": "Mùng 1",
+      "plantMaterial": "cay_giong",
+      "plantMaterialName": "Cây cúc giống",
+      "sprites": {
+        "seed": "crop_hoa_cuc_seed.png",
+        "stage1": "crop_hoa_cuc_stage1.png",
+        "stage2": "crop_hoa_cuc_stage2.png",
+        "stage3": "crop_hoa_cuc_stage3.png",
+        "icon": "crop_hoa_cuc_icon.png",
+        "packet": "crop_hoa_cuc_packet.png"
+      },
+      "yield": null
+    },
+    {
+      "id": "huong_duong",
+      "name": "Hướng dương",
+      "group": "sự kiện",
+      "growSeconds": null,
+      "level": null,
+      "tallStage3": true,
+      "event": "Mùng 1",
+      "plantMaterial": "hat",
+      "plantMaterialName": "Hạt hướng dương",
+      "sprites": {
+        "seed": "crop_huong_duong_seed.png",
+        "stage1": "crop_huong_duong_stage1.png",
+        "stage2": "crop_huong_duong_stage2.png",
+        "stage3": "crop_huong_duong_stage3.png",
+        "icon": "crop_huong_duong_icon.png",
+        "packet": "crop_huong_duong_packet.png"
+      },
+      "yield": null
+    }
+  ]
+}

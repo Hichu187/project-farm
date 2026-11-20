@@ -6,12 +6,16 @@ namespace VeQue.Logic
     [Serializable]
     public sealed class SaveData
     {
-        // 2: thêm orders, randomState (save 1 nạp được, đơn sinh mới).
-        // 3: thêm character (save 1, 2 nạp được: chưa tạo nhân vật, tóc mặc định).
-        // 4: thêm hạng / hạn đơn, giới hạn đơn mỗi ngày, múi giờ (save 1–3 nạp được: đơn thường, lượt hôm nay = 0).
-        // 5: thêm fishing – cần, mồi, giỏ cá, kỷ lục (save 1–4 nạp được: chưa có gì, được tặng cần + mồi khi mở).
-        // 6: thêm repairCount của cần (save 1–5 nạp được: chưa sửa lần nào).
-        public const int CurrentVersion = 6;
+        // 8: bộ 25 cây thuần Việt (Đợt 2 Phần 4).
+        // 9: sửa cần không giảm độ bền tối đa – bỏ repairCount, snapped của cần; bỏ basketLevel (Đợt 2 Phần 1).
+        // 10: cá shiny – SaveFish.shiny, SaveFishing.shinyDex (Đợt 2 Phần 18).
+        // 11: đơn có thoại + đơn cá – SaveOrder bỏ customer, thêm kind / npc / line / seed; orderLines, lastThanks (Đợt 2 Phần 11).
+        // 12: GameCalendar UTC+7 cố định – bỏ utcOffsetSeconds, thêm lastSeenDayKey (Đợt 2 Phần 2).
+        // 13: hộp thư – mailbox (Đợt 2 Phần 3).
+        public const int CurrentVersion = 13;
+        // Đợt 2, trước bản thử kín: không migration – save cũ hơn mốc này bị bỏ, tạo save mới.
+        // Phần nào đổi cấu trúc save thì tăng cả CurrentVersion và MinSupportedVersion.
+        public const int MinSupportedVersion = 13;
 
         public int version;
         public long coins;
@@ -30,8 +34,13 @@ namespace VeQue.Logic
         // Chỉ số ngày (giờ địa phương) và số đơn đã giao trong ngày đó; 0 = chưa có.
         public long orderDay;
         public int deliveredToday;
-        public int utcOffsetSeconds;
+        // Ngày lớn nhất đã thấy (GameCalendar.DayKey) – chống lùi ngày.
+        public int lastSeenDayKey = int.MinValue;
+        public SaveMailbox mailbox;
         public SaveFishing fishing;
+        // Đơn có thoại: câu đặt đơn vừa dùng của từng người (id người → chỉ số câu), câu cảm ơn vừa dùng (-1 = chưa có).
+        public SaveCount[] orderLines;
+        public int lastThanks = -1;
     }
 
     [Serializable]
@@ -41,10 +50,55 @@ namespace VeQue.Logic
         public string equippedRod;
         public SaveCount[] baits;
         public SaveFish[] basket;
-        public int basketLevel;
+        // Số ô giỏ đã mở.
+        public int basketSlots;
         // Kỷ lục cân nặng (gam) theo loài.
         public SaveCount[] records;
         public bool starterGranted;
+        // Các cặp (loài, kiểu shiny) đã câu được.
+        public SaveShiny[] shinyDex;
+    }
+
+    [Serializable]
+    public sealed class SaveMailbox
+    {
+        public SaveMail[] mails;
+        // Mọi id thư đã từng gửi (chống gửi lại thư đã bị dọn).
+        public string[] sentIds;
+        public int lastRefreshDayKey = int.MinValue;
+    }
+
+    [Serializable]
+    public sealed class SaveMail
+    {
+        public string id;
+        public string sender;
+        public string title;
+        public string body;
+        public SaveReward[] rewards;
+        public int createdDayKey;
+        public int expiresDayKey = int.MaxValue;
+        public bool read;
+        public bool claimed;
+        public int claimedDayKey;
+    }
+
+    [Serializable]
+    public sealed class SaveReward
+    {
+        // RewardKind (số cố định).
+        public int kind;
+        public string id;
+        public long amount;
+    }
+
+    [Serializable]
+    public sealed class SaveShiny
+    {
+        public string fishId;
+        // ShinyKind (số cố định).
+        public int kind;
+        public long firstCaughtAt;
     }
 
     [Serializable]
@@ -52,8 +106,6 @@ namespace VeQue.Logic
     {
         public string id;
         public int durability;
-        public bool snapped;
-        public int repairCount;
     }
 
     [Serializable]
@@ -64,6 +116,8 @@ namespace VeQue.Logic
         public long caughtAt;
         // DaySlot (0–6).
         public int slot;
+        // ShinyKind (0 = cá thường; kiểu lạ đọc ra None).
+        public int shiny;
     }
 
     [Serializable]
@@ -80,7 +134,12 @@ namespace VeQue.Logic
     [Serializable]
     public sealed class SaveOrder
     {
-        public string customer;
+        // OrderKind (0 nông sản, 1 cá).
+        public int kind;
+        // Người đặt (id trong npcs.json), câu thoại (chỉ số trong order_lines.csv, -1 = không có), seed của đơn.
+        public string npc;
+        public int line = -1;
+        public long seed;
         public SaveCount[] items;
         public long rewardCoins;
         public long rewardXp;
@@ -121,5 +180,7 @@ namespace VeQue.Logic
         Ok = 0,
         Invalid = 1,
         NewerVersion = 2,
+        // Save của bản cũ không còn dùng được (version < MinSupportedVersion).
+        Outdated = 3,
     }
 }

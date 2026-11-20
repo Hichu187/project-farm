@@ -22,7 +22,7 @@ namespace VeQue.EditorTools
         private static readonly string[] CornerFiles = { "selectbox_tl", "selectbox_tr", "selectbox_bl", "selectbox_br" };
         private static readonly string[] CornerFields = { "_topLeft", "_topRight", "_bottomLeft", "_bottomRight" };
 
-        [MenuItem("Về Quê/Khung chọn: tạo asset + gán vào scene")]
+        [MenuItem("Về Quê/Dựng scene/Khung chọn (tạo asset + gán)", priority = 103)]
         private static void Setup()
         {
             var errors = new List<string>();

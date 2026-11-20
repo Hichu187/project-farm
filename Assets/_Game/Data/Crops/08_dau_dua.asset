@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d79a68c2214c76c4cb9a6ea0e8fa6ff8, type: 3}
+  m_Name: 08_dau_dua
+  m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.CropDefinition
+  _id: dau_dua
+  _displayName: "\u0110\u1EADu \u0111\u0169a"
+  _enabled: 1
+  _growMinutes: 60
+  _buyPrice: 37
+  _sellPrice: 28
+  _harvestYield: 4
+  _xp: 9
+  _unlockLevel: 3
+  _group: 1
+  _seedSprite: {fileID: 21300000, guid: ae92dc9e65114eef99b1c326c5722ca0, type: 3}
+  _stageSprites:
+  - {fileID: 21300000, guid: 7f970830efe140b9bd565d16efd7c9d5, type: 3}
+  - {fileID: 21300000, guid: 51ba04085bc4476b84cc7bd8b5f4adc9, type: 3}
+  - {fileID: 21300000, guid: eb8d5e49f925420582fcdf64569832bb, type: 3}
+  - {fileID: 21300000, guid: 62eab38c9b4349c8bb4a6172b49a1523, type: 3}
+  _produceIcon: {fileID: 21300000, guid: 8d591af7c67143a19b761d7d16f8273f, type: 3}

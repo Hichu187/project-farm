@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d79a68c2214c76c4cb9a6ea0e8fa6ff8, type: 3}
+  m_Name: 03_cai_xanh
+  m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.CropDefinition
+  _id: cai_xanh
+  _displayName: "C\u1EA3i xanh"
+  _enabled: 1
+  _growMinutes: 15
+  _buyPrice: 15
+  _sellPrice: 20
+  _harvestYield: 2
+  _xp: 4
+  _unlockLevel: 2
+  _group: 0
+  _seedSprite: {fileID: 21300000, guid: 72a0426fd0e3465b9c140aa2cb709d6b, type: 3}
+  _stageSprites:
+  - {fileID: 21300000, guid: 69e0abd3bd244def8e37bac545d303cc, type: 3}
+  - {fileID: 21300000, guid: 4cd7b9b2263c4fcba4ffb725953ad74e, type: 3}
+  - {fileID: 21300000, guid: 82a410db325a484da7b6e00ea9c09bb3, type: 3}
+  - {fileID: 21300000, guid: 7c1949da68bb4c97a3ec3802ba85c35d, type: 3}
+  _produceIcon: {fileID: 21300000, guid: a8bfb5c5d7f44f4fb549bcb027fd164a, type: 3}

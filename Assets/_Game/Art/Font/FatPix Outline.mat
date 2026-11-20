@@ -36,8 +36,8 @@ Material:
     - _MaskSoftnessX: 0
     - _MaskSoftnessY: 0
     - _OutlineCorners: 1
-    - _OutlineTexels: 1
-    - _Padding: 1
+    - _OutlineTexels: 1.25
+    - _Padding: 0
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0

@@ -7,10 +7,6 @@ namespace VeQue.Logic
     // Thời gian chỉ lấy từ IClock; không đếm giờ theo frame.
     public sealed partial class Farm
     {
-        private const long SecondsPerDay = 86400;
-        // Múi giờ thật nằm trong UTC−12 … UTC+14.
-        private const int MaxUtcOffsetSeconds = 14 * 3600;
-
         private readonly IClock _clock;
 
         // Báo sau mỗi lệnh thành công. Cây lớn theo thời gian không phát sự kiện, View tự làm mới định kỳ.
@@ -19,32 +15,39 @@ namespace VeQue.Logic
         public event Action<int> LeveledUp;
         // Báo id cây được tặng 1 hạt vì người chơi bị kẹt; phát trước Changed của lệnh đó.
         public event Action<string> Rescued;
+        // Báo giao đơn xong (người đặt, câu cảm ơn) để View hiện bong bóng; phát trước Changed của lệnh đó.
+        public event Action<OrderDelivery> OrderDelivered;
 
         public FarmDef Definition { get; }
         public FarmState State { get; }
+        // Ngày / khung giờ / âm lịch theo giờ VN (UTC+7 cố định), không lùi ngày (Đợt 2 Phần 2).
+        public GameCalendar Calendar { get; }
 
         public Farm(FarmDef definition, FarmState state, IClock clock)
         {
             Definition = definition ?? throw new ArgumentNullException(nameof(definition));
             State = state ?? throw new ArgumentNullException(nameof(state));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            Calendar = new GameCalendar(clock, definition.Lunar, state);
 
             ValidateState();
             State.GrantAvailableStartPlots(Definition);
             GrantFishingStarter();
             TryRescue();
             FillOrders();
+            // Thư theo build + dọn thư lần đầu trong ngày (không báo Changed lúc nạp).
+            RefreshMailInternal();
         }
 
         public int OrderSlotCount => State.Orders.Length;
 
         public bool OrdersUnlocked => Definition.Orders.SlotCount > 0 && State.Level >= Definition.Orders.UnlockLevel;
 
-        // Chỉ số ngày theo giờ địa phương (đổi lúc 0 giờ).
-        public long CurrentDay => FloorDiv(_clock.UtcNowSeconds + State.UtcOffsetSeconds, SecondsPerDay);
+        // Chỉ số ngày (số ngày từ 1970) theo giờ VN, đổi lúc 0 giờ VN, không lùi (GameCalendar).
+        public long CurrentDay => Calendar.AbsoluteDay;
 
-        // Số giây tới 0 giờ hôm sau (giờ địa phương).
-        public long SecondsUntilNextDay => (CurrentDay + 1) * SecondsPerDay - (_clock.UtcNowSeconds + State.UtcOffsetSeconds);
+        // Số giây tới 0 giờ hôm sau (giờ VN).
+        public long SecondsUntilNextDay => Calendar.SecondsUntilNextDay;
 
         public bool HasDailyOrderLimit => Definition.Orders.DailyLimit > 0;
 
@@ -75,16 +78,6 @@ namespace VeQue.Logic
             return true;
         }
 
-        // Độ lệch múi giờ (giây, dương = phía đông UTC). View gọi lúc mở game; đổi ngày thì đếm lại lượt đơn.
-        public void SetUtcOffset(int seconds)
-        {
-            seconds = Math.Max(-MaxUtcOffsetSeconds, Math.Min(MaxUtcOffsetSeconds, seconds));
-            if (seconds == State.UtcOffsetSeconds)
-                return;
-            State.UtcOffsetSeconds = seconds;
-            RefreshOrders();
-        }
-
         public bool TryGetOrder(int slot, out OrderState order)
         {
             if (slot < 0 || slot >= State.Orders.Length)
@@ -96,7 +89,7 @@ namespace VeQue.Logic
             return true;
         }
 
-        // Đủ nông sản trong Kho để giao đơn này.
+        // Đủ nông sản trong Kho (đơn cá: đủ cá thường trong giỏ) để giao đơn này.
         public bool CanDeliver(int slot)
         {
             if (!OrdersUnlocked || !TryGetOrder(slot, out OrderState order) || !order.HasOrder
@@ -104,10 +97,18 @@ namespace VeQue.Logic
                 return false;
             foreach (OrderItem item in order.Items)
             {
-                if (State.GetItems(item.CropId) < item.Count)
+                if (GetOrderItemHave(order, item) < item.Count)
                     return false;
             }
             return true;
+        }
+
+        // Số đang có cho 1 món của đơn: nông sản trong Kho, hoặc cá thường (không shiny) cùng loài trong giỏ.
+        public int GetOrderItemHave(OrderState order, OrderItem item)
+        {
+            if (order == null || item == null)
+                return 0;
+            return order.IsFish ? CountOrderFish(item.Id) : State.GetItems(item.Id);
         }
 
         public FarmResult DeliverOrder(int slot)
@@ -129,13 +130,20 @@ namespace VeQue.Logic
                 return FarmResult.NotEnoughItems;
 
             foreach (OrderItem item in order.Items)
-                FarmState.AddCount(State.Inventory, item.CropId, -item.Count);
+            {
+                if (order.IsFish)
+                    TakeOrderFish(item.Id, item.Count);
+                else
+                    FarmState.AddCount(State.Inventory, item.Id, -item.Count);
+            }
             State.Coins += order.RewardCoins;
             long xp = order.RewardXp;
+            var delivery = new OrderDelivery(slot, order.NpcId, PickThanksLine(order), order.RewardCoins, xp);
             RollOrderDay();
             State.DeliveredToday++;
             ScheduleNextOrder(order, now, false);
             AddXp(xp);
+            OrderDelivered?.Invoke(delivery);
             NotifyChanged();
             return FarmResult.Ok;
         }
@@ -342,6 +350,8 @@ namespace VeQue.Logic
         {
             var crops = new List<string>();
             var zones = new List<int>();
+            var rods = new List<string>();
+            var baits = new List<string>();
             bool orders = false;
             long coins = 0;
             int seeds = 0;
@@ -360,11 +370,25 @@ namespace VeQue.Logic
                         zones.Add(i);
                 }
                 orders = Definition.Orders.SlotCount > 0 && Definition.Orders.UnlockLevel == level;
+                if (Definition.Fishing.IsEnabled)
+                {
+                    foreach (RodDef rod in Definition.Fishing.Rods)
+                    {
+                        if (rod.UnlockLevel == level)
+                            rods.Add(rod.Id);
+                    }
+                    foreach (BaitDef bait in Definition.Fishing.Baits)
+                    {
+                        if (bait.Buyable && bait.UnlockLevel == level)
+                            baits.Add(bait.Id);
+                    }
+                }
             }
-            return new LevelUnlocks(level, coins, crops, seeds, zones, orders);
+            return new LevelUnlocks(level, coins, crops, seeds, zones, orders, rods, baits);
         }
 
         // Giai đoạn 0..StageCount-1 của cây đang lớn; -1 nếu ô không có cây.
+        // Giai đoạn cuối (sprite cây đã ra quả) chỉ hiện khi chín; các giai đoạn trước chia đều thời gian lớn.
         public int GetStage(PlotId id)
         {
             if (!TryGetGrowing(id, out PlotState plot, out CropDef crop))
@@ -373,7 +397,9 @@ namespace VeQue.Logic
             long elapsed = GetElapsed(plot);
             if (elapsed >= crop.GrowSeconds)
                 return crop.StageCount - 1;
-            return (int)(elapsed * crop.StageCount / crop.GrowSeconds);
+            if (crop.StageCount <= 1)
+                return 0;
+            return (int)(elapsed * (crop.StageCount - 1) / crop.GrowSeconds);
         }
 
         // Số giây còn lại tới khi chín, 0 nếu đã chín; -1 nếu ô không có cây.
@@ -477,14 +503,15 @@ namespace VeQue.Logic
             }
         }
 
-        private static long FloorDiv(long value, long divisor)
-        {
-            long quotient = value / divisor;
-            return value % divisor < 0 ? quotient - 1 : quotient;
-        }
-
         private bool GenerateOrder(OrderState order, OrderRank rank, long now)
         {
+            // Đơn cá: chỉ hạng Thường (không có đơn cá khẩn), chỉ khi đã mở câu cá.
+            if (rank == OrderRank.Normal && RollFishOrder(out List<FishDef> fishPool))
+            {
+                GenerateFishOrder(order, fishPool, now);
+                return true;
+            }
+
             OrderDef def = Definition.Orders;
             var unlocked = new List<CropDef>();
             foreach (CropDef crop in Definition.Crops)
@@ -509,14 +536,71 @@ namespace VeQue.Logic
 
                 int harvests = SeededRandom.Range(ref State.RandomState, 1, def.GetMaxHarvests(level) + 1);
                 int count = harvests * crop.HarvestYield;
-                items[i] = new OrderItem { CropId = crop.Id, Count = count };
+                items[i] = new OrderItem { Id = crop.Id, Count = count };
                 coins += (long)count * crop.SellPrice;
                 xp += (long)harvests * crop.Xp;
             }
 
-            IReadOnlyList<string> names = def.CustomerNames;
-            order.Customer = names.Count > 0 ? names[SeededRandom.Range(ref State.RandomState, 0, names.Count)] : null;
+            order.Kind = OrderKind.Crops;
             order.Items = items;
+            FinishOrder(order, rank, now, coins, xp);
+            return true;
+        }
+
+        // Đơn cá: 1 loài trong pool, 1..GetFishOrderMaxCount con. Thưởng theo giá / XP gốc của cá, cùng hệ số đơn nông sản.
+        private void GenerateFishOrder(OrderState order, List<FishDef> pool, long now)
+        {
+            int levelsAbove = State.Level - Definition.Fishing.UnlockLevel;
+            FishDef fish = pool[SeededRandom.Range(ref State.RandomState, 0, pool.Count)];
+            int count = SeededRandom.Range(ref State.RandomState, 1, Definition.Orders.GetFishOrderMaxCount(levelsAbove) + 1);
+            order.Kind = OrderKind.Fish;
+            order.Items = new[] { new OrderItem { Id = fish.Id, Count = count } };
+            FinishOrder(order, OrderRank.Normal, now, (long)count * fish.BasePrice, (long)count * fish.BaseXp);
+        }
+
+        // Có ra đơn cá không: đã mở câu cá, tỉ lệ theo cấp > 0, có loài hợp lệ. Không đủ điều kiện thì không tung số
+        // (giữ chuỗi đơn như trước).
+        private bool RollFishOrder(out List<FishDef> pool)
+        {
+            pool = null;
+            OrderDef def = Definition.Orders;
+            if (!FishingUnlocked)
+                return false;
+            int percent = def.GetFishOrderPercent(State.Level - Definition.Fishing.UnlockLevel);
+            if (percent <= 0)
+                return false;
+            pool = GetFishOrderPool();
+            if (pool.Count == 0)
+                return false;
+            return SeededRandom.Range(ref State.RandomState, 0, 100) < percent;
+        }
+
+        // Loài đặt được trong đơn cá: độ hiếm thấp, câu được ở đủ nhiều khung giờ (không kẹt đơn).
+        // Phần 5 (album) sẽ lọc thêm: chỉ loài đã câu được.
+        public List<FishDef> GetFishOrderPool()
+        {
+            OrderDef def = Definition.Orders;
+            var pool = new List<FishDef>();
+            foreach (FishDef fish in Definition.Fishing.Fish)
+            {
+                if (fish.Rarity > def.FishOrderMaxRarity)
+                    continue;
+                int slots = 0;
+                foreach (float factor in fish.SlotFactors)
+                {
+                    if (factor > 0f)
+                        slots++;
+                }
+                if (slots >= def.FishOrderMinSlots)
+                    pool.Add(fish);
+            }
+            return pool;
+        }
+
+        // Thưởng, hạng, hạn; rồi gắn người đặt + câu thoại.
+        private void FinishOrder(OrderState order, OrderRank rank, long now, long coins, long xp)
+        {
+            OrderDef def = Definition.Orders;
             long rankPercent = rank == OrderRank.Urgent ? def.UrgentRewardPercent : 100;
             // Làm tròn tới 5 xu gần nhất, ít nhất 5. Đơn thường: (coins × CoinPercent + 250) / 500 × 5.
             order.RewardCoins = Math.Max(5L, (coins * def.CoinPercent * rankPercent + 25000) / 50000 * 5);
@@ -524,7 +608,87 @@ namespace VeQue.Logic
             order.AvailableAt = 0;
             order.Rank = rank;
             order.ExpiresAt = rank == OrderRank.Urgent && def.UrgentExpireSeconds > 0 ? now + def.UrgentExpireSeconds : 0;
-            return true;
+            // 1 lần tung từ chuỗi chính (thay cho lần chọn tên khách cũ); người + câu chọn bằng random riêng của đơn.
+            order.Seed = SeededRandom.Next(ref State.RandomState);
+            AssignDialogue(order);
+        }
+
+        // Người đặt: theo trọng số (đơn cá dùng FishWeight); người hay đặt cây có trong đơn ×3.
+        // Câu: đúng loại (khẩn / cá / thường), không lặp câu người đó vừa dùng.
+        private void AssignDialogue(OrderState order)
+        {
+            OrderDialogue dialogue = Definition.Orders.Dialogue;
+            uint random = SeededRandom.Mix(order.Seed);
+            NpcDef npc = PickNpc(dialogue, order, ref random);
+            order.NpcId = npc?.Id;
+
+            string itemId = order.Items.Length > 0 ? order.Items[0].Id : null;
+            bool hasDish = !order.IsFish && dialogue.GetDishes(itemId).Count > 0;
+            OrderLineKind kind = order.IsFish ? OrderLineKind.Fish
+                : order.IsUrgent ? OrderLineKind.Urgent : OrderLineKind.Request;
+            int exclude = npc != null && State.LastOrderLines.TryGetValue(npc.Id, out int last) ? last : -1;
+            int line = dialogue.PickLine(kind, npc?.Id, itemId, hasDish, exclude, ref random);
+            if (line < 0 && kind != OrderLineKind.Request)
+                line = dialogue.PickLine(OrderLineKind.Request, npc?.Id, itemId, hasDish, exclude, ref random);
+            order.Line = line;
+            if (npc != null && line >= 0)
+                State.LastOrderLines[npc.Id] = line;
+        }
+
+        private static NpcDef PickNpc(OrderDialogue dialogue, OrderState order, ref uint random)
+        {
+            IReadOnlyList<NpcDef> npcs = dialogue.Npcs;
+            if (npcs.Count == 0)
+                return null;
+            bool fish = order.IsFish;
+            long total = 0;
+            for (int pass = 0; pass < 2 && total == 0; pass++)
+            {
+                // Lượt 2: không ai đặt đơn cá thì chọn theo trọng số thường.
+                bool useFish = fish && pass == 0;
+                total = 0;
+                foreach (NpcDef npc in npcs)
+                    total += NpcWeight(npc, order, useFish);
+                if (total == 0)
+                    continue;
+                long pick = SeededRandom.Next(ref random) % total;
+                foreach (NpcDef npc in npcs)
+                {
+                    long weight = NpcWeight(npc, order, useFish);
+                    if (pick < weight)
+                        return npc;
+                    pick -= weight;
+                }
+            }
+            return null;
+        }
+
+        private static long NpcWeight(NpcDef npc, OrderState order, bool fish)
+        {
+            if (fish)
+                return npc.FishWeight;
+            if (order.IsFish)
+                return npc.Weight;
+            foreach (OrderItem item in order.Items)
+            {
+                if (npc.Prefers(item.Id))
+                    return (long)npc.Weight * PreferredNpcFactor;
+            }
+            return npc.Weight;
+        }
+
+        private const int PreferredNpcFactor = 3;
+
+        // Câu cảm ơn khi giao: của người đặt hoặc dùng chung, không lặp câu cảm ơn vừa dùng.
+        private int PickThanksLine(OrderState order)
+        {
+            OrderDialogue dialogue = Definition.Orders.Dialogue;
+            uint random = SeededRandom.Mix(order.Seed ^ 0x7A4E4B53u);
+            string itemId = order.Items.Length > 0 ? order.Items[0].Id : null;
+            int line = dialogue.PickLine(OrderLineKind.Thanks, order.NpcId, itemId, false, State.LastThanksLine, ref random);
+            if (line >= 0)
+                State.LastThanksLine = line;
+            return line;
         }
 
         // Cộng XP, lên liền nhiều cấp nếu đủ. Tới cấp tối đa thì không giữ XP nữa.
@@ -594,6 +758,9 @@ namespace VeQue.Logic
 
             if (State.Coins >= cheapestSeed)
                 return false;
+            // Còn cá trong giỏ thì bán được lấy xu (giai đoạn 5, 13/11/2026). Mồi / cần không tính.
+            if (State.Fishing != null && State.Fishing.Basket.Count > 0)
+                return false;
 
             foreach (ZoneState zone in State.Zones)
             {
@@ -655,6 +822,7 @@ namespace VeQue.Logic
             State.Inventory ??= new Dictionary<string, int>();
             NormalizeOrders();
             NormalizeFishing();
+            NormalizeMail();
             if (State.RandomState == 0)
                 State.RandomState = SeededRandom.Seed(_clock.UtcNowSeconds);
         }
@@ -678,17 +846,29 @@ namespace VeQue.Logic
                 order.Items ??= Array.Empty<OrderItem>();
                 if (order.HasOrder && !IsValidOrder(order))
                     order.Clear(0, OrderRank.Normal);
+                // Người / câu không còn trong data: bỏ người, bỏ câu (đơn vẫn giữ).
+                OrderDialogue dialogue = Definition.Orders.Dialogue;
+                if (order.NpcId != null && !dialogue.TryGetNpc(order.NpcId, out _))
+                    order.NpcId = null;
+                if (!dialogue.TryGetLine(order.Line, out _))
+                    order.Line = -1;
             }
             State.Orders = current;
+            State.LastOrderLines ??= new Dictionary<string, int>();
         }
 
         private bool IsValidOrder(OrderState order)
         {
             if (order.RewardCoins < 0 || order.RewardXp < 0)
                 return false;
+            if (order.IsFish && order.Items.Length != 1)
+                return false;
             foreach (OrderItem item in order.Items)
             {
-                if (item == null || item.Count <= 0 || !Definition.TryGetCrop(item.CropId, out _))
+                if (item == null || item.Count <= 0)
+                    return false;
+                bool known = order.IsFish ? Definition.Fishing.TryGetFish(item.Id, out _) : Definition.TryGetCrop(item.Id, out _);
+                if (!known)
                     return false;
             }
             return true;

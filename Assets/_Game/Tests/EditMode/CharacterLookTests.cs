@@ -132,21 +132,6 @@ namespace VeQue.Tests
         }
 
         [Test]
-        public void Save_Version2WithoutCharacter_NotCreatedDefaultLook()
-        {
-            Farm farm = CreateFarm();
-            SaveData data = SaveMapper.ToSave(farm.State, farm.Definition, _clock.UtcNowSeconds);
-            data.version = 2;
-            data.character = null;
-
-            Assert.AreEqual(SaveLoadResult.Ok, SaveMapper.TryFromSave(data, farm.Definition, out FarmState loaded));
-
-            Assert.IsFalse(loaded.Character.Created);
-            Assert.AreEqual(CharacterLook.DefaultHairStyle, loaded.Character.HairStyle);
-            Assert.AreEqual(CharacterLook.DefaultHairColor, loaded.Character.HairColor);
-        }
-
-        [Test]
         public void Save_EmptyCharacterObject_LikeJsonUtilityDefault_NotCreated()
         {
             // JsonUtility tạo sẵn object rỗng khi save cũ thiếu trường character.

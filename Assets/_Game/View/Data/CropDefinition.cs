@@ -18,6 +18,8 @@ namespace VeQue.View.Data
         [Min(0)] [SerializeField] private int _xp;
         [Tooltip("Cấp cần để gieo và mua hạt.")]
         [Min(1)] [SerializeField] private int _unlockLevel = 1;
+        [Tooltip("Nhóm giá: rau lá đổi giá theo chợ sáng / khuya.")]
+        [SerializeField] private CropGroup _group = CropGroup.LeafyGreen;
 
         [Header("Art")]
         [SerializeField] private Sprite _seedSprite;
@@ -29,6 +31,7 @@ namespace VeQue.View.Data
         public string DisplayName => _displayName;
         public bool Enabled => _enabled;
         public int UnlockLevel => _unlockLevel;
+        public CropGroup Group => _group;
         public Sprite SeedSprite => _seedSprite;
         public Sprite ProduceIcon => _produceIcon;
 
@@ -42,7 +45,7 @@ namespace VeQue.View.Data
         public CropDef ToDef()
         {
             int stageCount = _stageSprites == null ? 1 : Mathf.Max(1, _stageSprites.Length);
-            return new CropDef(_id, _growMinutes * 60L, _buyPrice, _sellPrice, _harvestYield, stageCount, _xp, _unlockLevel);
+            return new CropDef(_id, _growMinutes * 60L, _buyPrice, _sellPrice, _harvestYield, stageCount, _xp, _unlockLevel, _group);
         }
     }
 }

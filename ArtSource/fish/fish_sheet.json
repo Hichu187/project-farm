@@ -1,0 +1,207 @@
+{
+  "cell": 16,
+  "columns": 5,
+  "rows": 4,
+  "fish": [
+    {
+      "index": 0,
+      "no": 1,
+      "id": "fish_01_ca_ro",
+      "name_vi": "Cá rô",
+      "name_en": "climbing perch",
+      "rarity": "common",
+      "col": 0,
+      "row": 0
+    },
+    {
+      "index": 1,
+      "no": 2,
+      "id": "fish_02_ca_diec",
+      "name_vi": "Cá diếc",
+      "name_en": "crucian carp",
+      "rarity": "common",
+      "col": 1,
+      "row": 0
+    },
+    {
+      "index": 2,
+      "no": 3,
+      "id": "fish_03_tep",
+      "name_vi": "Tép",
+      "name_en": "freshwater shrimp",
+      "rarity": "common",
+      "col": 2,
+      "row": 0
+    },
+    {
+      "index": 3,
+      "no": 4,
+      "id": "fish_04_ca_ro_phi",
+      "name_vi": "Cá rô phi",
+      "name_en": "tilapia",
+      "rarity": "common",
+      "col": 3,
+      "row": 0
+    },
+    {
+      "index": 4,
+      "no": 5,
+      "id": "fish_05_ca_chach",
+      "name_vi": "Cá chạch",
+      "name_en": "pond loach",
+      "rarity": "common",
+      "col": 4,
+      "row": 0
+    },
+    {
+      "index": 5,
+      "no": 6,
+      "id": "fish_06_ca_chep",
+      "name_vi": "Cá chép",
+      "name_en": "common carp",
+      "rarity": "uncommon",
+      "col": 0,
+      "row": 1
+    },
+    {
+      "index": 6,
+      "no": 7,
+      "id": "fish_07_ca_tre",
+      "name_vi": "Cá trê",
+      "name_en": "walking catfish",
+      "rarity": "uncommon",
+      "col": 1,
+      "row": 1
+    },
+    {
+      "index": 7,
+      "no": 8,
+      "id": "fish_08_ca_me",
+      "name_vi": "Cá mè",
+      "name_en": "silver carp",
+      "rarity": "uncommon",
+      "col": 2,
+      "row": 1
+    },
+    {
+      "index": 8,
+      "no": 9,
+      "id": "fish_09_ca_troi",
+      "name_vi": "Cá trôi",
+      "name_en": "mud carp",
+      "rarity": "uncommon",
+      "col": 3,
+      "row": 1
+    },
+    {
+      "index": 9,
+      "no": 10,
+      "id": "fish_10_ca_that_lat",
+      "name_vi": "Cá thát lát",
+      "name_en": "bronze featherback",
+      "rarity": "uncommon",
+      "col": 4,
+      "row": 1
+    },
+    {
+      "index": 10,
+      "no": 11,
+      "id": "fish_11_ca_loc",
+      "name_vi": "Cá lóc",
+      "name_en": "snakehead",
+      "rarity": "rare",
+      "col": 0,
+      "row": 2
+    },
+    {
+      "index": 11,
+      "no": 12,
+      "id": "fish_12_luon",
+      "name_vi": "Lươn",
+      "name_en": "swamp eel",
+      "rarity": "rare",
+      "col": 1,
+      "row": 2
+    },
+    {
+      "index": 12,
+      "no": 13,
+      "id": "fish_13_tom_cang_xanh",
+      "name_vi": "Tôm càng xanh",
+      "name_en": "giant river prawn",
+      "rarity": "rare",
+      "col": 2,
+      "row": 2
+    },
+    {
+      "index": 13,
+      "no": 14,
+      "id": "fish_14_ca_lang",
+      "name_vi": "Cá lăng",
+      "name_en": "Asian redtail catfish",
+      "rarity": "rare",
+      "col": 3,
+      "row": 2
+    },
+    {
+      "index": 14,
+      "no": 15,
+      "id": "fish_15_ca_bong_tuong",
+      "name_vi": "Cá bống tượng",
+      "name_en": "marble goby",
+      "rarity": "precious",
+      "col": 4,
+      "row": 2
+    },
+    {
+      "index": 15,
+      "no": 16,
+      "id": "fish_16_ca_chep_do",
+      "name_vi": "Cá chép đỏ",
+      "name_en": "red koi carp",
+      "rarity": "precious",
+      "col": 0,
+      "row": 3
+    },
+    {
+      "index": 16,
+      "no": 17,
+      "id": "fish_17_ca_anh_vu",
+      "name_vi": "Cá anh vũ",
+      "name_en": "anh vu carp",
+      "rarity": "precious",
+      "col": 1,
+      "row": 3
+    },
+    {
+      "index": 17,
+      "no": 18,
+      "id": "fish_18_ca_chep_vang",
+      "name_vi": "Cá chép vàng",
+      "name_en": "golden carp",
+      "rarity": "legendary",
+      "col": 2,
+      "row": 3
+    },
+    {
+      "index": 18,
+      "no": 19,
+      "id": "fish_19_ca_tram_den",
+      "name_vi": "Cá trắm đen khổng lồ",
+      "name_en": "giant black carp",
+      "rarity": "legendary",
+      "col": 3,
+      "row": 3
+    },
+    {
+      "index": 19,
+      "no": 20,
+      "id": "fish_20_ca_ho",
+      "name_vi": "Cá hô khổng lồ",
+      "name_en": "giant Mekong barb",
+      "rarity": "legendary",
+      "col": 4,
+      "row": 3
+    }
+  ]
+}

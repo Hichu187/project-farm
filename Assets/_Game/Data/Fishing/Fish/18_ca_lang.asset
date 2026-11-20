@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04fa3c247b2b7ba4590d7d189dc79f25, type: 3}
+  m_Name: 18_ca_lang
+  m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.FishDefinition
+  _id: ca_lang
+  _displayName: "C\xE1 l\u0103ng"
+  _icon: {fileID: 21300000, guid: d3eefae6be7aa6c4295e94f250c536c8, type: 3}
+  _rarity: 2
+  _minGrams: 500
+  _maxGrams: 5000
+  _basePrice: 140
+  _baseXp: 8
+  _slotFactors:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 1
+  - 1
+  - 2
+  _depths: 4
+  _preferredBaits:
+  - {fileID: 11400000, guid: faa4f59eca662784ebde4db1be560fe9, type: 2}
+  - {fileID: 11400000, guid: a8fa1dbeb646c0c4fa0f6333924c0e12, type: 2}
+  - {fileID: 11400000, guid: f114cf97b9817b54baca17554ab00f44, type: 2}
+  _minArrows: 6
+  _maxArrows: 8
+  _pullSeconds: 3.5
+  _hookWindowSeconds: 1.2
+  _slipPercent: 12
+  _redArrows: 0

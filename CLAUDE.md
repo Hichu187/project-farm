@@ -2,6 +2,11 @@
 
 Kế hoạch đầy đủ: `Docs/MVP-Plan.md` (Phần 0 → 8). Tiến độ: `Docs/tien-do.md`.
 
+**Đợt 2 (từ 20/11/2026, phát hành 15/01/2027):**
+- Thứ tự làm và mục Kiểm tra: `Docs/ke-hoach-dot-2.md`. Làm đúng thứ tự trong bảng "Lịch tổng"; phần có 🔍 phải đưa kiến trúc để duyệt trước khi code.
+- Thiết kế chi tiết và các quyết định đã chốt: `Docs/thiet-ke-dot-2.md`.
+- Chỗ nào hai file này khác với các mục bên dưới (bộ cây, sửa cần câu, điểm danh, đơn hàng…) thì **theo hai file đợt 2**.
+
 ## Cách làm việc
 - Trả lời bằng tiếng Việt, ngắn gọn.
 - Mỗi việc: đề xuất kế hoạch (file sẽ tạo/sửa, các bước) → CHỜ duyệt → mới làm.

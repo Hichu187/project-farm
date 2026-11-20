@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7de7a311e83e1044b9f7b12e2300a6b, type: 3}
+  m_Name: 09_moi_nhai_hoi
+  m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.BaitDefinition
+  _id: moi_nhai_hoi
+  _displayName: "Nh\xE1i h\u01A1i"
+  _icon: {fileID: 21300000, guid: ab206ff51ab9eca4f9f37763163c7897, type: 3}
+  _price: 30
+  _buyable: 1
+  _rareBonusPercent: 60
+  _unlockLevel: 11

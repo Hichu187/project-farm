@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.FishDefinition
   _id: ca_diec
   _displayName: "C\xE1 di\u1EBFc"
-  _icon: {fileID: 21300000, guid: b4655ebb58853294f9c5383eec9a4614, type: 3}
+  _icon: {fileID: 21300000, guid: e41785e226c83eb4fb7ffa3c72bb38e5, type: 3}
   _rarity: 0
   _minGrams: 100
   _maxGrams: 600
@@ -32,11 +32,9 @@ MonoBehaviour:
   _preferredBaits:
   - {fileID: 11400000, guid: ae5b8469ca5dc774cac64a70424f31aa, type: 2}
   - {fileID: 11400000, guid: 51b664b5c271ddc4ca29439bda86037c, type: 2}
-  _rounds: 2
-  _minArrows: 3
-  _maxArrows: 4
-  _roundSeconds: 4
-  _beatWindow: 0.3
-  _hookWindowSeconds: 0.9
+  _minArrows: 4
+  _maxArrows: 5
+  _pullSeconds: 4
+  _hookWindowSeconds: 1.6
   _slipPercent: 5
   _redArrows: 0

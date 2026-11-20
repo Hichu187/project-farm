@@ -144,7 +144,7 @@ namespace VeQue.View.Map
         [SerializeField] private Color _waterHintColor = Color.white;
 
         [Header("Khung chọn 4 góc")]
-        [Tooltip("Sunnyside UI/selectbox_*. Gán bằng menu Về Quê → Khung chọn: tạo asset + gán vào scene.")]
+        [Tooltip("Sunnyside UI/selectbox_*. Gán bằng menu Về Quê → Dựng scene → Khung chọn.")]
         [SerializeField] private SelectBoxSkin _selectBoxSkin;
         [Tooltip("Ô có việc chờ: khung khít ô, mờ, đứng yên. Ô đang làm: khung nới ra, co giãn.")]
         [SerializeField] private bool _showQueued = true;

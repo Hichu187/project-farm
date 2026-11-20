@@ -190,8 +190,8 @@ Vòng chơi: trồng → thu hoạch → giao đơn (hoặc bán) → xu + XP �
 - Kẹt khi đủ cả 4 điều: (1) Kho không còn nông sản nào (kể cả nông sản cây chưa mở); (2) không còn hạt của cây đã mở (hạt cây chưa tới cấp không tính); (3) xu ít hơn giá hạt rẻ nhất trong các cây đã mở; (4) không ô nào đang có cây.
 - Kẹt → tặng 1 hạt cây cứu (`FarmDefinition._rescueCrop` → `FarmDef.RescueCropId`, hiện là rau muống; cây cứu phải `enabled`, không thì tắt chống kẹt), phát sự kiện `Rescued` → HUD hiện "Được tặng 1 hạt …".
 - Kiểm tra lúc nạp save (khởi tạo `Farm`) và sau mỗi lệnh làm đổi tiến trình (`NotifyChanged`). Tặng xong là có hạt nên không tặng lặp.
-- Không tính: đơn hàng (giao đơn cần nông sản, đã có ở điều kiện 1), câu cá (cá trong giỏ, mồi, cần).
-- Phải sửa ở Phần 10 giai đoạn 5 (khi bán được cá): còn cá trong giỏ thì không coi là kẹt. Mồi / cần không tính (câu ra cá mới có tiền, nhưng giỏ đầy hoặc cần hỏng vẫn có thể kẹt – xem lại lúc đó).
+- Không tính: đơn hàng (giao đơn cần nông sản, đã có ở điều kiện 1), mồi, cần. **Từ 13/11/2026: còn cá trong giỏ thì không kẹt** (bán được lấy xu).
+- ~~Phải sửa ở Phần 10 giai đoạn 5~~ – đã sửa 13/11/2026 (`Farm.IsStuck` xét giỏ cá; test `Rescue_FishInBasket_DoesNotRescue`). Mồi / cần không tính (câu ra cá mới có tiền, nhưng giỏ đầy hoặc cần hỏng vẫn có thể kẹt – xem lại lúc đó).
 - Test: `ProgressionTests` – kẹt sau lệnh, kẹt khi nạp, chỉ còn hạt cây khóa vẫn tặng, có cây đang lớn thì không tặng; `FarmDefinitionTests` – data mặc định cây cứu là rau muống.
 
 **Sửa kèm:** chống kẹt (chi tiết ở trên); thông báo "+xu" khi bán, "Đã mở Khu N"; hộp xác nhận mở ô đóng cùng các bảng khác; mua hạt từ bảng chọn hạt xong thì gieo luôn vào ô đang chờ.
@@ -278,7 +278,7 @@ Ngoài phạm vi MVP (theo `CLAUDE.md`): nuôi cá, chuồng, đất mở rộng
 - **Kiểm tra:** test Logic (thứ tự, trùng ô, giữ chỗ hạt, kiểm tra lại khi tới nơi, hủy trả hạt, làm hết khi ẩn tab); trong Editor: chạm 1 ô, kéo gieo / thu / tưới 12 ô thấy nhân vật làm lần lượt đúng thứ tự, kéo quá số hạt chỉ xếp đủ hạt, hủy giữa chừng, zoom / kéo camera như cũ, ẩn tab rồi mở lại thấy việc đã làm xong.
 
 - **Art (đổi 12/11/2026 sang Sunnyside World, xem Phần 3b và `Docs/art-phan-10.md`):** nhân vật 3 lớp + câu cá `CASTING` / `WAITING` / `REELING` / `CAUGHT`; nước, bến, thuyền thúng, icon cần / giỏ / "!" / thanh / mũi tên có sẵn. Còn thiếu: 13 loài cá, icon mồi, cần 5 bậc.
-Vòng chơi: **chọn mồi → ném cần (canh perfect) → chờ cá cắn, giật đúng lúc → kéo cá bằng chuỗi mũi tên 4 hướng → được cá (loài, độ hiếm, cân nặng, giá) hoặc sổng / đứt dây / gãy cần.**
+Vòng chơi: **chọn mồi → ném cần (canh perfect) → chờ cá cắn, giật đúng lúc → kéo cá bằng chuỗi mũi tên 4 hướng → được cá (loài, độ hiếm, cân nặng, giá) hoặc sổng / cá thoát.** (13/11/2026: bỏ đứt dây / gãy cần khi kéo.)
 Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt khi ném, báo hiệu cắn câu + khung phản xạ ngắn, rồi một mini game kéo cá (Stardew Valley, Fish Quest, WebFishing, Tiny Fishing). Kéo cá dùng kiểu nhập chuỗi mũi tên theo nhịp (kiểu game nhảy theo nhịp) – chỉ mượn cơ chế, art và tên riêng.
 
 **1. Ném cần – canh perfect**
@@ -288,16 +288,16 @@ Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt k
 - Perfect: tăng tỉ lệ cá hiếm, chờ cắn ngắn hơn, vòng kéo đầu dễ hơn; có hiệu ứng + chữ "Perfect!". Ném hỏng (quá yếu): phao rơi sát bờ, chỉ có cá thường.
 
 **2. Chờ cá cắn – giật câu**
-- Chờ ngẫu nhiên (vd. 3–15 giây; mồi hợp loài, ném perfect thì ngắn hơn). Phao **rỉa nhẹ** vài lần (mồi nhử) rồi mới **chìm hẳn + dấu "!"**.
-- Chạm "Giật" trong khung phản xạ (vd. 0,9 giây với cá thường, 0,4 giây với cá huyền thoại). Giật lúc phao chỉ rỉa → cá sợ bỏ đi, mất mồi. Trễ → cá ăn mất mồi.
+- Chờ ngẫu nhiên (2–8 giây, sửa 13/11/2026 từ 3–15; mồi hợp loài, ném perfect thì ngắn hơn). Phao **rỉa nhẹ** (1 px) vài lần (mồi nhử) rồi mới **chìm hẳn (3 px) + dấu "!" nảy**; nút ghi "Chờ..." lúc chờ, đổi thành **"GIẬT!"** phập phồng khi cá cắn.
+- Chạm "Giật" trong khung phản xạ (1,6 / 1,4 / 1,2 / 1,0 / 0,8 giây từ Thường tới Huyền thoại, sửa 13/11/2026 từ 0,9 … 0,4). Giật trước khi cá cắn → cá sợ bỏ đi, mất mồi (giữ phạt, chốt 13/11/2026). Trễ → cá ăn mất mồi.
 - **Tỉ lệ trượt**: giật đúng lúc vẫn có xác suất trượt lưỡi (cá sổng ngay), giảm theo rank cần, tăng theo độ hiếm cá.
 - Android có thể rung máy khi cá cắn (`navigator.vibrate`); iPhone trên web không rung được → dựa vào hình + âm thanh.
 
 **3. Kéo cá – chuỗi mũi tên 4 hướng, 1 lượt (chốt lại 13/11/2026)**
-- Móc được cá → hiện **1 chuỗi** mũi tên (↑ ↓ ← →) + thanh thời gian. Nhập đúng hết chuỗi trước khi hết giờ là **câu được**. Không có nhiều vòng, thể lực cá, độ căng dây, combo hay nút Chốt.
+- Móc được cá → hiện **1 chuỗi** mũi tên (↑ ↓ ← →) + thanh thời gian; **xem trước 1,2 giây** ("Sẵn sàng...", chưa tính giờ; bấm đúng mũi tên đầu thì tính luôn – `FishingTuning.PullPreviewSeconds`). **Bóng cá** trong nước ngay trước phao (phía xa nhân vật) lao theo mũi tên vừa bấm, bấm sai thì vùng ra rồi về; câu được thì bị kéo vào, thoát thì bơi đi. Nhập đúng hết chuỗi trước khi hết giờ là **câu được**. Không có nhiều vòng, thể lực cá, độ căng dây, combo hay nút Chốt.
 - **Càng nhanh càng hoàn hảo**: dùng ≤ 40% thời gian = **Perfect** (+50% XP, cân nặng lệch về nặng hơn), ≤ 70% = **Tốt** (bình thường), còn lại = **Thường** (cân nặng lệch về nhẹ). Các mốc ở `FishingTuning`.
-- **Bấm sai** 1 mũi tên → **đứt dây**: cá thoát, mất mồi, có xác suất **gãy cần** (không trừ thêm độ bền). **Hết giờ** → cá thoát (chỉ mất mồi).
-- Cá càng hiếm: chuỗi dài hơn (3–4 → 8–10 mũi tên), ít thời gian hơn (4 → 3 giây); cá huyền thoại có **mũi tên khác màu (đỏ)** – bấm hướng ngược lại (không đổi chuỗi giữa chừng). Ném Perfect: chuỗi bớt 1 mũi tên. Cần rank cao **thêm thời gian** (tre 0%, trúc +10%, thủy tinh +20%, carbon +30%, vàng +50%; thay cho "sức bền dây").
+- **Bấm sai** 1 mũi tên → cả chuỗi **nháy đỏ**, về mũi tên đầu, phải **nhập lại từ đầu**; thời gian vẫn chạy (phạt bằng thời gian: khó Perfect, dễ hết giờ). Không đứt dây, không gãy cần (chốt 13/11/2026, phương án B). **Hết giờ** → cá thoát (chỉ mất mồi).
+- Cá càng hiếm: chuỗi dài hơn (4–5 → 8–10 mũi tên, nâng 14/11/2026), ít thời gian hơn (4 → 3 giây); cá huyền thoại có **mũi tên khác màu (đỏ)** – bấm hướng ngược lại (không đổi chuỗi giữa chừng). Ném Perfect: chuỗi bớt 1 mũi tên. Chuỗi luôn **ít nhất 4 mũi tên** (`FishingTuning.MinPullArrows`, 14/11/2026). Cần rank cao **thêm thời gian** (tre 0%, trúc +10%, thủy tinh +20%, carbon +30%, vàng +50%; thay cho "sức bền dây").
 - Nhập trên điện thoại: **4 nút mũi tên** 64 pt xếp **chữ thập ở giữa** nửa dưới màn hình (bàn phím: phím mũi tên). Cần thử cảm giác trên máy thật.
 
 **4. Cá**
@@ -316,11 +316,11 @@ Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt k
 - Logic: `FishDef` có bảng hệ số 7 khung; hàm khung giờ thuần (giờ UTC + độ lệch múi giờ → khung), có test ranh giới (4:59 / 5:00, qua nửa đêm).
 
 **5. Cần câu – rank, độ bền, sửa / mua mới**
-- Rank gợi ý: Cần tre → Cần trúc → Cần sợi thủy tinh → Cần carbon → Cần vàng. Mua ở Cửa hàng, mở theo cấp.
+- Rank (mở rộng 10 bậc 14/11/2026, có icon `Art/Fishing/rods`): tre (cấp 1, tặng) → nứa (2, 120 xu) → trúc (3, 300) → mây (4, 700) → sợi thủy tinh (5, 1.500) → composite (7, 3.000) → carbon (9, 6.000) → titan (11, 11.000) → vàng (13, 20.000) → rồng (15, 40.000). Mỗi bậc tăng vùng Perfect (±0,030 → 0,090), chu kỳ thanh (1,2 → 1,9 giây), thêm thời gian kéo (0 → 60%), giảm trượt (0 → 18), thưởng cá hiếm (0 → 70%), độ bền (30 → 250); giá sửa ≈ 40% giá mua. Số trong `FishingDataGenerator`. Mua ở Cửa hàng, mở theo cấp.
 - Chỉ số: độ rộng vùng Perfect, tốc độ thanh lực, sức bền dây (độ căng tối đa), tỉ lệ trượt, thưởng tỉ lệ cá hiếm, **độ bền**.
-- Mỗi lần câu trừ độ bền (đứt dây trừ nhiều hơn). Độ bền về 0 hoặc gãy khi đứt dây → **cần gãy**: sửa (tốn xu, rẻ hơn mua) hoặc mua mới. Có thể giữ nhiều cần, chọn cần trước khi câu.
-- **Lý do mất độ bền (chốt lại 13/11/2026: mọi mức trừ là 1):** mỗi lượt câu −1 lúc ném (trừ ngay, mọi kết quả kể cả bỏ dở); đứt dây không trừ thêm, chỉ có thể gãy cần; độ bền về 0 = hỏng. Câu được cá (to / hiếm), cá sợ, cá ăn mồi, trượt lưỡi, cá thoát không mất thêm.
-- **Gãy khi đứt dây** tăng khi độ bền thấp: tỉ lệ = 20% + (60% − 20%) × (1 − độ bền còn / độ bền tối đa thực tế) (đầy 20%, nửa 40%, về 0 60%).
+- Mỗi lần câu trừ độ bền. Độ bền về 0 → **cần hỏng**: sửa (tốn xu, rẻ hơn mua) hoặc mua mới. Có thể giữ nhiều cần, chọn cần trước khi câu.
+- **Lý do mất độ bền (chốt lại 13/11/2026: mọi mức trừ là 1):** mỗi lượt câu −1 lúc ném (trừ ngay, mọi kết quả kể cả bỏ dở); độ bền về 0 = hỏng (không còn gãy khi đứt dây – bỏ 13/11/2026). Câu được cá (to / hiếm), cá sợ, cá ăn mồi, trượt lưỡi, cá thoát không mất thêm.
+- ~~Gãy khi đứt dây~~ (bỏ 13/11/2026). `RodState.Snapped` giữ trong save `version` 6 để save cũ nạp được; sửa / mua lại thì xóa.
 - **Sửa làm giảm độ bền tối đa:** mỗi lần sửa, độ bền tối đa giảm 10% độ bền gốc (100 → 90 → … → 10%). Khi độ bền tối đa đã **dưới 15%** thì không sửa được nữa (sau 9 lần sửa) → mua lại.
 - **Mua lại cần đang có:** được, khi cần hỏng hoặc đã từng sửa; trả đủ giá, cần về như mới (độ bền gốc, số lần sửa 0). Cần còn dùng được và chưa sửa thì không mua lại.
 - Các con số ở `FishingTuning` (data), không viết cứng.
@@ -328,22 +328,27 @@ Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt k
 **6. Mồi câu**
 - Mỗi lần ném tốn 1 mồi; mồi quyết định loài nào dễ cắn: giun → rô, diếc, trê; cám → chép, mè; tép → lóc, bống; mồi giả → lóc, cá quý. Mồi đặc biệt hút cá hiếm.
 - Nguồn: giun có khi đào được lúc thu hoạch (nối câu cá với trồng trọt), mồi khác mua ở Cửa hàng. Hết mồi là nghỉ → giới hạn tự nhiên, không cần thanh năng lượng.
+- **10 mồi (mở rộng 14/11/2026, icon `Art/Fishing/bait`)** – cấp mở, giá, thưởng cá hiếm, cá ưa: giun (không bán; rô, diếc, trê, lươn) · cám (1, 3 xu; diếc, tép, chép, mè) · ruồi (2, 4; mè, rô) · mồi tép (3, 6; lóc, tôm càng, bống tượng) · dế (4, 6, +5%; rô, trê, lóc) · nhái (5, 10, +10%; lóc, bống tượng) · mồi giả cá (6, 12, +20%; lóc, trắm đen) · mồi thơm (9, 25, +100%, icon bột; chép đỏ, chép vàng, trắm đen) · nhái hơi (11, 30, +60%; lóc, bống tượng, trắm đen) · thìa vàng (13, 50, +150%; chép vàng, chép đỏ, trắm đen). Id cũ giữ nguyên cho save.
 
 **7. Kỹ thuật & thứ tự làm**
-- Logic thuần (`VeQue.Logic`): `FishDef`, `RodDef`, `BaitDef`, phiên câu dạng state machine (Chờ ném → Đang ném → Chờ cắn → Cá cắn → Kéo → Kết quả), sinh cá / sinh chuỗi mũi tên bằng `SeededRandom`, thời gian qua `IClock`; test cho tỉ lệ, cân nặng, trượt, đứt dây, độ bền. Save: cần + độ bền, mồi, giỏ cá, kỷ lục.
-- View: khung camera câu cá, phao + dây (pixel), thanh lực, nút mũi tên + vạch nhịp, hiệu ứng Perfect / đứt dây / gãy cần, âm thanh (chỉ phát sau lần chạm đầu trên web).
+- Logic thuần (`VeQue.Logic`): `FishDef`, `RodDef`, `BaitDef`, phiên câu dạng state machine (Chờ ném → Đang ném → Chờ cắn → Cá cắn → Kéo → Kết quả), sinh cá / sinh chuỗi mũi tên bằng `SeededRandom`, thời gian qua `IClock`; test cho tỉ lệ, cân nặng, trượt, bấm sai nhập lại, độ bền. Save: cần + độ bền, mồi, giỏ cá, kỷ lục.
+- View: khung camera câu cá, phao + dây (pixel), thanh lực, nút mũi tên + vạch nhịp, hiệu ứng Perfect / bấm sai (nháy đỏ) / cá thoát, âm thanh (chỉ phát sau lần chạm đầu trên web).
 - Nhân vật / vùng câu: `GridPath` (A*, C# thuần, có test) trên lưới ô đi được lấy từ Tilemap; `CharacterView` (nhiều lớp đồng bộ khung, 4 hướng, đi / đứng / câu, di chuyển theo pixel, vẽ theo trục Y); bộ điều khiển chạm để đi (nông trại + vùng câu), `FarmTaskQueue` + bộ chạy hàng việc ở nông trại; `CameraController` giới hạn + zoom theo vùng, chế độ đi theo nhân vật + kéo xem rồi tự quay về; `CameraTouchInput` thêm chế độ vùng câu. Save: không lưu vị trí nhân vật (luôn vào game ở nông trại); lưu cá trong ao nhà.
-- Art cần có: phao, cần theo rank, sprite từng loài cá, mồi, nước động, tile vùng câu (xem mục 0). Âm thanh: bước chân, quăng cần, cá cắn, đứt dây.
+- Art cần có: phao, cần theo rank, sprite từng loài cá, mồi, nước động, tile vùng câu (xem mục 0). Âm thanh: bước chân, quăng cần, cá cắn, bấm sai, cá thoát.
 - Giai đoạn (mỗi giai đoạn duyệt thiết kế chi tiết trước khi làm):
   1. **Nhân vật ở nông trại: chạm để đi + hàng việc trồng trọt** (mục 0b): `GridPath`, lưới ô đi được, `CharacterView` nhiều lớp (1 trang phục), chạm để đi, `FarmTaskQueue`, nối `FarmInteraction` / `FarmGesture` / `SeedPicker` vào hàng việc, nút Dừng, làm hết khi ẩn tab.
   2. **Vùng câu + di chuyển** (đã viết code 12/11/2026, vùng tạm bằng menu **Vùng câu: tạo tạm**): vẽ vùng (Tilemap riêng, chuyển cảnh), giới hạn camera theo vùng, **Đi câu** (đi ra cổng) / **Về nhà**, chạm để đi, chạm chỗ câu, camera đi theo + kéo xem rồi tự quay về, HUD theo chế độ.
-  3. **Câu cá – Logic + test** (đã viết code 12/11/2026): `FishDef` (gồm khung giờ), `RodDef`, `BaitDef`, phiên câu, sinh cá / chuỗi mũi tên, độ bền. Chốt 12/11: giỏ cá 8 ô, nâng cấp được (8 → 10 → 12 → 16 → 20, giá 300 / 1.000 / 3.000 / 8.000 – data); đào được giun khi thu hoạch (10%, 1–2 con); câu cá mở từ cấp 1 (người dùng quy định lại sau), tặng cần tre + 10 giun. View chạy phần thời gian thực (thanh lực, giật, mũi tên), Logic nhận kết quả. ScriptableObject + data mặc định làm đầu giai đoạn 4.
+  3. **Câu cá – Logic + test** (đã viết code 12/11/2026): `FishDef` (gồm khung giờ), `RodDef`, `BaitDef`, phiên câu, sinh cá / chuỗi mũi tên, độ bền. Chốt 12/11: giỏ cá 8 ô, nâng cấp được (8 → 10 → 12 → 16 → 20, giá 300 / 1.000 / 3.000 / 8.000 – data) – **đổi 13/11/2026:** mở sẵn 8 ô, mua lần lượt từng ô tới 25, giá ô thứ k (k = 1…17) = 100 × 1,3^(k−1) tròn 10 xu (100, 130, 170 … 6.650; tới 20 ô ≈ 7.400 xu, đủ 25 ô ≈ 28.500 xu), save `version` 7 (`basketSlots`, save ≤ 6 quy đổi theo sức chứa cũ); đào được giun khi thu hoạch (10%, 1–2 con); câu cá mở từ cấp 1 (người dùng quy định lại sau), tặng cần tre + 10 giun. View chạy phần thời gian thực (thanh lực, giật, mũi tên), Logic nhận kết quả. ScriptableObject + data mặc định làm đầu giai đoạn 4.
   4. **Câu cá – chơi** (duyệt 12/11/2026, chia 5 đợt):
      - Đợt A – data: SO `FishDefinition` / `RodDefinition` / `BaitDefinition` / `FishingDefinition` (+ `FarmDefinition._fishing`); menu **Tạo data câu cá** (13 cá, 5 cần, 5 mồi theo bảng duyệt 12/11, cũng chạy trong **Tạo data mặc định**); menu **Câu cá: tạo art tạm** (phao 8×8, icon cá 16×16 tô màu theo độ hiếm → `Assets/_Game/Art/Fishing/`); test data.
      - Đợt B – hoạt ảnh nhân vật `CASTING` / `WAITING` / `REELING` / `CAUGHT` (thêm vào `CharacterSkin`, `CharacterSkinAssigner`).
      - Đợt C – ném (giữ nút, thanh lực, vùng Perfect / Tốt) + chờ cắn (phao rỉa, chìm, "!", rung Android) + giật; phao ở **đầu dây vẽ sẵn** của art Sunnyside (cố định, chốt 13/11/2026 – cách A), độ sâu Gần / Vừa / Xa vẫn theo lực nhưng chỉ hiện bằng chữ ("Perfect! · Phao: Xa"); trước Đợt D móc được cá thì báo rồi bỏ lượt; HUD vùng câu (cần + độ bền, mồi – chạm đổi, giỏ, khung giờ + còn bao lâu); đang câu chạm map không đi, nút **Thu cần** (bỏ lượt, mất mồi), ẩn tab = bỏ lượt.
-     - Đợt D – kéo cá 1 lượt (chốt lại 13/11/2026, xem mục 3): chuỗi mũi tên + thanh thời gian (màu theo hạng còn đạt được); 4 nút mũi tên chữ thập ở giữa; nhanh = Perfect; sai = đứt dây, hết giờ = cá thoát; câu được → hoạt ảnh được cá → thông báo tạm (Đợt E thay bằng hộp kết quả); Editor dùng phím mũi tên. Logic bỏ vòng / thể lực / độ căng / combo / chốt nhịp; cần: sức bền dây → thêm thời gian.
-     - Đợt E – hộp kết quả (cá, cân nặng, giá, XP, "Kỷ lục mới!"; sợ / ăn mồi / trượt / đứt dây / "Cần gãy!"); bảng **Đồ câu** (cần: mua / mua lại / sửa / chọn; mồi: mua 1 / 10; giỏ: nâng cấp; nút **Thả cá** bỏ bớt cá khỏi giỏ – tạm khi chưa bán được cá), mở từ nút **Đồ câu** trên HUD vùng câu và nút chuyển "Hạt giống | Đồ câu" trong tab Cửa hàng; thông báo đào được giun; build lại, so Build Report.
+     - Đợt D – kéo cá 1 lượt (chốt lại 13/11/2026, xem mục 3): chuỗi mũi tên + thanh thời gian (màu theo hạng còn đạt được); 4 nút mũi tên chữ thập ở giữa; nhanh = Perfect; sai = nháy đỏ + nhập lại từ đầu (sửa 13/11/2026), hết giờ = cá thoát; câu được → hoạt ảnh được cá → thông báo tạm (Đợt E thay bằng hộp kết quả); Editor dùng phím mũi tên. Logic bỏ vòng / thể lực / độ căng / combo / chốt nhịp; cần: sức bền dây → thêm thời gian.
+     - Đợt D bổ sung (13/11/2026): ném xong hiện chữ trên đầu nhân vật (Hoàn hảo! / Tuyệt! / Tốt / Yếu, bỏ độ sâu phao); hụt cá cũng là chữ trên đầu (Sớm quá! / Mất mồi! / Trượt lưỡi! / Cá thoát!); câu được → hình cá bật khỏi nước ở phao, bay dọc dây về tay → **bảng cá vừa câu** (tên, hình, cân nặng, độ hiếm có màu, giá; dòng nhỏ hạng kéo + XP; OK).
+     - HUD câu + giỏ (duyệt 13/11/2026, làm trước Đợt E): bỏ khung giờ và dòng cần / giỏ; **đồng hồ chung** trên HUD (giờ + khung giờ, góc trên phải dưới Sao lưu, chạm = khung giờ + còn bao lâu, cả nông trại và vùng câu); cột **3 nút icon** Cần / Giỏ / Mồi (số nhỏ: độ bền, số cá, số mồi; khóa khi đang câu) mở 3 bảng: **Cần** (tên, rank, độ bền, Đang dùng / Hỏng; Dùng, Sửa, Hết sửa), **Giỏ** (lưới 5 cột ô vuông tới 25 ô, cuộn dọc; ô chưa mở có ổ khóa, ô khóa kế tiếp hiện giá, bấm → xác nhận mở; nền theo độ hiếm; chạm → chi tiết tên / độ hiếm / cân nặng / giá / khung giờ bắt + **Thả**), **Mồi** (tên, số lượng, tác dụng; Dùng). Icon: Sunnyside `rod`, `basket`; mồi tạm `rod alt` (không có icon giun trong project).
+     - Mua cần / mồi (duyệt 13/11/2026): mồi có cấp mở mua (cám 1, mồi tép 3, mồi giả 6, mồi thơm 9; giun không bán), cần giữ cấp cũ (tre 1, trúc 3, thủy tinh 5, carbon 9, vàng 12 – 14/11/2026 mở rộng 10 cần / 10 mồi, cấp mới ở mục 5, 6); bảng Cần / Mồi ở vùng câu và tab Cửa hàng → **"Hạt giống | Đồ câu"** dùng chung danh sách: cần (Dùng / Sửa / Hết sửa / Mua lại / Mua / "Cấp N"), mồi (Dùng / Mua 1 / Mua 10 / "Cấp N"); hộp lên cấp báo "Mở <cần / mồi>".
+     - Bán cá + tab (duyệt 13/11/2026, phần đầu giai đoạn 5): Cửa hàng 3 tab "Hạt giống | Cần câu | Mồi câu"; Kho 2 tab "Nông sản | Giỏ cá"; giỏ cá (bảng Giỏ ở vùng câu và tab Giỏ cá trong Kho dùng chung) bán từng con (Bán + giá) và **Bán hết** (hộp xác nhận, tổng xu), vẫn Thả / mở ô; chống kẹt tính cá trong giỏ.
+     - Đợt E – "Kỷ lục mới!" trong bảng cá vừa câu ("Loài mới!" khi lần đầu câu loài; "Kỷ lục mới! (cũ …)" khi nặng hơn); thông báo đào được giun bằng chữ nổi "+N giun" trên đầu nhân vật ở nông trại (duyệt 14/11/2026, cộng dồn trong 2 giây); build lại, so Build Report. (Chọn / sửa / mua cần, chọn / mua mồi, Thả cá, mở ô giỏ đã làm ở các mục trên.)
      - Con số data (bảng duyệt 12/11): chỉnh lại sau khi chơi thử / mô phỏng cân bằng.
   5. **Giỏ cá, bán, album, đơn hàng có cá**.
   6. **Ao nhà** (sau cùng): thả cá, bóng cá bơi, bảng danh sách cá.
@@ -357,5 +362,5 @@ Tham khảo cơ chế chung của thể loại: thanh lực có điểm ngọt k
 - Đã chốt 12/11/2026 (sau kiểm tra logic câu cá):
   - Kéo cá: nhập đúng chuỗi nhưng chốt nhịp **Trượt** vẫn trừ một ít thể lực cá (40, so với Tốt 70, Perfect 100) và vẫn giảm độ căng – giữ như vậy.
   - Data cá: luôn có vài loài cá Thường xuất hiện **cả ngày** (mọi khung giờ) và ở độ sâu Gần, để ném hỏng / khung giờ nào cũng có cá (code dự phòng lấy cá Thường bất kỳ, bỏ qua khung giờ, chỉ dùng khi data thiếu).
-  - Độ bền cần: xem mục 5 (lý do mất độ bền, gãy tăng khi độ bền thấp, sửa giảm độ bền tối đa tới dưới 15%, mua lại cần đang có). Save lên `version` 6 (`repairCount`).
+  - Độ bền cần: xem mục 5 (lý do mất độ bền, sửa giảm độ bền tối đa tới dưới 15%, mua lại cần đang có). Save lên `version` 6 (`repairCount`).
   - Chống kẹt chưa tính cá trong giỏ → sửa ở giai đoạn 5 (Phần 6b mục Chống kẹt).

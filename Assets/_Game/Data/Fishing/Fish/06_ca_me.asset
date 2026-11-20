@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.FishDefinition
   _id: ca_me
   _displayName: "C\xE1 m\xE8"
-  _icon: {fileID: 21300000, guid: 0ea528e119caaa74897ecea2b69a223d, type: 3}
+  _icon: {fileID: 21300000, guid: a79db93d61599c344abee15e0c4e775d, type: 3}
   _rarity: 1
   _minGrams: 500
   _maxGrams: 5000
@@ -31,11 +31,10 @@ MonoBehaviour:
   _depths: 6
   _preferredBaits:
   - {fileID: 11400000, guid: 51b664b5c271ddc4ca29439bda86037c, type: 2}
-  _rounds: 3
-  _minArrows: 4
-  _maxArrows: 5
-  _roundSeconds: 4
-  _beatWindow: 0.25
-  _hookWindowSeconds: 0.8
+  - {fileID: 11400000, guid: dd77e91db0c85214f9fcaa2f8e4d2da7, type: 2}
+  _minArrows: 5
+  _maxArrows: 6
+  _pullSeconds: 4
+  _hookWindowSeconds: 1.4
   _slipPercent: 8
   _redArrows: 0

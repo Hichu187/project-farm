@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.BaitDefinition
   _id: cam
   _displayName: "C\xE1m"
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: c4519ffac991a6647b8633d8ac35a1f0, type: 3}
   _price: 3
   _buyable: 1
   _rareBonusPercent: 0
+  _unlockLevel: 1

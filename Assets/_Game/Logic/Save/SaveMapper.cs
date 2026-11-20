@@ -28,8 +28,11 @@ namespace VeQue.Logic
                 character = ToSaveCharacter(state.Character),
                 orderDay = state.OrderDay,
                 deliveredToday = state.DeliveredToday,
-                utcOffsetSeconds = state.UtcOffsetSeconds,
+                lastSeenDayKey = state.LastSeenDayKey,
+                mailbox = ToSaveMailbox(state.Mailbox),
                 fishing = ToSaveFishing(state.Fishing),
+                orderLines = ToSaveCounts(state.LastOrderLines),
+                lastThanks = state.LastThanksLine,
             };
         }
 
@@ -40,6 +43,8 @@ namespace VeQue.Logic
                 return SaveLoadResult.Invalid;
             if (data.version > SaveData.CurrentVersion)
                 return SaveLoadResult.NewerVersion;
+            if (data.version < SaveData.MinSupportedVersion)
+                return SaveLoadResult.Outdated;
             if (data.coins < 0 || data.level < 0 || data.xp < 0 || data.zones == null || data.zones.Length == 0)
                 return SaveLoadResult.Invalid;
 
@@ -61,6 +66,16 @@ namespace VeQue.Logic
             }
 
             ReadLevel(data, def.Levels, out int level, out long xp);
+            // Chỉ số câu (≥ 0, kể cả 0) – không dùng ReadCountsLenient vì hàm đó bỏ số 0.
+            var orderLines = new Dictionary<string, int>();
+            if (data.orderLines != null)
+            {
+                foreach (SaveCount item in data.orderLines)
+                {
+                    if (item != null && !string.IsNullOrEmpty(item.id) && item.count >= 0)
+                        orderLines[item.id] = item.count;
+                }
+            }
             state = new FarmState
             {
                 Coins = data.coins,
@@ -75,8 +90,11 @@ namespace VeQue.Logic
                 Character = FromSaveCharacter(data.character),
                 OrderDay = data.orderDay > 0 ? data.orderDay : 0,
                 DeliveredToday = data.deliveredToday > 0 ? data.deliveredToday : 0,
-                UtcOffsetSeconds = data.utcOffsetSeconds,
+                LastSeenDayKey = data.lastSeenDayKey,
+                Mailbox = FromSaveMailbox(data.mailbox),
                 Fishing = FromSaveFishing(data.fishing),
+                LastOrderLines = orderLines,
+                LastThanksLine = data.lastThanks >= 0 ? data.lastThanks : -1,
             };
             return SaveLoadResult.Ok;
         }
@@ -88,13 +106,26 @@ namespace VeQue.Logic
             foreach (RodState rod in fishing.Rods)
             {
                 if (rod != null)
-                    rods.Add(new SaveRod { id = rod.Id, durability = rod.Durability, snapped = rod.Snapped, repairCount = rod.RepairCount });
+                    rods.Add(new SaveRod { id = rod.Id, durability = rod.Durability });
             }
             var basket = new List<SaveFish>();
             foreach (CaughtFish fish in fishing.Basket)
             {
                 if (fish != null)
-                    basket.Add(new SaveFish { id = fish.FishId, grams = fish.Grams, caughtAt = fish.CaughtAt, slot = (int)fish.Slot });
+                    basket.Add(new SaveFish
+                    {
+                        id = fish.FishId,
+                        grams = fish.Grams,
+                        caughtAt = fish.CaughtAt,
+                        slot = (int)fish.Slot,
+                        shiny = (int)fish.Shiny,
+                    });
+            }
+            var shinyDex = new List<SaveShiny>();
+            foreach (ShinyRecord record in fishing.ShinyDex)
+            {
+                if (record != null)
+                    shinyDex.Add(new SaveShiny { fishId = record.FishId, kind = (int)record.Kind, firstCaughtAt = record.FirstCaughtAt });
             }
             return new SaveFishing
             {
@@ -102,13 +133,14 @@ namespace VeQue.Logic
                 equippedRod = fishing.EquippedRodId,
                 baits = ToSaveCounts(fishing.Baits),
                 basket = basket.ToArray(),
-                basketLevel = fishing.BasketLevel,
+                basketSlots = fishing.BasketSlots,
                 records = ToSaveCounts(fishing.RecordGrams),
                 starterGranted = fishing.StarterGranted,
+                shinyDex = shinyDex.ToArray(),
             };
         }
 
-        // Save cũ (không có fishing): trạng thái trống, Farm tặng cần + mồi khi mở câu cá.
+        // Không có fishing: trạng thái trống, Farm tặng cần + mồi khi mở câu cá.
         // Mục hỏng (id rỗng, số âm) thì bỏ qua, không làm hỏng cả save.
         private static FishingState FromSaveFishing(SaveFishing saved)
         {
@@ -125,8 +157,6 @@ namespace VeQue.Logic
                         {
                             Id = rod.id,
                             Durability = Math.Max(0, rod.durability),
-                            Snapped = rod.snapped,
-                            RepairCount = Math.Max(0, rod.repairCount),
                         });
                 }
             }
@@ -137,16 +167,119 @@ namespace VeQue.Logic
                     if (fish == null || string.IsNullOrEmpty(fish.id) || fish.grams <= 0)
                         continue;
                     int slot = fish.slot >= 0 && fish.slot < DaySlots.Count ? fish.slot : 0;
-                    fishing.Basket.Add(new CaughtFish { FishId = fish.id, Grams = fish.grams, CaughtAt = fish.caughtAt, Slot = (DaySlot)slot });
+                    fishing.Basket.Add(new CaughtFish
+                    {
+                        FishId = fish.id,
+                        Grams = fish.grams,
+                        CaughtAt = fish.caughtAt,
+                        Slot = (DaySlot)slot,
+                        Shiny = ToShinyKind(fish.shiny),
+                    });
+                }
+            }
+            if (saved.shinyDex != null)
+            {
+                foreach (SaveShiny record in saved.shinyDex)
+                {
+                    ShinyKind kind = record != null ? ToShinyKind(record.kind) : ShinyKind.None;
+                    if (kind == ShinyKind.None || string.IsNullOrEmpty(record.fishId) || fishing.HasShiny(record.fishId, kind))
+                        continue;
+                    fishing.ShinyDex.Add(new ShinyRecord { FishId = record.fishId, Kind = kind, FirstCaughtAt = record.firstCaughtAt });
                 }
             }
             ReadCountsLenient(saved.baits, fishing.Baits);
             ReadCountsLenient(saved.records, fishing.RecordGrams);
             fishing.EquippedRodId = string.IsNullOrEmpty(saved.equippedRod) ? null : saved.equippedRod;
-            fishing.BasketLevel = Math.Max(0, saved.basketLevel);
+            // Farm chuẩn hóa về khoảng hợp lệ của data hiện tại.
+            fishing.BasketSlots = saved.basketSlots;
             fishing.StarterGranted = saved.starterGranted;
             return fishing;
         }
+
+        private static SaveMailbox ToSaveMailbox(MailboxState box)
+        {
+            box = box ?? new MailboxState();
+            var mails = new List<SaveMail>();
+            foreach (Mail mail in box.Mails)
+            {
+                if (mail == null)
+                    continue;
+                var rewards = new List<SaveReward>();
+                foreach (Reward reward in mail.Rewards ?? new List<Reward>())
+                {
+                    if (reward != null)
+                        rewards.Add(new SaveReward { kind = (int)reward.Kind, id = reward.Id, amount = reward.Amount });
+                }
+                mails.Add(new SaveMail
+                {
+                    id = mail.Id,
+                    sender = mail.Sender,
+                    title = mail.Title,
+                    body = mail.Body,
+                    rewards = rewards.ToArray(),
+                    createdDayKey = mail.CreatedDayKey,
+                    expiresDayKey = mail.ExpiresDayKey,
+                    read = mail.Read,
+                    claimed = mail.Claimed,
+                    claimedDayKey = mail.ClaimedDayKey,
+                });
+            }
+            var sent = new List<string>(box.SentIds);
+            sent.Sort(StringComparer.Ordinal);
+            return new SaveMailbox { mails = mails.ToArray(), sentIds = sent.ToArray(), lastRefreshDayKey = box.LastRefreshDayKey };
+        }
+
+        // Thư hỏng (không id) bỏ qua; quà loại lạ bỏ qua; Farm bỏ tiếp quà trỏ tới cây / mồi không còn.
+        private static MailboxState FromSaveMailbox(SaveMailbox saved)
+        {
+            var box = new MailboxState();
+            if (saved == null)
+                return box;
+            if (saved.sentIds != null)
+            {
+                foreach (string id in saved.sentIds)
+                {
+                    if (!string.IsNullOrEmpty(id))
+                        box.SentIds.Add(id);
+                }
+            }
+            if (saved.mails != null)
+            {
+                foreach (SaveMail s in saved.mails)
+                {
+                    if (s == null || string.IsNullOrEmpty(s.id) || box.TryGet(s.id, out _))
+                        continue;
+                    var mail = new Mail
+                    {
+                        Id = s.id,
+                        Sender = s.sender ?? "",
+                        Title = s.title ?? "",
+                        Body = s.body ?? "",
+                        CreatedDayKey = s.createdDayKey,
+                        ExpiresDayKey = s.expiresDayKey,
+                        Read = s.read,
+                        Claimed = s.claimed,
+                        ClaimedDayKey = s.claimedDayKey,
+                    };
+                    if (s.rewards != null)
+                    {
+                        foreach (SaveReward r in s.rewards)
+                        {
+                            if (r != null && Enum.IsDefined(typeof(RewardKind), r.kind))
+                                mail.Rewards.Add(new Reward((RewardKind)r.kind, string.IsNullOrEmpty(r.id) ? null : r.id, r.amount));
+                        }
+                    }
+                    box.Mails.Add(mail);
+                    box.SentIds.Add(mail.Id);
+                }
+            }
+            box.LastRefreshDayKey = saved.lastRefreshDayKey;
+            return box;
+        }
+
+        // Kiểu shiny lạ (bản sau thêm, hoặc save hỏng) → None.
+        private static ShinyKind ToShinyKind(int value)
+            => Enum.IsDefined(typeof(ShinyKind), value) ? (ShinyKind)value : ShinyKind.None;
 
         private static void ReadCountsLenient(SaveCount[] saved, Dictionary<string, int> counts)
         {
@@ -202,11 +335,14 @@ namespace VeQue.Logic
                 OrderItem[] items = order.Items ?? Array.Empty<OrderItem>();
                 var savedItems = new SaveCount[items.Length];
                 for (int j = 0; j < items.Length; j++)
-                    savedItems[j] = new SaveCount { id = items[j].CropId, count = items[j].Count };
+                    savedItems[j] = new SaveCount { id = items[j].Id, count = items[j].Count };
 
                 result[i] = new SaveOrder
                 {
-                    customer = order.Customer,
+                    kind = (int)order.Kind,
+                    npc = order.NpcId,
+                    line = order.Line,
+                    seed = order.Seed,
                     items = savedItems,
                     rewardCoins = order.RewardCoins,
                     rewardXp = order.RewardXp,
@@ -246,12 +382,16 @@ namespace VeQue.Logic
                     SaveCount item = s.items[j];
                     valid = item != null && !string.IsNullOrEmpty(item.id) && item.count > 0;
                     if (valid)
-                        items[j] = new OrderItem { CropId = item.id, Count = item.count };
+                        items[j] = new OrderItem { Id = item.id, Count = item.count };
                 }
                 if (!valid)
                     continue;
 
-                order.Customer = s.customer;
+                // Loại lạ coi như đơn nông sản (Farm bỏ đơn nếu id không phải cây). Người / câu lạ Farm bỏ khi nạp.
+                order.Kind = s.kind == (int)OrderKind.Fish ? OrderKind.Fish : OrderKind.Crops;
+                order.NpcId = string.IsNullOrEmpty(s.npc) ? null : s.npc;
+                order.Line = s.line >= 0 ? s.line : -1;
+                order.Seed = (uint)s.seed;
                 order.Items = items;
                 order.RewardCoins = s.rewardCoins;
                 order.RewardXp = s.rewardXp;

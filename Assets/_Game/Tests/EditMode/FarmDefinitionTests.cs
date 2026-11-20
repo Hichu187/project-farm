@@ -100,19 +100,62 @@ namespace VeQue.Tests
         }
 
         [Test]
-        public void ToDef_DefaultData_OnlyMvpCropsEnabled()
+        public void ToDef_DefaultData_RegularCropsEnabledEventCropsNot()
         {
             FarmDefinition asset = LoadAsset();
             FarmDef def = asset.ToDef();
 
             Assert.AreEqual(25, asset.Crops.Count);
-            Assert.AreEqual(4, def.Crops.Count);
+            Assert.AreEqual(22, def.Crops.Count);
             Assert.IsTrue(def.TryGetCrop("rau_muong", out CropDef rauMuong));
             Assert.AreEqual(120, rauMuong.GrowSeconds);
-            Assert.IsTrue(def.TryGetCrop("cai_xanh", out _));
-            Assert.IsTrue(def.TryGetCrop("ca_chua", out _));
-            Assert.IsTrue(def.TryGetCrop("bi_do", out CropDef biDo));
-            Assert.AreEqual(4 * 3600, biDo.GrowSeconds);
+            Assert.IsTrue(def.TryGetCrop("ca_chua", out CropDef caChua));
+            Assert.AreEqual(4 * 3600, caChua.GrowSeconds);
+            Assert.IsTrue(def.TryGetCrop("bi_ngo", out CropDef biNgo));
+            Assert.AreEqual(6 * 3600, biNgo.GrowSeconds);
+            Assert.IsFalse(def.TryGetCrop("hoa_dao", out _));
+            Assert.IsFalse(def.TryGetCrop("hoa_cuc", out _));
+            Assert.IsFalse(def.TryGetCrop("huong_duong", out _));
+            Assert.IsFalse(def.TryGetCrop("bi_do", out _), "cây cũ đã bỏ");
+        }
+
+        // Thứ tự trong data theo thời gian lớn ngoài đời: cây sau không chín nhanh hơn cây trước.
+        [Test]
+        public void ToDef_DefaultData_GrowTimesFollowRealLifeOrder()
+        {
+            FarmDef def = LoadAsset().ToDef();
+
+            for (int i = 1; i < def.Crops.Count; i++)
+                Assert.GreaterOrEqual(def.Crops[i].GrowSeconds, def.Crops[i - 1].GrowSeconds, def.Crops[i].Id);
+        }
+
+        // Mỗi cấp 1–13 có ít nhất 1 cây mới; cấp 14–15 dành cho cần và mồi.
+        [Test]
+        public void ToDef_DefaultData_EveryLevelUpTo13UnlocksACrop()
+        {
+            FarmDef def = LoadAsset().ToDef();
+
+            for (int level = 1; level <= 13; level++)
+            {
+                bool found = false;
+                foreach (CropDef crop in def.Crops)
+                    found |= crop.UnlockLevel == level;
+                Assert.IsTrue(found, $"cấp {level}");
+            }
+            foreach (CropDef crop in def.Crops)
+                Assert.LessOrEqual(crop.UnlockLevel, 13, crop.Id);
+        }
+
+        [TestCase("rau_muong", CropGroup.LeafyGreen)]
+        [TestCase("mong_toi", CropGroup.LeafyGreen)]
+        [TestCase("dua_hau", CropGroup.Fruit)]
+        [TestCase("ca_chua", CropGroup.Fruit)]
+        [TestCase("lua", CropGroup.RootGrain)]
+        [TestCase("bi_ngo", CropGroup.RootGrain)]
+        public void ToDef_DefaultData_CropGroup(string id, CropGroup group)
+        {
+            Assert.IsTrue(LoadAsset().ToDef().TryGetCrop(id, out CropDef crop));
+            Assert.AreEqual(group, crop.Group);
         }
 
         [Test]
@@ -149,11 +192,14 @@ namespace VeQue.Tests
             Assert.AreEqual(3, levels.UnlockSeedCount);
         }
 
-        // Bảng cây ở MVP-Plan Phần 6b: (id, giá hạt, sản lượng, giá bán, XP, cấp mở).
+        // Bảng cây ở thiet-ke-dot-2.md mục 1: (id, giá hạt, sản lượng, giá bán, XP, cấp mở).
         [TestCase("rau_muong", 5, 2, 5, 1, 1)]
         [TestCase("cai_xanh", 15, 2, 20, 4, 2)]
-        [TestCase("ca_chua", 37, 3, 38, 9, 4)]
-        [TestCase("bi_do", 92, 1, 322, 22, 6)]
+        [TestCase("dau_dua", 37, 4, 28, 9, 3)]
+        [TestCase("ca_chua", 92, 3, 107, 22, 5)]
+        [TestCase("bi_ngo", 121, 1, 440, 29, 7)]
+        [TestCase("lua", 148, 2, 274, 35, 4)]
+        [TestCase("khoai_so", 195, 3, 250, 46, 13)]
         public void ToDef_DefaultData_MvpCropBalance(string id, int seed, int yield, int sell, int xp, int level)
         {
             Assert.IsTrue(LoadAsset().ToDef().TryGetCrop(id, out CropDef crop));
@@ -203,7 +249,7 @@ namespace VeQue.Tests
             Assert.AreEqual(200, orders.UrgentRewardPercent);
             Assert.AreEqual(1800, orders.UrgentExpireSeconds);
             Assert.AreEqual(15, orders.DailyLimit);
-            Assert.GreaterOrEqual(orders.CustomerNames.Count, 1);
+            Assert.GreaterOrEqual(orders.Dialogue.Npcs.Count, 1);
         }
 
         [Test]
@@ -225,15 +271,29 @@ namespace VeQue.Tests
             FishingDef fishing = LoadAsset().ToDef().Fishing;
 
             Assert.IsTrue(fishing.IsEnabled, "Chạy Về Quê → Tạo data câu cá.");
-            Assert.AreEqual(13, fishing.Fish.Count);
-            Assert.AreEqual(5, fishing.Rods.Count);
-            Assert.AreEqual(5, fishing.Baits.Count);
+            Assert.AreEqual(20, fishing.Fish.Count);
+            // 14/11/2026: mở rộng 10 cần, 10 mồi.
+            Assert.AreEqual(10, fishing.Rods.Count);
+            Assert.AreEqual(10, fishing.Baits.Count);
+            // Cấp mở mua mồi (duyệt 13/11/2026, mở rộng 14/11/2026).
+            var baitLevels = new System.Collections.Generic.Dictionary<string, int>
+            {
+                { "cam", 1 }, { "moi_ruoi", 2 }, { "moi_tep", 3 }, { "moi_de", 4 }, { "moi_nhai", 5 },
+                { "moi_gia", 6 }, { "moi_thom", 9 }, { "moi_nhai_hoi", 11 }, { "moi_thia_vang", 13 },
+            };
+            foreach (var pair in baitLevels)
+            {
+                Assert.IsTrue(fishing.TryGetBait(pair.Key, out BaitDef bait), pair.Key);
+                Assert.AreEqual(pair.Value, bait.UnlockLevel, pair.Key);
+            }
             Assert.AreEqual(1, fishing.UnlockLevel);
             Assert.AreEqual("can_tre", fishing.StarterRodId);
             Assert.AreEqual("giun", fishing.StarterBaitId);
             Assert.AreEqual(10, fishing.StarterBaitCount);
-            CollectionAssert.AreEqual(new[] { 8, 10, 12, 16, 20 }, fishing.BasketCapacities);
-            CollectionAssert.AreEqual(new long[] { 0, 300, 1000, 3000, 8000 }, fishing.BasketUpgradePrices);
+            Assert.AreEqual(8, fishing.BasketStartSlots);
+            Assert.AreEqual(25, fishing.BasketMaxSlots);
+            CollectionAssert.AreEqual(new long[] { 100, 130, 170, 220, 290, 370, 480, 630, 820, 1060, 1380, 1790, 2330, 3030, 3940, 5120, 6650 },
+                fishing.BasketSlotPrices);
             Assert.AreEqual("giun", fishing.WormBaitId);
             Assert.AreEqual(10, fishing.WormChancePercent);
         }
@@ -292,6 +352,17 @@ namespace VeQue.Tests
             }
         }
 
+        // 14/11/2026: chuỗi kéo cá tối thiểu 4 mũi tên.
+        [Test]
+        public void ToDef_DefaultData_FishHaveAtLeastMinPullArrows()
+        {
+            FishingDef fishing = LoadAsset().ToDef().Fishing;
+
+            Assert.AreEqual(4, fishing.Tuning.MinPullArrows);
+            foreach (FishDef fish in fishing.Fish)
+                Assert.GreaterOrEqual(fish.MinArrows, fishing.Tuning.MinPullArrows, fish.Id);
+        }
+
         [Test]
         public void ToDef_DefaultData_RodsGetBetterAndCostMore()
         {
@@ -307,7 +378,6 @@ namespace VeQue.Tests
                 Assert.Greater(rod.PerfectHalfWidth, prev.PerfectHalfWidth, rod.Id);
                 Assert.Greater(rod.BonusTimePercent, prev.BonusTimePercent, rod.Id);
                 Assert.GreaterOrEqual(rod.UnlockLevel, prev.UnlockLevel, rod.Id);
-                Assert.Less(rod.RepairPrice, rod.Price, $"{rod.Id}: sửa rẻ hơn mua");
             }
             Assert.AreEqual(0, fishing.Rods[0].Price, "Cần tre tặng");
         }
@@ -323,10 +393,140 @@ namespace VeQue.Tests
                 Assert.IsFalse(string.IsNullOrEmpty(fish.DisplayName), fish.Id);
                 Assert.IsNotNull(fish.Icon, $"{fish.Id}: chạy Về Quê → Câu cá: tạo art tạm.");
             }
+            // 14/11/2026: cần, mồi có icon (Art/Fishing/rods, bait – gán bằng Tạo data câu cá).
             foreach (RodDefinition rod in fishing.Rods)
+            {
                 Assert.IsFalse(string.IsNullOrEmpty(rod.DisplayName), rod.Id);
+                Assert.IsNotNull(rod.Icon, $"{rod.Id}: chạy Về Quê → Tạo data câu cá.");
+            }
             foreach (BaitDefinition bait in fishing.Baits)
+            {
                 Assert.IsFalse(string.IsNullOrEmpty(bait.DisplayName), bait.Id);
+                Assert.IsNotNull(bait.Icon, $"{bait.Id}: chạy Về Quê → Tạo data câu cá.");
+            }
+        }
+
+        // 14/11/2026: mồi nào cũng có ít nhất 1 loài cá ưa (mua mồi mới không vô dụng).
+        [Test]
+        public void ToDef_DefaultData_EveryBaitAttractsSomeFish()
+        {
+            FishingDef fishing = LoadAsset().ToDef().Fishing;
+
+            foreach (BaitDef bait in fishing.Baits)
+            {
+                bool attracts = false;
+                foreach (FishDef fish in fishing.Fish)
+                {
+                    foreach (string preferred in fish.PreferredBaits)
+                    {
+                        if (preferred == bait.Id)
+                            attracts = true;
+                    }
+                }
+                Assert.IsTrue(attracts, bait.Id);
+            }
+        }
+
+        // ---------- Đơn hàng có thoại (Đợt 2 Phần 11) ----------
+
+        [Test]
+        public void Dialogue_DefaultData_EnoughLinesPerNpc()
+        {
+            OrderDialogue dialogue = LoadAsset().ToDef().Orders.Dialogue;
+            Assert.GreaterOrEqual(dialogue.Npcs.Count, 5);
+            int sharedThanks = 0;
+            foreach (OrderLineDef line in dialogue.Lines)
+            {
+                if (line.NpcId == null && line.Kind == OrderLineKind.Thanks)
+                    sharedThanks++;
+            }
+            Assert.GreaterOrEqual(sharedThanks, 3, "Ít nhất 3 câu cảm ơn dùng chung");
+            foreach (NpcDef npc in dialogue.Npcs)
+            {
+                int requests = 0;
+                foreach (OrderLineDef line in dialogue.Lines)
+                {
+                    if (line.NpcId == npc.Id && line.Kind == OrderLineKind.Request && line.CropTag == null)
+                        requests++;
+                }
+                Assert.GreaterOrEqual(requests, 4, $"{npc.Id}: cần ít nhất 4 câu đặt đơn");
+            }
+        }
+
+        [Test]
+        public void Dialogue_DefaultData_TagsAndPreferredCropsExist()
+        {
+            FarmDef def = LoadAsset().ToDef();
+            OrderDialogue dialogue = def.Orders.Dialogue;
+            foreach (NpcDef npc in dialogue.Npcs)
+            {
+                foreach (string crop in npc.PreferredCrops)
+                    Assert.IsTrue(def.TryGetCrop(crop, out _), $"{npc.Id}: cây '{crop}' không có");
+            }
+            foreach (OrderLineDef line in dialogue.Lines)
+            {
+                if (line.CropTag != null)
+                    Assert.IsTrue(def.TryGetCrop(line.CropTag, out _) || def.Fishing.TryGetFish(line.CropTag, out _), line.Text);
+            }
+        }
+
+        // Câu dài nhất sau khi điền (số lượng 2 chữ số, tên cây / món / cá dài nhất có thể gặp) ≤ 72 ký tự.
+        [Test]
+        public void Dialogue_DefaultData_LinesFitTwoRows()
+        {
+            const int MaxLength = 72;
+            FarmDefinition asset = LoadAsset();
+            FarmDef def = asset.ToDef();
+            OrderDialogue dialogue = def.Orders.Dialogue;
+            var farm = new Farm(def, FarmState.CreateNew(def), new FakeClock());
+            var fishNames = new System.Collections.Generic.List<string>();
+            foreach (FishDef fish in farm.GetFishOrderPool())
+            {
+                if (asset.Fishing.TryGetFish(fish.Id, out FishDefinition name))
+                    fishNames.Add(name.DisplayName.ToLowerInvariant());
+            }
+
+            foreach (OrderLineDef line in dialogue.Lines)
+            {
+                var titles = new System.Collections.Generic.List<string>();
+                if (dialogue.TryGetNpc(line.NpcId, out NpcDef owner))
+                    titles.Add(owner.Title);
+                else
+                    foreach (NpcDef npc in dialogue.Npcs)
+                        titles.Add(npc.Title);
+
+                foreach (string title in titles)
+                {
+                    if (line.Kind == OrderLineKind.Fish)
+                    {
+                        foreach (string fish in fishNames)
+                            AssertFits(line, title, fish, null, MaxLength);
+                        continue;
+                    }
+                    foreach (CropDefinition crop in asset.Crops)
+                    {
+                        if (crop == null || (line.CropTag != null && line.CropTag != crop.Id))
+                            continue;
+                        string name = crop.DisplayName.ToLowerInvariant();
+                        var dishes = dialogue.GetDishes(crop.Id);
+                        if (line.NeedsDish)
+                        {
+                            foreach (string dish in dishes)
+                                AssertFits(line, title, name, dish, MaxLength);
+                        }
+                        else
+                        {
+                            AssertFits(line, title, name, null, MaxLength);
+                        }
+                    }
+                }
+            }
+        }
+
+        private static void AssertFits(OrderLineDef line, string title, string item, string dish, int max)
+        {
+            string text = OrderDialogue.Format(line.Text, title, 18, item, dish);
+            Assert.LessOrEqual(text.Length, max, text);
         }
     }
 }

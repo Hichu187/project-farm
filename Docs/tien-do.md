@@ -15,12 +15,13 @@
 | 6 – UI | Ổn trong Editor | Mục 4 hiệu ứng GUI (làm sau); mục 5 chạm/kéo chờ kiểm tra; chữ có dấu + safe-area trên iPhone |
 | 6b – Cấp độ, đơn hàng, cân bằng | Ổn trong Editor | Build + Build Report; công cụ Cân bằng (làm sau) |
 | 6c – Việc làm lúc chờ cây lớn | Mục 2 (đơn hàng: chờ, Khẩn cấp, 15 đơn/ngày) xong code, người dùng xác nhận đơn ổn 12/11 | Mục 1, 3–6 trong MVP, 7–8 sau MVP; Test Runner + thử Tua thời gian mục 2; mỗi mục duyệt thiết kế trước |
-| 10 – Nhân vật, vùng câu, câu cá, ao nhà | Giai đoạn 1–3 xong (nhân vật, vùng câu tạm, Logic câu cá + độ bền cần). Giai đoạn 4: Đợt A (data), B (hoạt ảnh câu), C (ném / chờ / giật) xong; Đợt D (kéo cá 1 lượt, nhanh = Perfect) đã viết code, chờ kiểm tra | Đợt D kiểm tra; Đợt E (hộp kết quả, bảng Đồ câu, Thả cá, báo đào giun, build); giai đoạn 5 (bán cá, album, đơn có cá, chống kẹt tính cá), 6 (ao nhà); art cá / phao thật |
-| 7 – Lưu tiến trình | Đã viết code (save `version` 6 từ 12/11: nhân vật, hạng / hạn đơn, giới hạn ngày, múi giờ, câu cá, số lần sửa cần) | Thử trên máy thật, nhập mã máy khác, trình duyệt nhúng Facebook |
+| 10 – Nhân vật, vùng câu, câu cá, ao nhà | Giai đoạn 1–3 xong. Giai đoạn 4: Đợt A–D xong (người dùng: câu ổn 13/11 – nhịp, bấm sai nhập lại, chữ trên đầu, cá bay, bảng cá vừa câu); HUD câu + đồng hồ chung (người dùng: ổn); giỏ 25 ô mở từng ô (tạm ổn); mua cần / mồi theo cấp, tab Cửa hàng, bán cá ở Giỏ + Kho, bỏ tab Nông trại, bóng cá xem xét / đớp thử / căng – đã viết code, chờ kiểm tra | Kiểm tra các mục chờ (xem "Việc đang chờ"); Đợt E ("Kỷ lục mới!", báo đào giun, build + Build Report); giai đoạn 5 còn album, đơn hàng có cá; giai đoạn 6 ao nhà; art cá (7 loài thừa), phao, ổ khóa, icon mồi thật |
+| 7 – Lưu tiến trình | Đã viết code (save `version` 7 từ 13/11: thêm số ô giỏ `basketSlots`; save ≤ 6 quy đổi mức giỏ cũ) | Thử trên máy thật, nhập mã máy khác, trình duyệt nhúng Facebook |
 | 8 – Build & phát hành | Chưa làm | Toàn bộ |
+| **Đợt 2** (từ 20/11, kế hoạch `ke-hoach-dot-2.md`) | Thứ tự 1 – Phần 4 Bộ cây mới: data 25 cây, save version 8 (bỏ save cũ), art 25 cây đã gán, giai đoạn cuối chỉ khi chín – đã viết code. Kèm: thanh chọn hạt chỉ hiện hạt có trong kho + cuộn ngang (người dùng: ổn); Cửa hàng / Kho xếp theo cấp mở | Test Runner lại (dự kiến 468/468); Play xem art cây; build + Build Report. Tiếp theo: thứ tự 2 – Phần 1 Sửa cần |
 
-Git: nhánh `setup/phan-0-camera`; `origin` có tới `b210c55`. Commit mới nhất `063595a` (việc 12/11: 3b, 6c mục 2, Phần 10 giai đoạn 2–3, độ bền cần; chưa push). **Chưa commit:** Phần 10 giai đoạn 4 Đợt A–D (13/11).
-Test: Test Runner trong Unity ổn sau Đợt C (dự kiến 414); sau Đợt D chưa chạy (dự kiến 431). Ngoài Unity (13/11): NUnit Logic + `UiFormat` 345/345 xanh (không gồm `SmokeTests`, `SaveTests`, `FarmDefinitionTests`, `CharacterSkinTests`, `EaseTests`). Biên dịch Logic + View + Editor + Tests (Editor và WebGL): không lỗi.
+Git (20/11): nhánh `setup/phan-0-camera`; `origin` có tới `3276bb3`. Commit mới nhất `dc35df7` (chưa push). **Chưa commit:** 258 mục trong `git status` (việc 13–14/11 + Đợt 2 từ 20/11). **Chưa commit (13/11):** asset cá + `ArtSource/fish/`, sửa nhịp / bóng cá / chữ trên đầu / cá bay / bảng cá vừa câu, HUD câu + đồng hồ, giỏ 25 ô, mua cần / mồi, bán cá, tab Cửa hàng / Kho, bỏ tab Nông trại (88 mục trong `git status`).
+Test: Test Runner 13/11 (sau mua cần / mồi): 446 test, 445 xanh, 1 đỏ ở `FarmDefinitionTests` – data mồi chưa tạo lại (file mồi chưa có `_unlockLevel`) → chạy **Tạo data câu cá**. Sau bán cá dự kiến **449**. Ngoài Unity (13/11): NUnit Logic + `UiFormat` 345/345 xanh (không gồm `SmokeTests`, `SaveTests`, `FarmDefinitionTests`, `CharacterSkinTests`, `EaseTests`). Biên dịch Logic + View + Editor + Tests (Editor và WebGL): không lỗi.
 
 ## Phần 0 – Dọn project & khung thư mục (XONG – 29/10/2026)
 
@@ -650,17 +651,372 @@ Quyết định (người dùng 13/11/2026, thay thiết kế cũ nhiều vòng 
 - Test: `FishingTests` viết lại phần kéo (hạng theo thời gian, câu được, chậm = thoát, sai = đứt dây, Perfect nặng hơn + XP +50%, cần thêm thời gian, mũi tên đỏ); `UiFormatTests` thêm cân nặng, thông báo câu được, cá thoát. NUnit ngoài Unity (Logic + UiFormat): 345/345. Biên dịch Editor + WebGL: không lỗi.
 - [ ] Người dùng: **UI Sunnyside: ghép 9-slice** (thêm mũi tên) → **Tạo data câu cá** (số mới) → **Tạo UI** → Ctrl+S → Test Runner (dự kiến 431) → chơi thử: kéo nhanh / chậm / bấm sai / hết giờ, mũi tên đỏ (cá Huyền thoại – có thể tạm sửa `_redArrows` của cá rô để thử), số giỏ + XP tăng khi câu được, Thu cần / Về nhà lúc đang kéo.
 
+### Đợt D – sửa nhịp + bóng cá + icon cá thật (đã viết code, chờ kiểm tra – 13/11/2026)
+Quyết định (người dùng 13/11/2026): cho sửa `.meta` icon cá qua menu; chuyển file phụ của art cá ra `ArtSource/fish/`; 7 cá thừa (rô phi, chạch, thát lát, lăng, anh vũ, hồ, trôi) để giai đoạn 5; giật sớm **vẫn phạt** (cá hoảng, mất mồi).
+
+Đã làm:
+- Asset: 20 icon 16×16 ở `Assets/_Game/Art/Fishing/fish/` (PPU 16, Point, không nén – đúng; nhưng Sprite Mode Multiple với sprite con tên `Piknik basket_0` → menu đổi sang Single). Script / json / preview chuyển ra `ArtSource/fish/` (ngoài `Assets`).
+- Editor: menu **Câu cá: import sprite cá** (`FishingSpriteImporter`): icon Single + gán `FishDefinition._icon` theo id (`tom_cang_xanh` → `tom_cang`); chép `small fish` / `mediuml fish` (Ocean Pack, Sprout Lands) sang `Assets/_Game/Art/Fishing/shadow/`, cắt 4 khung theo hướng (bó sát hình). `FishingPlaceholderArt` chỉ thay icon tạm `fish_<độ hiếm>.png` (trước đây sẽ ghi đè icon thật). `UiBuilder`: tạo `FishShadow` (sorting 299, dưới phao), chữ "Sẵn sàng..." trên bảng kéo.
+- View: `FishShadow` (bóng tối mờ dưới phao: lượn nhẹ, lao 4 px theo mũi tên bấm đúng, câu được → kéo về nhân vật, sai / hết giờ / thu cần → bơi đi mờ dần; cá Thường / Khá dùng bóng nhỏ, Hiếm trở lên bóng vừa). `FishingController`: phao chìm 3 px (trước 2), "!" nảy 1 px, `BiteShown`; xem trước chuỗi `PullPreviewSeconds` rồi mới tính giờ. `FishingHud`: nút "Chờ..." → "GIẬT!" phập phồng khi cá cắn. `FishingPullPanel`: "Sẵn sàng..." lúc xem trước.
+- Số: chờ cắn 3–15 → 2–8 giây; khung giật 0,9/0,8/0,6/0,5/0,4 → 1,6/1,4/1,2/1,0/0,8 giây; Huyền thoại 8–10 → 7–9 mũi tên; `PullPreviewSeconds` 1,2.
+- Biên dịch Logic + View + Editor + Tests (dotnet, ngoài Unity): không lỗi. Không thêm test (Logic chỉ đổi số mặc định).
+- [ ] Người dùng: **Câu cá: import sprite cá** → **Tạo data câu cá** → **Tạo UI** → Ctrl+S → Test Runner (dự kiến 431) → chơi thử: để ý thấy cá cắn, giật sớm bị phạt, xem trước chuỗi, bóng cá lao theo mũi tên / bị kéo vào / bơi đi; icon cá đúng trong thông báo / giỏ.
+- Sprite bóng cá lấy từ gói Sprout Lands (đã chép sang `_Game`, xóa gói vẫn còn); kiểm tra giấy phép như các asset khác.
+
+### Đợt D – bấm sai nhập lại + sửa bóng cá (đã viết code, chờ kiểm tra – 13/11/2026)
+Người dùng: câu tạm ổn; bấm sai không mất lượt mà nhập lại từ đầu, có nháy đỏ; chọn **phương án B** (bỏ hẳn đứt dây / gãy cần khi kéo, cần chỉ hỏng khi hết độ bền). Báo lỗi: chưa thấy bóng cá ở phao.
+
+Đã làm:
+- Bóng cá không thấy: bóng đặt 3 px dưới phao, bóng nhỏ chỉ 6×3 px, phao (sorting 300) vẽ đè gần hết. Sửa: bóng đặt **trong nước trước phao, phía xa nhân vật** (`_waterOffsetPixels` 9, −2; lật theo hướng nhìn), mọi cá dùng **bóng vừa** 9×5 (`_mediumFrom` = Thường), màu đậm hơn (alpha 0,6 – trường `_color` trong scene vẫn giữ 0,5, chỉnh tay nếu cần).
+- Logic: `FishingSession.WrongArrow()` không kết thúc phiên, trả `None`, đếm `Mistakes`. Bỏ `FishingOutcome.LineSnapped`, nhánh gãy cần trong `Farm.CompleteFishing`, `FishingTuning.SnapDurabilityCost` / `SnapBreakMinPercent` / `SnapBreakMaxPercent` / `SnapBreakPercentAt`. `RodState.Snapped` giữ cho save cũ.
+- View: `FishingController` bấm sai → về mũi tên đầu, sự kiện `PullMistake`, bóng cá `Flinch` (vùng ra xa 6 px rồi về). `FishingPullPanel` nháy đỏ cả chuỗi 2 lần trong 0,35 giây. `UiFormat` bỏ "Bấm sai, đứt dây rồi!".
+- Test: thay `Pull_WrongArrow_SnapsLine` bằng `Pull_WrongArrow_KeepsPullingAndCanStillCatch`; bỏ 4 test gãy cần (`Complete_Snap…`, `SnapBreakPercent…` 5 ca, `Snap_LowDurability…`) và ca `LineSnapped` trong `UiFormatTests` → dự kiến **423** test.
+- Biên dịch Logic + View + Editor + Tests (dotnet): không lỗi.
+- [ ] Người dùng: **Tạo UI** (không bắt buộc – chỉ đổi code; chạy lại nếu muốn chắc) → Test Runner (dự kiến 423) → chơi thử: bấm sai thấy nháy đỏ + về đầu + bóng cá vùng ra, nhập lại vẫn câu được; bóng cá thấy rõ trước phao (cả khi nhìn trái / phải).
+- Sửa thêm (người dùng: đầu bóng cá chưa quay vào phao): bóng luôn quay đầu về phía phao, mũi tên chỉ làm bóng lao theo hướng (không quay); cá thoát thì quay đầu ra xa rồi bơi đi.
+- `CLAUDE.md` còn câu "gãy phải sửa / mua mới" – vẫn đúng nghĩa cần hỏng (hết độ bền) phải sửa / mua; chưa sửa.
+
+### Đợt D – chữ trên đầu nhân vật, cá bay lên, bảng cá vừa câu (đã viết code, chờ kiểm tra – 13/11/2026)
+Người dùng: ném chỉ hiện chữ hoàn hảo / tuyệt / tốt trên đầu nhân vật; hụt cá cũng là chữ trên đầu; câu được thì hình cá bắn lên từ nước theo dây về nhân vật; thêm bảng cá vừa câu (tên, hình, cân nặng, rank, giá). Người dùng chốt: rank = độ hiếm của cá (hạng kéo ở dòng nhỏ). Ném yếu hiện "Yếu" (mặc định, chưa chốt).
+
+Đã làm:
+- `UiFormat`: `CastQualityName` → Hoàn hảo! / Tuyệt! / Tốt / Yếu; `FishingOutcomeText` → Sớm quá! / Mất mồi! / Trượt lưỡi! / Cá thoát!; thêm `RarityName`, `CatchDetail`; bỏ `CastResult`, `CaughtText`. Thu cần / hết mồi / không ném được vẫn dùng thông báo.
+- View: `WorldPopText` (chữ nổi trên Canvas, bám điểm trên map, nảy rồi bay lên 8 px, mờ dần 0,9 giây); `CaughtFishFlyer` (icon cá trồi khỏi nước ở phao, bay cong ~0,55 giây về tay, lật hình theo hướng bay); `CatchResultPanel` (nền tối chặn chạm, OK). `FishingController`: sự kiện `CastJudged`, `Missed`, `FishCaught`; `HeadPosition` (`_headPixels` 0, 26), tay `_handPixels` (8, 10); Landing chờ cả hoạt ảnh lẫn cá bay. `FishingHud` hiện chữ nổi (màu theo hạng ném, hụt = đỏ nhạt).
+- `UiBuilder`: `PopText` trong HUD câu, `CatchResult` trên HUD câu, `CaughtFish` (SpriteRenderer, sorting 320) dưới `Regions`.
+- Test: `UiFormatTests` – `CastQualityName_PopText` (4), `RarityName_AllRarities` (5), `CatchDetail_GradeAndXp`; bỏ `CastResult` (4) → dự kiến **428**.
+- Biên dịch Logic + View + Editor + Tests (dotnet): không lỗi.
+- [ ] Người dùng: **Tạo UI** → Ctrl+S → Test Runner (dự kiến 428) → chơi thử: chữ ném trên đầu, chữ hụt (giật sớm / không giật / để hết giờ), cá bay lên đúng hướng (nhìn trái / phải), bảng cá vừa câu đúng thông tin; chỉnh `_headPixels`, `_handPixels` nếu lệch.
+
+### HUD câu cá: đồng hồ chung, nút icon Cần / Giỏ / Mồi, bảng giỏ cá (đã viết code, chờ kiểm tra – 13/11/2026)
+Người dùng (13/11): bỏ khung giờ ở HUD câu, làm 1 đồng hồ chung cho cả game; bỏ dòng cần / giỏ, thay bằng nút icon (Cần → chọn cần, Giỏ → giỏ dạng lưới, thêm nút Mồi). Chốt: đồng hồ hiện giờ + khung giờ dưới nút Sao lưu; bảng Cần có nút Sửa; icon mồi lấy asset có sẵn → không có giun / mồi trong project, dùng tạm `rod alt` (Sunnyside, cần có mồi đỏ).
+
+Đã làm:
+- Logic: `Farm.ReleaseFish(index)` (thả 1 con, kỷ lục giữ), `Farm.GetFishPrice(cá)`; `FishingMath.WeightValuePercent` / `FishPrice` (dùng chung với lúc câu); `FarmResult.UnknownFish` (thêm cuối enum). Save không đổi.
+- View: `GameClock` (2 dòng "15:42" / "Chiều", chạm = thông báo khung giờ + còn bao lâu); `FishingHud` bỏ khung giờ / dòng cần-giỏ / nút mồi chữ, thêm 3 nút icon có số nhỏ (đỏ khi cần hỏng / giỏ đầy / hết mồi), khóa khi đang câu; `RodPanel`, `BaitPanel` (dòng `FishingItemRow`), `BasketPanel` (lưới `FishCell` 5 cột, tối đa 20 ô; chi tiết + Thả). `FishingController.CycleBait` → `SelectBait(id)`. `UiFormat.Clock`.
+- Editor: `SunnysideUiImporter` thêm icon `basket`, `rod alt`; `UiBuilder` dựng đồng hồ, cột nút icon, 3 bảng (BottomSheet).
+- Test: `FishingTests` – `ReleaseFish_RemovesOneKeepsRecord`, `ReleaseFish_BadIndex_Unknown` (2), `GetFishPrice_MatchesPriceWhenCaught`; `UiFormatTests` – `Clock_LocalTime` (4) → dự kiến **436**.
+- Biên dịch Logic + View + Editor + Tests (dotnet): không lỗi.
+- [ ] Người dùng: **UI Sunnyside: ghép 9-slice** (lấy icon giỏ / mồi) → **Tạo UI** → Ctrl+S → Test Runner (dự kiến 436) → chơi thử: đồng hồ ở nông trại + vùng câu, chạm đồng hồ; 3 nút icon + số; bảng Cần (Dùng, Sửa khi hỏng), Giỏ (chọn cá, Thả, giỏ hết đầy câu tiếp được), Mồi (đổi mồi, số trên nút đổi theo); nút khóa khi đang câu.
+- Sửa 19/11/2026 (người dùng): đồng hồ chỉ hiện giờ 24h, **bỏ dòng khung giờ và toast khi chạm** (dòng khung giờ cũ bị ẩn vì ô cao 16 px < dòng font pixel cỡ 16, overflow Ellipsis). `GameClock` bỏ `_slot`, `_button`, `_toast`; `UiBuilder.BuildGameClock` bỏ label `Slot` + `Button`, `Time` chiếm cả khung, nền vẫn chặn chạm. `UiFormat.SlotStatus` / `DaySlots.SecondsUntilEnd` giữ (có test). → Người dùng: **Tạo UI** → Ctrl+S → kiểm đồng hồ hiện "23:05" căn giữa.
+
+### Giỏ cá: ô vuông, 25 ô, mở từng ô (đã viết code, chờ kiểm tra – 13/11/2026)
+Người dùng: ô cá vuông; lưới tối đa 25 ô; ô chưa mở hiện khóa, bấm mở ô gần nhất. Chốt: giá ô thứ k = 100 × 1,3^(k−1) (tròn 10; 100 … 6.650); có hộp xác nhận; ô 64 px, cuộn dọc.
+
+Đã làm:
+- Logic: bỏ mức nâng cấp giỏ; `FishingDef.BasketStartSlots` (8) + `BasketSlotPrices` (17 giá) + `BasketMaxSlots`; `FishingState.BasketSlots`; `Farm.BasketCapacity` = số ô đã mở, `CanUnlockBasketSlot`, `NextBasketSlotPrice`, `UnlockBasketSlot()` (thay `UpgradeBasket`). Save **`version` 7**: `basketSlots`; save ≤ 6 quy đổi `basketLevel` → 8 / 10 / 12 / 16 / 20 ô rồi kẹp theo data.
+- Data: `FishingDefinition` `_basketStartSlots`, `_basketSlotPrices`; `FishingDataGenerator.BasketSlotPrice(k)`.
+- View: `FishCell` thêm trạng thái khóa (ổ khóa; ô kế tiếp hiện giá, bấm được; ô sau mờ); `BasketPanel` 25 ô, hộp xác nhận "Mở thêm 1 ô giỏ (ô N) – Giá" (nút Mở mờ khi thiếu xu). `FishingPlaceholderArt`: ổ khóa tạm 10×12 (`lock.png`, không có icon khóa trong project). `UiBuilder`: ô 64×64, 25 ô, hộp xác nhận.
+- Test: `UnlockBasketSlot_OneByOneUntilMax`, `UnlockBasketSlot_NotEnoughCoins`, `Save_V6BasketLevel_ConvertsToSlots` (3); `Save_RoundTrip_KeepsFishing` kiểm số ô; `FarmDefinitionTests` kiểm 8 / 25 / bảng giá; `Save_CurrentVersionIs7` → dự kiến **440**.
+- Biên dịch Logic + View + Editor + Tests (dotnet): không lỗi.
+- [ ] Người dùng: **Câu cá: tạo art tạm** (ổ khóa) → **Tạo data câu cá** (giá ô giỏ) → **Tạo UI** → Ctrl+S → Test Runner (dự kiến 440) → chơi thử: lưới 25 ô vuông, cuộn; ô khóa kế tiếp có giá, bấm → xác nhận → mở; thiếu xu nút Mở mờ; save cũ (nếu có giỏ đã nâng) nạp đúng số ô.
+
+### Mua cần / mồi theo cấp, tab Đồ câu trong Cửa hàng (đã viết code, chờ kiểm tra – 13/11/2026)
+Người dùng: làm hệ thống mua mồi và cần câu, đủ cấp mới mua được. Chốt: cấp mồi cám 1 / mồi tép 3 / mồi giả 6 / mồi thơm 9 (giun không bán); làm cả tab Cửa hàng ở nông trại; hộp lên cấp báo cần / mồi mới.
+
+Đã làm:
+- Logic: `BaitDef.UnlockLevel` (tham số cuối, mặc định 1); `Farm.BuyBait` trả `LevelTooLow` khi chưa đủ cấp; `LevelUnlocks.RodIds` / `BaitIds` (cần / mồi bán ở Cửa hàng mở đúng cấp đó, câu cá đang bật). Cần đã có cấp (`RodDef.UnlockLevel`), giữ nguyên. Save không đổi.
+- Data: `BaitDefinition._unlockLevel`; `FishingDataGenerator` ghi cấp mồi.
+- View: `FishingItemRow` tối đa 3 nút (trái → phải), kiểu dòng Thường / Đang dùng / Khóa; `RodListView`, `BaitListView` (tự vẽ lại khi bật + khi tiến trình đổi) dùng cho bảng Cần / Mồi ở vùng câu và trang Đồ câu của Cửa hàng; `RodPanel` / `BaitPanel` chỉ còn mở bảng; `ShopTabs` ("Hạt giống | Đồ câu", mở Cửa hàng về Hạt giống); `LevelUpDialog` thêm "Mở <cần / mồi>"; `UiFormat.ShopBlocked` (thiếu xu, chưa đủ cấp…).
+- Editor: `UiBuilder` – dòng mẫu 84 px 3 nút, `BuildShopFishingTab` (nút chuyển cạnh tiêu đề Cửa hàng, trang Cần câu + Mồi câu).
+- Test: `BuyBait_NeedsLevel`, `GetUnlocksAtLevel_ListsRodsAndBaits`, `ShopBlocked_Messages` (4); `FarmDefinitionTests` kiểm cấp mồi → dự kiến **446**.
+- Biên dịch Logic + View + Editor + Tests (dotnet): không lỗi.
+- [ ] Người dùng: **Tạo data câu cá** (cấp mồi) → **Tạo UI** → Ctrl+S → Test Runner (dự kiến 446) → chơi thử: Cửa hàng ở nông trại chuyển Hạt giống / Đồ câu; mua cần (đủ / thiếu xu, chưa đủ cấp hiện "Cấp N"), Dùng, Sửa, Mua lại; mua mồi 1 / 10, Dùng; bảng Cần / Mồi ở vùng câu giống vậy; lên cấp 3 thấy "Mở Cần trúc", "Mở Mồi tép"; build lại, so Build Report.
+
+### Bán cá, chia tab Cửa hàng / Kho (đã viết code, chờ kiểm tra – 13/11/2026)
+Người dùng: tab Đồ câu chia riêng Cần câu / Mồi câu; thêm chỗ bán cá. Chốt: bán ở bảng Giỏ (vùng câu) và trong Kho (nông trại); Bán hết có xác nhận.
+
+Đã làm:
+- Logic: `Farm.SellFish(index, out xu)`, `Farm.SellAllFish(out xu)`, `Farm.GetBasketValue()`; chống kẹt: còn cá trong giỏ thì không kẹt (`IsStuck`). Save không đổi.
+- View: `BasketView` (giỏ dùng chung: "Giỏ n/m" + **Bán hết (tổng)** → xác nhận; chi tiết cá + **Bán (giá)** / Thả; lưới 25 ô; 1 hộp xác nhận dùng cho mở ô và bán hết; thông báo "+X xu"); `BasketPanel` chỉ còn mở bảng; `ShopTabs` tổng quát nhiều tab (giữ tên file để không đụng `.meta`).
+- Editor: `UiBuilder` – hàng tab dưới tiêu đề (`BuildTabRow`), Cửa hàng "Hạt giống | Cần câu | Mồi câu" (`BuildShopTabs`), Kho "Nông sản | Giỏ cá" (`BuildStorageTabs`, đưa Scroll + nhãn Empty vào trang Nông sản), `BuildBasketView`.
+- Test: `SellFish_AddsPriceRemovesOne`, `SellAllFish_SumsAndEmpties`, `Rescue_FishInBasket_DoesNotRescue` → dự kiến **449**.
+- Biên dịch Logic + View + Editor + Tests (dotnet): không lỗi.
+- [ ] Người dùng: **Tạo UI** → Ctrl+S → Test Runner (dự kiến 449) → chơi thử: Cửa hàng 3 tab (mở lại về Hạt giống); Kho 2 tab, Giỏ cá bán 1 con / Bán hết (xác nhận, xu tăng đúng), Thả, mở ô; bảng Giỏ ở vùng câu giống vậy; nhãn "Kho trống" chỉ ở tab Nông sản.
+
+### Bỏ tab Nông trại (13/11/2026)
+Người dùng đề xuất bỏ; tab chỉ gọi `GameUI.CloseAll` (đóng bảng), đã có nút X / chạm nền / chuyển tab. Thanh tab còn "Đơn hàng | Kho | Cửa hàng". Sửa `GameUI` (bỏ `_farmTab`), `UiBuilder.BuildNav`. Biên dịch không lỗi. [ ] Người dùng: **Tạo UI** → Ctrl+S.
+
+### Bóng cá: xem xét, đớp thử, căng khi kéo (đã viết code, chờ kiểm tra – 13/11/2026)
+Người dùng: bóng hiện sau khi ném 0,5–1 giây, bơi quanh xem xét, lâu lâu đớp thử mồi; khi giật thì căng liên tục.
+
+Đã làm (chỉ View, Logic / test / save không đổi):
+- `FishShadow` viết lại theo bước: `Approach` (hiện mờ dần sau độ trễ, lượn qua lại theo cung phía nước xa nhân vật, đầu theo hướng bơi), `Nibble` (lao vào phao rồi lùi, khớp lần phao rỉa), `Bite` (lao vào phao và giữ, rung 1 px), `Hook` + `SetTension` (ghì ra xa, rung dọc / ngang dây liên tục, gần hết giờ mạnh gấp 2,2), `Dart` / `Flinch` như cũ, `Escape` (hụt / thoát / thu cần: quay đầu bơi đi), `Reel`. Mọi số chỉnh trong Inspector.
+- `FishingController`: gọi `Approach` lúc phao chạm nước (độ trễ ngẫu nhiên `_shadowAppearSeconds` 0,5–1 giây, luôn trước lần rỉa / cắn đầu − 0,3 giây), `Nibble` ở đầu mỗi lần rỉa, `Bite` lúc cắn, `Hook` khi móc được cá, `SetTension` theo thời gian kéo, `Escape` khi lượt kết thúc không ra cá.
+- Biên dịch không lỗi. [ ] Người dùng: Play (không cần Tạo UI) → thử: bóng hiện sau ném, lượn, đớp thử khớp lúc phao rỉa, cắn thì lao vào phao; giật sớm / để mất mồi → bóng bơi đi; kéo cá bóng rung liên tục, gần hết giờ mạnh hơn.
+
+### Kéo cá tối thiểu 4 mũi tên (đã viết code, chờ kiểm tra – 14/11/2026)
+Người dùng: logic câu ổn nhưng có lúc chỉ 2 mũi tên (cá Thường 3–4, ném Perfect bớt 1, chặn dưới cũ là 1). Duyệt: nâng mọi hạng +1 và chặn dưới 4.
+- Logic: `FishingTuning.MinPullArrows = 4` (kiểm tra ≥ 1 trong `Validate`); `FishingSession.MakePull` bớt 1 khi Perfect rồi chặn dưới bằng `MinPullArrows`. Asset cũ thiếu trường → Unity lấy giá trị mặc định 4.
+- Data (`FishingDataGenerator`): mũi tên theo hạng 4–5 / 5–6 / 6–8 / 7–9 / 8–10 (trước 3–4 / 4–5 / 5–7 / 6–8 / 7–9). Thời gian kéo không đổi.
+- Test: `Strike_InWindow_NoSlip_Hooked` kiểm tra ≥ 4; thêm `Pull_PerfectCast_NeverBelowMinPullArrows` (cá rô test 3–4, ném Perfect 40 seed); `ToDef_DefaultData_FishHaveAtLeastMinPullArrows`.
+- [ ] Người dùng: **Tạo data câu cá** → Ctrl+S → Test Runner (dự kiến 451) → câu thử cá Thường, ném Perfect vẫn ≥ 4 mũi tên.
+
+### Đợt E – Kỷ lục mới, đào được giun (đã viết code, chờ kiểm tra – 14/11/2026)
+Duyệt 14/11/2026; thông báo giun chọn phương án B (chữ nổi trên đầu nhân vật).
+- Logic: `FishingSession.PreviousRecordGrams` / `IsNewRecord` / `IsNewSpecies`, ghi trong `Farm.CompleteFishing` lúc áp cá câu được (chỉ để hiển thị, không lưu – save không đổi).
+- Bảng cá vừa câu (`CatchResultPanel`, `UiBuilder`): thêm dòng vàng có viền dưới cân nặng – "Loài mới!" (lần đầu câu loài) / "Kỷ lục mới! (cũ 1,25 kg)"; không phá kỷ lục thì ẩn. Hộp cao 330 → 356.
+- Giun: `BaitFoundPopup` (mới) nghe `Farm.BaitFound`, hiện "+2 giun" trên đầu nhân vật ở nông trại bằng một `WorldPopText` riêng (`BaitFoundPopText`); đào tiếp cùng loại trong 2 giây thì cộng dồn. Thông số trong Inspector.
+- `UiFormat.CatchRecord`, `UiFormat.BaitFound`.
+- Sửa 19/11/2026 (người dùng duyệt): bỏ chữ nổi "+N giun" trên đầu nhân vật; giun đào được hiện bằng nhãn **"+N [icon giun]" trên tab Kho**, chồng ngay trên nhãn nông sản, hiện cùng lúc icon nông sản bay tới (cùng thời gian hiện / mờ, cộng dồn cùng loại). `HarvestFlyer` nghe `Farm.BaitFound` (gọi trước `Harvested`), gắn số mồi vào lượt bay; icon từ `BaitDefinition.Icon`. `UiBuilder`: `BuildFlyerBadge` dựng `HarvestBadge` + `BaitBadge`; bỏ `BuildBaitFoundPopup`. Xóa `BaitFoundPopup.cs` (+ .meta), `UiFormat.BaitFound`, test `BaitFound_PopText` (3 ca → tổng test giảm 3). Biên dịch View + Editor + Tests (dotnet): không lỗi. → Người dùng: **Tạo UI** → Ctrl+S → Test Runner → thu hoạch tới khi đào được giun.
+- Test: `Record_FirstCatch_IsNewSpecies`, `Record_Heavier_IsNewRecordWithPrevious`, `Record_Lighter_NotNewRecord`; `UiFormatTests` thêm `CatchRecord_Lines` (5), `BaitFound_PopText` (3).
+- Biên dịch ngoài Unity (Logic, View, Editor, Tests) không lỗi.
+- [ ] Người dùng: **Tạo UI** → Ctrl+S → Test Runner (dự kiến 462) → câu loài mới / con nặng hơn / con nhẹ hơn; thu hoạch (tạm đặt `_wormChancePercent` = 100 trong `FishingDefinition` để thử, xong trả 10) → "+N giun" trên đầu nhân vật, thu liên tiếp cộng dồn.
+- [ ] Build WebGL, so Build Report (mốc 10,8 MB đã nén).
+
+### Mở rộng 10 cần, 10 mồi + icon (đã viết code, chờ kiểm tra – 14/11/2026)
+Người dùng thêm art `Art/Fishing/rods` (10 cần) và `Art/Fishing/bait` (10 mồi), duyệt mở rộng data (bảng ở `MVP-Plan.md` Phần 10 mục 5, 6).
+- Kiểm tra art: 20 icon 16×16, PPU 16, Point, không nén, tắt mipmap – ổn; nhưng meta chép theo preset là Multiple, sprite tên `Piknik basket_0` (cả icon cá, cá đã được menu import đưa về Single).
+- `FishingSpriteImporter`: menu **Câu cá: import sprite cá** đưa cả icon cần / mồi về Single; `EnsureSingleIcon` dùng khi gán.
+- `FishingDataGenerator`: 10 cần (thêm nứa, mây, composite, titan, rồng; cần vàng mở cấp 13 thay 12), 10 mồi (thêm ruồi, dế, nhái, nhái hơi, thìa vàng; mồi tép 5 → 6 xu, mồi giả → "Mồi giả cá" 8 → 12 xu), mồi ưa thích của cá cho mồi mới; gán icon cần / mồi; asset cũ đổi tên theo thứ tự mới bằng `MoveAsset` (giữ GUID). Id cũ giữ nguyên → save không đổi.
+- Chuyển file công cụ / preview / sheet của `rods`, `bait` sang `ArtSource/rods`, `ArtSource/bait` (xóa meta).
+- Test: số cần / mồi 10, bảng cấp mở mồi mới, cần / mồi có icon, `ToDef_DefaultData_EveryBaitAttractsSomeFish`. Biên dịch ngoài Unity không lỗi.
+- [ ] Người dùng: **Câu cá: import sprite cá** → **Tạo data câu cá** → Ctrl+S → Test Runner (dự kiến 463) → Cửa hàng đủ 10 cần / 10 mồi, mua thử mồi mới rồi câu → build, so Build Report.
+- Chưa làm (việc riêng, chưa duyệt): hiện icon cần / mồi trong các dòng danh sách.
+
+### Nút Cần / Mồi hiện icon đồ đang dùng (đã viết code, chờ kiểm tra – 14/11/2026)
+- `FishingHud`: `_rodIcon`, `_baitIcon` đặt theo cần đang dùng / mồi đang chọn mỗi lần `Refresh` (đổi cần → `Farm.Changed`, đổi mồi → `FishingController.Changed`); data chưa có icon thì giữ icon Sunnyside dựng sẵn; kích thước = sprite × `_iconPixelScale` (2).
+- `UiBuilder.BuildIconButton`: luôn có ô `Icon`, trả `Image` để nối vào HUD. Biên dịch không lỗi.
+- [ ] Người dùng: **Tạo UI** → Ctrl+S → ra vùng câu, đổi cần / mồi, icon trên 2 nút đổi theo.
+- Đổi chỗ nút Giỏ và Mồi (người dùng yêu cầu 14/11/2026): cột nút từ trên xuống Cần, Mồi, Giỏ.
+
+## Đợt 2 – Phần 4: Bộ cây mới (đã viết code, chờ kiểm tra – 20/11/2026)
+Kế hoạch: `Docs/ke-hoach-dot-2.md` Phần 4 (thứ tự 1); bảng cây: `Docs/thiet-ke-dot-2.md` mục 1.
+
+### Đã làm
+- `DefaultDataGenerator`: bảng 25 cây thuần Việt, tên giọng Bắc – 22 cây thường bật (cấp 1–13), 3 cây sự kiện (hoa đào, hoa cúc, hướng dương) **tắt**, số tạm. `CropRow` thêm nhóm giá. Menu **Tạo data mặc định** xóa asset cây không còn trong bảng (`DeleteStaleCrops`) và gán sprite tạm của rau muống cho cây chưa có sprite nào (`FillPlaceholderArt`; cây đã có sprite giữ nguyên).
+- Logic: `enum CropGroup { LeafyGreen, Fruit, RootGrain }`, `CropDef.Group` (tham số tùy chọn). View: `CropDefinition._group`.
+- Save: `CurrentVersion` 8, `MinSupportedVersion` 8, `SaveLoadResult.Outdated`. Save cũ (< 8) bị bỏ → save mới + thông báo "Bản lưu cũ không còn dùng được, bắt đầu lại từ đầu" (`SaveService.OldSaveDiscarded` → `GameUI`). Nhập mã cũ: từ chối, web báo "Mã của bản cũ, không còn dùng được." (`VeQueSave.jslib`).
+- `CropSpriteAssigner`: đổi tên asset theo số thứ tự mới (`03_cai_xanh`, `16_ca_chua`, `19_bi_ngo`).
+- Test: `FarmDefinitionTests` (25 asset / 22 cây bật, cây sự kiện không vào game, thứ tự thời gian, cấp 1–13 đều có cây, nhóm giá, số liệu 7 cây); `SaveTests` (save cũ → save mới + cờ báo, nhập mã cũ bị từ chối); `OrderTests` version 8. **Xóa 6 test migration save cũ** (version 1–6) vì đã bỏ migration.
+
+### Quyết định
+- Trước bản thử kín (02/01) không viết migration; đổi save thì tăng cả `CurrentVersion` và `MinSupportedVersion`. Code migration cũ trong `SaveMapper` để nguyên (không còn chạy tới), dọn sau.
+- Cờ `eventOnly` + mở cây theo sự kiện làm ở Phần 7–8; thời gian lớn cây sự kiện chốt sau (`note.md`).
+- Biên dịch ngoài Unity (Logic, View, Editor, Tests): không lỗi. Chưa chạy Test Runner.
+
+### Người dùng kiểm tra
+- [ ] **Về Quê → Tạo data mặc định** → Ghi đè → Console báo "đã tạo 25 cây (… asset cây cũ đã xóa, … cây dùng sprite tạm)" → Ctrl+S.
+- [ ] Test Runner: chạy toàn bộ, báo số test xanh / đỏ.
+- [ ] Play: thấy thông báo bản lưu cũ, bắt đầu lại; cửa hàng cấp 1 chỉ có rau muống; tua lên cấp kiểm tra cây mở đúng cấp; cây không có art hiện bằng sprite rau muống.
+- [ ] Build lại, so Build Report.
+
+### Thanh chọn hạt chỉ hiện hạt có trong kho (đã viết code, chờ kiểm tra – 20/11/2026)
+- `SeedPicker`: `RefreshItems` ẩn icon cây hết hạt (số hạt đã trừ hạt giữ chỗ), trả về số cây còn hạt; đang kéo gieo hàng loạt thì không bật / tắt icon (tránh mất sự kiện kéo), thả tay rồi mới ẩn. Chạm ô trống mà không còn hạt nào: không mở thanh, báo "Hết hạt giống, mua ở Cửa hàng" và mở Cửa hàng. Đang mở thanh mà hết sạch hạt thì đóng thanh. Có hạt nhưng chưa tới cấp: vẫn hiện mờ. Biên dịch không lỗi.
+- [ ] Người dùng: Play – chạm ô trống chỉ thấy cây có hạt; gieo hết một loại thì loại đó biến mất; hết sạch hạt thì mở Cửa hàng; kéo gieo hàng loạt tới khi hết hạt vẫn kéo bình thường.
+
+### Thanh chọn hạt cuộn ngang (đã viết code, chờ kiểm tra – 20/11/2026)
+- `UiBuilder.BuildSeedPicker`: `Box` (nền, `CanvasGroup`, `ScrollRect` ngang, Clamped, có quán tính) → `Viewport` (`RectMask2D`, lề 4) → `Content` (layout ngang + `ContentSizeFitter`, neo trái) chứa icon.
+- `SeedPicker`: `ResizeBox` đặt bề ngang = min(vừa số icon, `_maxVisibleItems` 5,5 icon, bề ngang màn hình − lề 16); mở thanh thì cuộn về đầu.
+- Bị giới hạn bề ngang thì cắt cho icon cuối lộ một nửa. Người dùng xác nhận ổn 20/11.
+- Sửa 20/11 (người dùng báo kéo ngang không cuộn, trong Editor, > 5 loại hạt): nghi `Content` không được nới rộng nên `ScrollRect` không có gì để cuộn → bỏ `ContentSizeFitter`, `ResizeBox` đặt thẳng bề ngang `Content` (`SetSizeWithCurrentAnchors`). Cần chạy lại **Tạo UI**.
+- `SeedPickerItem`: lúc bắt đầu kéo, ngang nhiều hơn dọc → chuyển cả lượt kéo cho `ScrollRect` (cuộn); còn lại → gieo hàng loạt như cũ. Chạm vẫn gieo ô đang chọn. Biên dịch không lỗi.
+- [ ] Người dùng: **Tạo UI** → Ctrl+S → Play với nhiều loại hạt: thanh không tràn màn hình, thấy nửa icon cuối; kéo ngang thì cuộn; kéo xuống ruộng thì gieo hàng loạt; chạm icon thì gieo; thử trên điện thoại.
+
+### Cửa hàng, Kho xếp cây theo cấp mở (đã viết code, chờ kiểm tra – 20/11/2026)
+- `CropListPanel.CropsByUnlockLevel`: cây đang bật xếp theo cấp mở tăng dần, cùng cấp giữ thứ tự data (sắp xếp chèn, ổn định); dùng chung cho `ShopPanel` và `StoragePanel`. Biên dịch không lỗi.
+- [ ] Người dùng: Play – Cửa hàng và Kho: rau muống → hành lá, cải xanh → mồng tơi, đậu đũa → rau đay, lúa → …
+
+### Gán art 25 cây + giai đoạn cuối chỉ khi chín (đã viết code, chờ kiểm tra – 20/11/2026)
+- Người dùng thêm `Assets/_Game/Art/Crops`: 25 cây × 6 file (`seed`, `stage1`–`stage3`, `icon`, `packet`) + `crops_data.json`. Kiểm tra: import đúng (Sprite, PPU 16, Point, None, tắt mipmap; pivot Bottom cho seed/stage, Center cho icon/packet); `stage3` của ngô nếp, hướng dương, hoa đào cao 16×32; json khớp data 22 cây thường.
+- `DefaultDataGenerator.AssignCropArt`: lấy art theo tên `crop_{id}_{part}.png` – ruộng `seed → stage1 → stage2 → stage3` (4 giai đoạn), hạt UI `packet`, nông sản `icon`; ghi đè sprite cũ; thiếu file thì giữ sprite cũ và báo. Bỏ sprite tạm mượn rau muống. Xóa `CropSpriteAssigner` (menu cắt sheet Sprout Lands, không dùng nữa).
+- Logic `Farm.GetStage` (người dùng chọn B): giai đoạn cuối chỉ khi chín; các giai đoạn trước chia đều thời gian lớn. `FarmTests` sửa 2 test giai đoạn, thêm `GetStage_JustBeforeRipe_NotLastStage`. Biên dịch không lỗi. Test Runner 20/11: 467/468, đỏ `Water_MidGrowth_AdvancesStage` (viết theo cách chia 3 giai đoạn cũ) → sửa mốc 20 → 40 giây; chờ chạy lại.
+- `crops_data.json` đã chuyển sang `ArtSource/Crops/` (người dùng duyệt 20/11, xóa `.meta`). 3 cây cao có thể bị dấu chín / thanh tiến độ đè – xem khi Play.
+- [ ] Người dùng: **Tạo data mặc định** → Ghi đè → Console "… 0 cây thiếu art" → Ctrl+S → Test Runner → Play: gieo thấy hạt trên đất, lớn qua 2 giai đoạn, chỉ khi chín mới ra quả; icon gói hạt ở thanh chọn hạt / Cửa hàng; icon nông sản ở Kho / đơn hàng / khi thu hoạch; cây cao không bị đè → build, so Build Report (thêm 150 ảnh nhỏ).
+
+### Dọn sau khi load tiến độ (20/11/2026, người dùng duyệt)
+- Cây sự kiện để tạm **4 tiếng**: hoa cúc, hướng dương 120 → 240 phút (hoa đào đã 240); vẫn tắt.
+- Cân lại các cặp cây trùng thời gian / lãi: để sau.
+- Dọn migration save cũ trong `SaveMapper` (bỏ quy đổi `basketLevel` của save ≤ 6), làm cùng Phần 1.
+- Con số câu cá chỉnh sau khi thử máy thật (giữ nguyên).
+- Tên khách đơn hàng cũ (Bà Tư, Chú Ba…): đã thay ngay (người dùng chọn 20/11) bằng 5 người làng: Bà Lụa, Chú Thành, Cô Hạnh, Cu Tí, Bác Cả (`DefaultDataGenerator.CustomerNames`; tên trong `OrderTests`, `ProgressionTests` đổi theo). Thoại / món theo người: Phần 11.
+
+### Thêm 7 loài cá đã có art (đã viết code, chờ kiểm tra – 20/11/2026)
+- `FishingDataGenerator`: thêm cá rô phi, cá chạch (Thường), cá trôi, cá thát lát (Khá), cá lăng (Hiếm), cá anh vũ (Sử thi), cá hô (Huyền thoại) – bảng số người dùng duyệt 20/11; asset `14_…` → `20_…`, 13 asset cũ giữ tên. Tổng 20 loài (5 / 5 / 4 / 3 / 3).
+- **Tạo data câu cá** giờ tự gán icon cá theo file `fish_NN_<tên>.png` (dùng `FishingSpriteImporter.IdFromFile`, tôm càng xanh → `tom_cang`), như cần / mồi; không cần chạy riêng menu import sprite cá.
+- `FarmDefinitionTests`: số loài cá 13 → 20.
+- Art câu cá HD 32×32 (cá, cần, mồi) đã import đúng (Single, PPU 32); art gói hạt / hạt cây mới gán bằng **Tạo data mặc định**.
+
+## Đợt 2 – Phần 1: Sửa cần (đã viết code, chờ kiểm tra – 20/11/2026)
+### Đã làm
+- Logic: `FishingTuning` bỏ `RepairMaxLossPercent`, `RepairMinPercent`, `MaxDurabilityAfterRepairs`, `CanRepairAgain`; thêm `RepairPricePercent = 30`, `LowDurabilityPercent = 10`, `RepairPrice(giá cần, bền, bền tối đa)` (tròn lên, tối thiểu 1, đầy = 0), `IsLowDurability`. `RodDef` bỏ `RepairPrice`. `RodState` bỏ `RepairCount`, `Snapped` (hỏng = hết độ bền). `FarmResult.RodWornOut` bỏ.
+- `Farm`: `RepairRod` sửa được bất cứ lúc nào chưa đầy, về đầy, độ bền tối đa giữ nguyên; `GetRodRepairPrice`, `IsRodLow`; `GetRodMaxDurability` = độ bền gốc; `BuyRod` cần đã có (kể cả hỏng) → `AlreadyOwned` (bỏ "Mua lại").
+- Save `version` 9, `MinSupportedVersion` 9: bỏ `repairCount`, `snapped`, `basketLevel`; không migration.
+- View: `RodListView` – nút Dùng / Đang dùng + nút "Sửa {giá}" khi chưa đầy, chữ "· Sắp hỏng" khi ≤ 10%; `FishingHud` – số độ bền đỏ khi ≤ 10%, toast "Cần sắp hỏng, nên sửa" một lần khi lần ném làm cần tụt xuống ≤ 10%. `RodDefinition`, `FishingDataGenerator` bỏ `_repairPrice`. Thông báo `RodNotDamaged`: "Cần còn đầy độ bền".
+- Test: thay test sửa cần cũ bằng `Repair_RestoresFull_PriceByMissingDurability`, `Repair_FreeRod_CostsAtLeastOneCoin`, `RepairPrice_RoundsUp_MinOne` (5 ca), `Repair_ManyTimes_MaxDurabilityNeverDrops`, `Repair_NotEnoughCoins_NoChange`, `IsRodLow_AtOrBelowTenPercent`, `BuyRod_OwnedEvenBroken_AlreadyOwned`; sửa test lưu cần, test kẹp độ bền khi nạp, test version 9. Biên dịch Logic / View / Editor / Tests ngoài Unity: không lỗi.
+### Quyết định
+- Cần tre giá 0 nên sửa luôn 1 xu (tối thiểu).
+- Bỏ nút "Mua lại" vì sửa luôn rẻ hơn mua.
+### Người dùng kiểm tra
+- [ ] **Tạo data câu cá** (Console không báo thiếu icon) → Ctrl+S → Test Runner Run All → Play: câu tới khi cần ≤ 10% thấy toast + số đỏ + "Sắp hỏng"; sửa nhiều lần độ bền tối đa không giảm; giá sửa giảm khi sửa sớm. Save cũ báo không dùng được (bình thường).
+
+## Đợt 2 – Phần 6: Kéo cá (đã viết code, chờ kiểm tra – 20/11/2026)
+### Đã làm
+- Logic: `FishingTuning.PullSecondsPerArrow = 0,45`; thời gian kéo = (giây kéo của cá + số mũi tên × 0,45) × (1 + thưởng cần). Ví dụ cá 3 giây, 10 mũi: 7,5 giây. Test: sửa 2 test thời gian, thêm `Pull_TimeGrowsWithArrowCount`.
+- `FishingPullPanel` (viết lại): mọi nguồn nhập (nút chạm xuống, vuốt, phím mũi tên) qua `Submit` – bỏ lần bấm cách lần trước < 60 ms. Bấm sai: ô sai lắc + đỏ 0,3 giây, các ô đã đúng sáng lại lần lượt từ phải sang trái (thay cho nháy đỏ cả chuỗi). Bấm đúng trong lúc hiệu ứng thì dừng hiệu ứng.
+- `FishingController`: `LastMistakeIndex`; bấm sai → phao giật về phía nhân vật 0,3 giây (game không vẽ dây câu), rung 30 ms (Android); bóng cá lao theo hướng **mũi tên kế tiếp**, lúc móc được cá lao theo mũi đầu.
+- `PullSound` (mới): nốt đô–rê–mi… cao dần mỗi mũi đúng, tiếng trầm khi sai; sinh bằng code (`AudioClip.Create`), không thêm file âm thanh.
+- `SwipePad` (mới): vuốt ở giữa màn hình (38–80% chiều cao, tránh mép dưới), 1 lần vuốt mỗi chạm, báo ngay khi đi đủ 24 đơn vị; chỉ nhận ngón đầu. Chạy song song với chữ thập để thử A/B. **Tạm tắt (20/11, người dùng yêu cầu):** comment phần tạo `SwipeArea` trong `UiBuilder.BuildPullPanel`; code `SwipePad` giữ nguyên, bỏ comment là bật lại.
+- `PullHandSetting` (mới): tay trái / phải lưu PlayerPrefs (không vào save). Nút "Tay phải / Tay trái" góc dưới trái HUD câu cá, chỉ hiện khi chưa câu.
+- `UiBuilder`: chữ thập trong nút gốc `Pad` ở góc dưới phải (tâm cách mép phải 118, cao 160; nút 64 ≥ 48 pt), không chồng nút Thu cần; thanh thời gian / chuỗi mũi tên / "Sẵn sàng" đẩy lên y 290 / 314 / 358; thêm `SwipeArea`, `PullSound` + `AudioSource`, nút Tay.
+- Biên dịch Logic / View / Editor / Tests ngoài Unity (bản csproj tạm có 3 file mới): không lỗi.
+### Quyết định (người dùng duyệt 20/11)
+- Không chặn cứng ngón thứ hai (ngón kế có thể chạm trước khi nhấc ngón trước), chỉ chặn bấm cách nhau < 60 ms.
+- Thời gian kéo tính bằng cách **cộng** 0,45 giây mỗi mũi (mọi cá dễ hơn, kể cả mốc Perfect).
+- Làm luôn vuốt thay nút (thiết kế mục 5.9), chạy cùng nút để so.
+### Người dùng kiểm tra
+- [ ] Unity mở lại sẽ tạo `.meta` cho `PullSound.cs`, `SwipePad.cs`, `PullHandSetting.cs`. **Tạo UI** → Ctrl+S → Test Runner → Play ở vùng câu: kéo cá bằng nút góc phải, bằng vuốt giữa màn hình, bấm sai (ô lắc đỏ, ô đúng sáng lại, phao giật, tiếng trầm), nốt cao dần, bóng cá lao theo mũi kế; nút Tay trái đổi chữ thập sang trái.
+- [ ] Build: thử iPhone Safari + trình duyệt nhúng Facebook / TikTok – không trễ, không nhận đôi; chuỗi 10 mũi reset ở mũi 9 vẫn kịp làm lại; so nút với vuốt, chọn giữ cái nào.
+
+## Đợt 2 – Phần 18: Cá shiny – Bước 1 Logic + save + test (XONG – 20/11/2026, Test Runner không lỗi)
+### Quyết định (người dùng duyệt kiến trúc 20/11)
+- "Bán hết" **bỏ qua cá shiny** (bán lẻ từng con vẫn được).
+- Random của shiny **riêng**, sinh từ seed phiên qua băm phi tuyến (murmur3 fmix32) → bật / tắt shiny không xê dịch cá, lịch phao, đề kéo, cân nặng.
+- Đơn cá không lấy cá shiny: làm ở Phần 11 (dùng `CaughtFish.IsShiny`).
+### Đã làm
+- `ShinyKind` (trong `FishingDef.cs`, số cố định: None 0, Gold 1, Aurora 2, Ice 3, Nebula 4, Ruby 5, Onyx 6, Silver 7, DarkAurora 8).
+- `FishingTuning`: `ShinyChancePer10000 = 100`, `ShinyRareTierPercent = 3,2`, `ShinyCommonKinds` (6 kiểu), `ShinyRareKinds` (Aurora, DarkAurora), hệ số giá ×3 / ×10; `IsRareShiny`, `ShinyPriceMultiplier`; kiểm tra hợp lệ (mỗi bậc ≥ 1 kiểu, không None, không trùng).
+- `FishingSession.Shiny` tung trong hàm tạo ngay sau khi chọn cá (`RollShiny` public static để test); `Price` đã nhân hệ số; `IsNewShiny`. XP không đổi.
+- `FishingMath.FishPrice(..., shiny)`; `CaughtFish.Shiny` / `IsShiny`; `FishingState.ShinyDex` (`ShinyRecord {FishId, Kind, FirstCaughtAt}`) + `HasShiny`; `Farm.CompleteFishing` ghi dex không trùng.
+- `Farm.GetSellAllCount`, `GetBasketValue` / `SellAllFish` bỏ qua cá shiny; chỉ còn cá shiny → `UnknownFish`. `BasketView`: nút Bán hết theo số cá thường, hộp xác nhận ghi "Giữ lại N con cá đột biến".
+- Save `version` 9 → **10** (`SaveFish.shiny`, `SaveFishing.shinyDex`), không migration; kiểu lạ đọc ra `None`, mục dex hỏng / trùng bỏ qua.
+- Test (`FishingTests`): 100.000 lần tung ≈ 1% (±0,15); bậc hiếm ≈ 3,2% (±0,3), mỗi kiểu hiếm ≈ 50%, mỗi kiểu thường ≈ 1/6; giá ×3 / ×10; shiny không xê dịch random cũ; dex không trùng; không câu được thì không ghi; Bán hết bỏ qua shiny; save giữ shiny + dex; kiểu lạ → None; tuning sai báo lỗi. Helper test tắt shiny mặc định. `OrderTests`/`SaveTests` đổi sang version 10.
+- Biên dịch Logic / View / Tests ngoài Unity: không lỗi. Mô phỏng Python cùng thuật toán và seed: tỉ lệ 0,955%, bậc hiếm 3,22%, các kiểu nằm trong ngưỡng.
+### Người dùng kiểm tra
+- [x] Test Runner **Run All**: không lỗi (20/11).
+### Bước 2 – Shader + 8 material + ShinyPalette (XONG – 20/11/2026, người dùng kiểm tra ổn; đổi tên Hắc cực quang → Tinh dạ, Hắc ngọc → Hư không)
+- `Art/Shaders/ShinyIcon.shader` (`VeQue/ShinyIcon`): dựa `UI/Default` (stencil, `_ClipRect`), thêm `_Flip` / `_RendererColor` cho SpriteRenderer; thuật toán khớp `shiny_8kieu.py` (16 khung × 0,095 giây, tính trong gamma, trắng mắt = alpha 254); không keyword riêng.
+- `ShinyClock` (tự tạo lúc vào game, `_ShinyTime` từ `Time.unscaledTime`); `ShinyIconMesh` (ghi khung sprite vào `uv1`, bật TexCoord1 của Canvas); `ShinyLook` (gán / gỡ material cho Image, SpriteRenderer qua `MaterialPropertyBlock`); `ShinyPalette` (SO 8 dòng).
+- `FishingDefinition._shinyPalette` + `GetShinyMaterial`. Gán material sớm (duyệt): ô giỏ cá, icon chi tiết giỏ, bảng cá vừa câu, cá bay.
+- Menu **Về Quê → Cá shiny: tạo material** (8 material ở `Art/Shiny/`, `Data/Fishing/ShinyPalette.asset`, gán vào FishingDefinition; Tạo data câu cá cũng tự gán). Menu **Cá shiny: xem thử (khi Play)**: bảng 20 loài × (gốc + 8 kiểu) trong khung cuộn, nút "Ẩn bảng" xem 9 con SpriteRenderer (con lẻ lật).
+- Biên dịch View / Editor ngoài Unity: không lỗi. Shader chỉ kiểm được trong Unity.
+#### Người dùng kiểm tra
+- [ ] Mở Unity (tạo `.meta`), Console không lỗi shader → menu **Cá shiny: tạo material** → Ctrl+S.
+- [ ] Play → menu **Cá shiny: xem thử**: 8 kiểu đúng màu so `shiny_8kieu_full.gif`, dải chạy theo lưới pixel, cuộn không tràn ngoài khung; "Ẩn bảng" → cá world lật vẫn đúng.
+- [ ] Câu thật: tạm đặt `ShinyChancePer10000 = 10000` trong FishingDefinition → cá bay, bảng kết quả, ô giỏ, chi tiết giỏ đều hiện shiny; đặt lại 100.
+- Trắng mắt chỉ đúng sau Bước 3.
+
+### Bước 3 – Đánh dấu trắng mắt alpha 254 (XONG – 20/11/2026, người dùng kiểm tra ổn)
+- Đổi cách so với thiết kế: PNG trong project khác bản `Downloads\VeQue-art\fish_hd\` và máy không có PIL → không xuất lại từ Python mà sửa thẳng PNG trong Unity.
+- `Editor/ShinyEyeMarker.cs`, menu **Về Quê → Cá shiny: đánh dấu trắng mắt**: con ngươi = khối `#181425` ≥ 2×2 không ở mép; pixel độ sáng > 0,8 cách con ngươi ≤ 2 ô → alpha 254 (giống `shiny_8kieu.py`). Ghi đè PNG, giữ `.meta`; chạy lại được (pixel 254 không còn là mắt thì trả về 255). Báo số pixel từng loài ở Console, cảnh báo loài không tìm thấy mắt.
+- Bản sao 20 PNG trước khi đánh dấu: scratchpad phiên 20/11 (`fish_png_backup`).
+#### Người dùng kiểm tra
+- [ ] Chạy menu: đủ 20 file, không loài nào "không tìm thấy mắt".
+- [ ] **Cá shiny: xem thử**: vòng mắt trắng ở cả 8 kiểu; hàng Gốc không đổi.
+
+### Bước 4 – Đốm lấp lánh + chữ "Đột biến" (XONG – 20/11/2026, người dùng kiểm tra ổn)
+- `ShinySparkleSprites`: sprite dấu cộng 7×7 sinh bằng code (cánh 1/2/3, tâm trắng, đầu cánh màu đốm), cache theo màu.
+- `ShinySparkles`: 3 đốm/con theo seed (x tràn 2 px mỗi bên), lệch pha 5 khung, sống 6/16 khung × 0,095 giây (`Time.unscaledTime`); UI = 3 `Image` con (bị RectMask2D cắt), world = 3 `SpriteRenderer` con (sortingOrder +1); chỉ đổi sprite khi sang khung mới.
+- `ShinyLook.Apply(..., ShinyPalette.Entry, seed)` gán material + đốm; `FishingDefinition.GetShiny`. Seed = cân nặng (giỏ và bảng kết quả cùng vị trí đốm).
+- Bảng cá vừa câu: dòng `Shiny` "Đột biến: <kiểu>!" (+ " Lần đầu!") giữa hình và độ hiếm, màu đốm, có viền (`UiBuilder`). Chi tiết giỏ: dòng "Đột biến: <kiểu>" đầu phần thông tin.
+- `UiFormat.ShinyCatch` / `ShinyDetail` + test. Biên dịch View / Editor / Tests ngoài Unity: không lỗi.
+#### Người dùng kiểm tra
+- [ ] **Tạo UI** → Ctrl+S → Test Runner.
+- [ ] **Cá shiny: xem thử**: đốm đúng màu, tràn nhẹ ngoài icon, bị cắt ở mép khung khi cuộn; "Ẩn bảng" → cá world có đốm.
+- [ ] Câu với `ShinyChancePer10000 = 10000`: cá bay có đốm; bảng kết quả "Đột biến: …!" + "Lần đầu!" ở con đầu; ô giỏ + chi tiết có đốm và dòng đột biến; tạm dừng vẫn nháy; chữ có dấu đủ glyph. Đặt lại 100.
+
+### Còn lại Phần 18
+- Bước 5 build + thử máy thật: **bỏ qua theo yêu cầu (20/11)**, gộp vào Phần 14 (build, thử máy thật). Phần 18 coi như xong phần code.
+
+## Đợt 2 – Phần 11: Đơn hàng có thoại + đơn cá (đang làm – 20/11/2026)
+### Quyết định (người dùng duyệt kiến trúc 20/11)
+- Data sửa được: `Data/Orders/npcs.json`, `order_lines.csv` (npcId, kind Request/Urgent/Fish/Thanks, text, cropTag), `dishes.json`.
+- Đơn cá: tỉ lệ 10% ở cấp mở câu cá, +1%/cấp, tối đa 20%; 1–3 con theo cấp (+1 con mỗi 3 cấp); chỉ cá Thường / Khá, câu được ≥ 3 khung giờ; không đơn cá khẩn; không lấy cá shiny; giao lấy con nhẹ nhất; thưởng = số con × giá / XP gốc × hệ số đơn.
+- Cô đồng nát chưa đặt đơn (để Phần 5). Agent viết nháp thoại giọng Bắc, người dùng sửa.
+### Thứ tự 1 – Logic + save + test (XONG – 20/11/2026, Test Runner không lỗi)
+- `OrderDialogue.cs` (mới): `NpcDef` (title, cây hay đặt, trọng số, trọng số đơn cá), `OrderLineDef`, `OrderLineKind`, `OrderDialogue` (chọn câu không lặp, món theo seed, `Format` điền {title} {qty} {crop} {dish}, đọc CSV có ngoặc kép / ghi chú / BOM).
+- `OrderDef`: `CustomerNames` → `Dialogue`; thông số đơn cá (`FishOrderMin/MaxPercent`, `MaxRarity`, `MinSlots`, `MaxCount`, `LevelsPerFish`). `OrderState`: `Kind` (Crops / Fish), `NpcId`, `Line`, `Seed`; `OrderItem.CropId` → `Id`. `OrderDelivery` + event `Farm.OrderDelivered` (câu cảm ơn).
+- `Farm`: đơn cá (pool, tung tỉ lệ chỉ khi đủ điều kiện – không thì không tốn số ngẫu nhiên), người đặt theo trọng số (hay đặt cây trong đơn ×3; đơn cá theo trọng số cá), câu theo loại, không lặp câu vừa dùng của người đó; seed đơn thay cho lần chọn tên khách cũ (chuỗi đơn giữ nguyên số lần tung). `GetOrderItemHave`, giao đơn cá lấy con nhẹ nhất không shiny. "Bán hết" giữ cá shiny + cá đang cần cho đơn (`IsKeptOnSellAll`).
+- Save `version` 10 → **11**: `SaveOrder` bỏ `customer`, thêm `kind`, `npc`, `line`, `seed`; `orderLines`, `lastThanks`.
+- View tạm: `FarmDefinition` dựng người làng từ tên cũ (thứ tự 2 thay bằng file data); `OrderPanel` hiện tên người + icon cá cho đơn cá.
+- Test mới `OrderDialogueTests` (21 test): CSV, điền chỗ trống, người + câu, không lặp liền, câu có món, đơn khẩn dùng câu khẩn, ưu tiên cây hay đặt, nạp lại giữ câu, cảm ơn không lặp; đơn cá: pool, loài / số con / Cu Tí, không khẩn, chưa mở câu cá thì không có và không đổi chuỗi đơn, tỉ lệ theo cấp, thưởng, giao (shiny không tính, lấy con nhẹ), Bán hết giữ cá cho đơn, nạp lại. Sửa test cũ theo tên mới, version 11.
+- Biên dịch Logic / View / Editor / Tests ngoài Unity: không lỗi.
+#### Người dùng kiểm tra
+- [x] Test Runner **Run All**: không lỗi (20/11).
+### Thứ tự 2 – Data + đọc file + nháp thoại (XONG – 20/11/2026, Test Runner không lỗi)
+- `Data/Orders/npcs.json` (5 người: Bà Lụa "bà", Chú Thành "chú", Cô Hạnh "cô", Cu Tí "em" – gọi người chơi "anh chị", trọng số cá 6; Bác Cả "bác"), `order_lines.csv` (48 câu nháp giọng Bắc: mỗi người 4 câu thường + 1 câu theo cây, câu khẩn (Bác Cả 3), câu cá (Cu Tí 4, Bà Lụa 1, Cô Hạnh 1), câu cảm ơn riêng + 4 câu chung), `dishes.json` (22 cây).
+- `Format` viết hoa đầu câu và sau . ! ?; title viết thường. Câu có {dish} không kèm {crop} (thẻ đơn đã ghi món + số lượng) để câu ≤ 70 ký tự.
+- `OrderDialogueLoader` (View, JsonUtility + CSV của Logic); `FarmDefinition`: bỏ `_customerNames`, thêm 3 TextAsset + thông số đơn cá; `DefaultDataGenerator` gán file + đơn cá 10–20%.
+- Test data thật (`FarmDefinitionTests`): ≥ 5 người, mỗi người ≥ 4 câu đặt đơn, ≥ 3 câu cảm ơn chung; cây hay đặt / cropTag tồn tại; câu dài nhất sau khi điền (số lượng 2 chữ số, tên dài nhất) ≤ 72 ký tự. Test `Format` viết hoa.
+- Biên dịch Logic / View / Editor / Tests ngoài Unity: không lỗi.
+#### Người dùng kiểm tra
+- [x] Tạo data mặc định + Test Runner: không lỗi (20/11).
+- [ ] Đọc / sửa thoại trong `Data/Orders/order_lines.csv` (sửa xong chạy lại test để kiểm độ dài).
+### Thứ tự 3 – UI thẻ đơn + bong bóng cảm ơn (đã viết code, chờ kiểm tra – 20/11/2026)
+- `OrderCard`: chân dung 32×32 (art 16×16 ×2) trái tên; chưa có art → khung tròn pixel 16×16 sinh bằng code, màu theo id người + chữ cái đầu tên gọi ("Bà Lụa" → L); câu thoại 2 dòng (cỡ 13, cắt "…" nếu dài); bong bóng cảm ơn (con của thẻ, đè đầu thẻ, 2 giây thời gian thật, tắt khi đóng bảng).
+- `OrderPanel`: điền câu (món đầu: số lượng, tên viết thường, món theo seed); nghe `Farm.OrderDelivered` → bong bóng "Tên: câu cảm ơn".
+- `FarmDefinition._npcPortraits` (id → sprite, đang trống). `UiBuilder`: thẻ cao 116 → 156, món dời xuống dưới câu thoại.
+- Biên dịch Logic / View / Editor / Tests ngoài Unity: không lỗi.
+#### Người dùng kiểm tra
+- [ ] **Tạo UI** → Ctrl+S → Play (cấp ≥ 2, dùng Tua thời gian nếu cần): thẻ có khung tròn + chữ cái, tên, câu thoại có dấu đủ glyph, không tràn 2 dòng; đơn khẩn câu khẩn; giao xong bong bóng cảm ơn 2 giây; đơn cá (cấp đủ mở câu cá) hiện icon cá + số cá thường trong giỏ; mở lại game câu không đổi.
+- [ ] Màn 375 pt (Game view 750×1334 hoặc máy thật): câu dài nhất vẫn 2 dòng.
+### Còn lại
+- Chân dung 16×16 cho 5 người (người dùng vẽ, gán vào FarmDefinition → Npc Portraits).
+
+## Đợt 2 – Phần 2: GameCalendar + âm lịch (đã viết code, chờ kiểm tra – 20/11/2026)
+### Quyết định (người dùng duyệt kiến trúc 20/11)
+- **Phương án A:** mọi thứ theo giờ VN UTC+7 cố định – lịch, khung giờ câu cá, mốc 0 giờ giới hạn đơn/ngày. Bỏ `Farm.SetUtcOffset`, `FarmState.UtcOffsetSeconds`.
+- Bảng âm lịch sinh bằng `Tools/lunar_table.py` (thuật toán Hồ Ngọc Đức, múi giờ +7), không cần port sang C#.
+### Đã làm
+- `Tools/lunar_table.py` → `Data/Calendar/lunar_2026_2040.json` (186 tháng, ~7,5 KB; mỗi tháng `s` DayKey bắt đầu, `d` số ngày, `m`, `l` nhuận, `y`). Đối chiếu: Tết 17/02/2026, 06/02/2027, 26/01/2028; nhuận tháng 5/2028, 3/2031, 11/2033, 6/2036, 5/2039.
+- Logic: `LunarTable.cs` (`LunarDate`, `LunarMonth`, `LunarTable` tra nhị phân, kiểm tra liền mạch); `GameCalendar.cs` (`DayKey` từ 01/01/2026 giờ VN, không lùi – lưu `FarmState.LastSeenDayKey`; `AbsoluteDay`, `SecondsUntilNextDay`, `TimeWindow`, `TryGetLunar`, `DaySeed(salt)` FNV-1a + murmur). `FarmDef.Lunar`, `Farm.Calendar`; `Farm.CurrentDay` / `SecondsUntilNextDay` / khung giờ khi ném câu dùng `Calendar`. `SeededRandom.Mix` dùng chung.
+- Save `version` 11 → **12**: bỏ `utcOffsetSeconds`, thêm `lastSeenDayKey`.
+- View: `LunarTableLoader`, `FarmDefinition._lunarTable` (Tạo data mặc định gán); `GameClock` giờ VN + dòng âm lịch ("Mùng 1 tháng 11", "Rằm tháng Chạp", "… nhuận"), chỉ dựng lại khi sang ngày; `UiBuilder` thêm nhãn `Lunar` dưới đồng hồ; `GameBootstrap` bỏ đọc múi giờ máy (`WebBridge.GetUtcOffsetSeconds` còn nhưng không dùng).
+- Test mới `CalendarTests` (13): Tết 2026 / 2027, tháng nhuận 2028 / 2033, phạm vi bảng, bảng không liền báo lỗi, `UiFormat.LunarDay`, DayKey đổi ở 0 giờ VN (17:00 UTC), giây tới nửa đêm, khung giờ theo giờ VN, không lùi ngày + giữ qua mở lại, `DaySeed` ổn định (so với công thức viết lại độc lập), `Farm.Calendar` ra mùng 1 Tết 2027. Sửa test cũ: `FishingTests` đặt giờ theo giờ VN; `OrderTests` thay test múi giờ bằng `DayBoundary_IsVietnamMidnight`; version 12.
+- Biên dịch Logic / View / Editor / Tests ngoài Unity: không lỗi.
+#### Người dùng kiểm tra
+- [ ] Mở Unity → **Tạo data mặc định** (gán bảng âm lịch) → **Tạo UI** → Ctrl+S → Test Runner **Run All**. Save cũ báo không dùng được (version 12).
+- [x] Play: đồng hồ HUD giờ VN + dòng âm lịch hôm nay (20/11/2026 = 12 tháng 10) – người dùng xác nhận; Tua thời gian tới 17/02/2026 hoặc 06/02/2027 thấy "Mùng 1 tháng Giêng".
+- **21/11/2026: bỏ dòng âm lịch trên HUD** (người dùng chốt: người chơi tự xem lịch ngoài đời). Đã gỡ nhãn `Lunar` (UiBuilder) và code âm lịch trong `GameClock`. Giữ `LunarTable`, `GameCalendar.TryGetLunar` (logic sự kiện) và `UiFormat.LunarDay` (có thể dùng cho banner sự kiện Phần 8).
+
+## Đợt 2 – Phần 13: Ngày đêm (đã viết code, chờ kiểm tra – 20/11/2026)
+### Quyết định (người dùng duyệt 20/11)
+- Thay cho "shader riêng gán mọi material": **một quad phủ khung nhìn**, shader `VeQue/WorldLight` hòa màu nhân (`Blend DstColor Zero`) ở sortingOrder **280** – dưới 280 bị tint (đất, cây, nhân vật, nước), trên 280 giữ nguyên (gợi ý tưới 300, "!" 300, khung chọn 290, cá bay 320, đom đóm 285), UI không ảnh hưởng. Cùng quad làm `DarknessOverlay` (độ tối + 8 vòng sáng) cho Soi đèn.
+- Cài đặt Đầy đủ / Nhẹ / Tắt: bảng Sao lưu là hộp thoại HTML nên đổi sang **chạm đồng hồ** (toast báo mức).
+### Đã làm
+- Logic `DayNightCurve` (mốc giờ → hệ số nhân, nội suy, vòng qua nửa đêm, giờ VN, kiểm tra mốc).
+- `WorldLight.shader`: hệ số = màu trời × (1 − độ tối × (1 − ánh sáng)), ấm theo màu đèn; vòng sáng theo lưới pixel PPU 16, 4 bậc; không keyword.
+- View: `DayNightProfile` (SO, mốc màu chỉnh trong Inspector), `DayNightController` (trên camera; quad tự khớp khung nhìn; tắt quad ban ngày; `Darkness` cho soi đèn; chọn 8 vòng sáng gần camera; `NightAmount`), `WorldLight` (vòng sáng, chỉ ban đêm), `Fireflies` (đom đóm 1 pixel, nhấp nháy, mỗi con 1 vòng sáng nhỏ, chỉ khi tối), `DayNightSetting` (PlayerPrefs). `GameClock` chạm → đổi mức. `UiBuilder`: Button trên đồng hồ.
+- Editor menu **Về Quê → Ngày đêm: tạo trong scene**: `Art/WorldLight.mat`, `Data/DayNightProfile.asset` (màu nháp: khuya `a8b3eb` – độ sáng 0,71; bình minh `fad6cc`; sáng / trưa trắng; chiều `fffaed`; hoàng hôn `ffdbb3`; chạng vạng `d1c2e6`), gắn controller vào Main Camera, vùng đom đóm ở (22, 13).
+- Test `DayNightTests` (7): nội suy, qua nửa đêm, không có mốc, mốc sai báo lỗi, giờ VN, profile thật không tối quá 30% ở mọi 15 phút.
+- Biên dịch Logic / View / Editor / Tests ngoài Unity: không lỗi.
+### Đổi hệ thống giờ (21/11/2026, người dùng chốt sau khi đánh giá)
+- **Giờ trong game** chỉ để hiển thị: 1 ngày game = `DayNightProfile.DayLengthMinutes` phút thật (mặc định 30, chỉnh trong data, có lệch pha). Logic `GameDayClock` (tính thẳng từ giờ Unix, không lưu save, mọi người cùng giờ). Màu trời / đèn / đom đóm theo giờ game; `DayNightController.GameHour`, `ForcedHour` (ép trời tối cho giao thừa 12b).
+- Đồng hồ HUD: giờ game `hh:mm` (dựng lại khi đổi phút), icon **mặt trời** (6–18h game) / **mặt trăng** – icon pixel 12×12 sinh bằng code, có ô `_sunIcon` / `_moonIcon` để thay art vẽ tay. Dòng âm lịch vẫn là ngày thật.
+- Mọi logic theo giờ thật (`GameCalendar`): giờ ra cá, âm lịch, sự kiện, điểm danh, đơn/ngày. Giờ ra cá **không hiển thị** cho người chơi (album không ghi khung giờ, gợi ý không nhắc giờ).
+- Rằm → **"Ngày trăng tròn"**: cả ngày Rằm tăng tỉ lệ cá hiếm. Giao thừa: ép trời game tối. Mò cua / soi đèn: **pending**. Đã sửa `thiet-ke-dot-2.md` (mục 3, 7, 8, 13) và `ke-hoach-dot-2.md` (Phần 5, 8, 13, 15, 16).
+- Test thêm trong `DayNightTests`: ngày 30 phút, lệch pha / độ dài khác, định dạng hh:mm, ban ngày / đêm.
+- Biên dịch Logic / View / Editor / Tests ngoài Unity: không lỗi.
+- Chi tiết giỏ cá: **bỏ dòng "Bắt lúc <khung giờ>"** (người dùng chốt 21/11); khung giờ lúc câu vẫn lưu trong save (`CaughtFish.Slot`).
+#### Người dùng kiểm tra
+- [ ] Mở Unity → **Ngày đêm: tạo trong scene** → **Tạo UI** → Ctrl+S → Test Runner.
+- [ ] Đồng hồ chạy giờ game (~1,25 giây thật / phút game), icon đổi mặt trời ↔ mặt trăng lúc 6h / 18h game, trời đổi màu theo; chỉnh `Day Length Minutes` trong `DayNightProfile` thấy nhịp đổi.
+- [ ] Đặt đèn dầu: tạo GameObject con ở ô cửa sổ nhà → Add Component **World Light** (bán kính ~24 px). Kéo `Fireflies` tới chỗ có cỏ / ao, chỉnh Size (gizmo vàng).
+- [ ] Tua thời gian qua 7 khung giờ, chụp màn hình, chỉnh màu trong `DayNightProfile`; 22h cây chín, icon tưới vẫn rõ; chạm đồng hồ đổi Đầy đủ / Nhẹ / Tắt.
+- [ ] FPS trên iPhone cũ / trình duyệt nhúng: để Phần 14.
+
+## Sắp xếp menu Về Quê trong Editor (21/11/2026, chờ kiểm tra)
+- Chia menu thành nhóm có vạch ngăn: Tua thời gian, Xóa save ở trên cùng; menu con **Dựng scene** (Tạo map, Tạo UI, Ngày đêm, Khung chọn, Vùng câu tạm), **Data** (data mặc định, data câu cá), **Import art** (tileset, UI 9-slice, nhân vật, sprite cá, art câu cá tạm, font), **Cá shiny** (tạo material, đánh dấu trắng mắt, xem thử).
+- Chỉ đổi đường dẫn và `priority`, không đổi logic. Giữ lại mọi tool (người dùng chốt). Sửa luôn các thông báo / tooltip nhắc tên menu cũ.
+- "Xóa save" bị mờ khi đang Play; "Cá shiny → Xem thử" chỉ bật khi đang Play.
+
+## Nước pixel ở vùng câu (21/11/2026, chờ kiểm tra)
+- Shader `VeQue/PixelWater` (`Assets/_Game/Art/Shaders/PixelWater.shader`, Built-in): giữ tile nước gốc, thêm 2 lớp noise trôi ngược chiều (`PixelWaterNoise.png` 32×32), snap theo PPU 16, thời gian chia bậc 8 FPS, 3 bậc màu cứng (tối = nhân màu gốc, sáng = phủ màu gợn). Không GrabPass, không đổi UV tile → an toàn với Sprite Atlas; WorldLight vẫn nhân đè lên.
+- Menu **Về Quê → Dựng scene → Nước pixel (vùng câu)** (`PixelWaterSetup.cs`): đặt import noise (Repeat, Point, không nén, không mipmap, không sRGB), tạo `Assets/_Game/Art/PixelWater.mat`, gán cho TilemapRenderer `FishingWater`. `FishingRegionBuilder` gọi lại nên dựng lại vùng câu vẫn giữ nước pixel.
+- Kiểm tra: gợn khớp lưới pixel ở mọi bậc zoom, không đường nối giữa tile; ban đêm vẫn tối theo WorldLight; build WebGL thử trên điện thoại ~10 phút (không đứng / rung); so Build Report (thêm ~3 KB).
+
+## Việc đang chờ người dùng (13/11/2026)
+1. **Tạo data câu cá** (cấp mồi, giá ô giỏ, mũi tên tối thiểu 4) → **Câu cá: tạo art tạm** (ổ khóa) nếu chưa chạy → **Tạo UI** → Ctrl+S → Test Runner (dự kiến 451, sửa được test đỏ `FarmDefinitionTests`).
+2. Chơi thử các mục "chờ kiểm tra" ở Phần 10 giai đoạn 4: mua cần / mồi theo cấp, tab Cửa hàng 3 trang, Kho 2 trang + bán cá / Bán hết, thanh tab 3 nút, bóng cá xem xét / đớp thử / căng.
+3. Build lại, so Build Report (mốc 10,8 MB; thêm icon cá, bóng, ổ khóa, icon UI nhỏ).
+4. Cho commit khi muốn.
+
 ## Tiếp theo (khi quay lại)
-0. Phần 6 mục 5 – chạy **Tạo UI**, Test Runner (221), chơi thử gieo chạm/kéo, kéo thu hoạch, kéo tưới; thử cảm giác kéo trên điện thoại.
-1. Phần 6c mục 2 đã viết code (xem mục trên, chờ kiểm tra). Phần 6c mục 1 (báo cây chín trên tab) chưa làm.
-2. Phần 4 – template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) + build, so Build Report (mốc 10,8 MB) + thử trên iPhone Safari / Android; cùng lúc kiểm tra Phần 7 trên máy thật.
-3. Phần 3b (đang làm, trước Phần 10 giai đoạn 2):
-   - Bước 1b tạo nhân vật: người dùng chạy menu **Nhân vật Sunnyside** + **Tạo UI** (đã thấy `HairTint.mat` và scene đổi), Test Runner (dự kiến 291), chơi thử theo **Kiểm tra** trong `MVP-Plan.md` Phần 3b bước 1b; thử bàn phím ảo ô nhập tên trên điện thoại.
-   - Commit Phần 3b khi người dùng cho.
-   - Bước 2 vẽ lại Map D (hướng dẫn trong `MVP-Plan.md` Phần 3b bước 2) – người dùng làm sau.
-   - Bước 3 ô đất + 4 cây tạm (kale / cabbage / radish / pumpkin); bước 4 UI (sau); bước 5 dọn Sprout Lands + Sprite Atlas + build, so Build Report.
-   - Kiểm tra giấy phép dùng thương mại Sunnyside.
-   Sau 3b: Phần 10 giai đoạn 2 (vùng câu + di chuyển, dùng nước / bến / thuyền thúng Sunnyside). Thử ẩn tab (làm hết việc) khi có bản build web.
-4. Phần 3 – tạo `ComingSoonArea` (trừ ao) sau khi vẽ lại map Sunnyside.
-5. Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation); giảm build < 10 MB (Phần 8).
-6. Làm sau: Phần 6c mục 3–8 (save hiện `version` 4), Phần 6 mục 4 (hiệu ứng GUI, gộp với 3b bước 4), công cụ Cân bằng, khung hình cây.
+0. Phần 10 giai đoạn 4 Đợt E: đã viết code 14/11/2026 – chờ kiểm tra + build, so Build Report.
+1. Phần 10 giai đoạn 5 còn lại: album cá + kỷ lục, đơn hàng có cá (7 loài cá thêm đã làm 20/11). Giai đoạn 6: ao nhà.
+2. Phần 6 mục 5 – chạy **Tạo UI**, chơi thử gieo chạm/kéo, kéo thu hoạch, kéo tưới; thử cảm giác kéo trên điện thoại.
+3. Phần 6c mục 1 (báo cây chín trên tab), mục 3–6.
+4. Phần 4 – template WebGL (`touch-action: none`, chặn `gesturestart`, `viewport-fit=cover`) + build, so Build Report (mốc 10,8 MB) + thử trên iPhone Safari / Android (rung, thanh lực, nút mũi tên, bàn phím ảo ô tên); cùng lúc kiểm tra Phần 7 trên máy thật.
+5. Phần 3b: bước 2 vẽ lại Map D (người dùng), bước 3 ô đất + 4 cây tạm, bước 5 dọn Sprout Lands + Sprite Atlas + build (bóng cá đã chép sang `_Game`, không phụ thuộc gói Sprout Lands). Kiểm tra giấy phép Sunnyside và gói Sprout Lands (bóng cá).
+6. Phần 3 – tạo `ComingSoonArea` (trừ ao) sau khi vẽ lại map Sunnyside.
+7. Chưa quyết: gỡ package không dùng (spriteshape, psdimporter, aseprite, 2d.animation); giảm build < 10 MB (Phần 8); ném yếu hiện chữ "Yếu" (mặc định, chưa chốt); con số câu cá (giá cá, giá cần / mồi, giá ô giỏ) chỉnh sau khi chơi thử.
+8. Làm sau: Phần 6 mục 4 (hiệu ứng GUI), công cụ Cân bằng, khung hình cây.

@@ -38,7 +38,7 @@ namespace VeQue.Logic
             return DaySlot.Night;
         }
 
-        // utcSeconds: giờ Unix; utcOffsetSeconds: độ lệch múi giờ (FarmState.UtcOffsetSeconds).
+        // utcSeconds: giờ Unix; utcOffsetSeconds: độ lệch múi giờ (game dùng GameCalendar.OffsetSeconds = UTC+7).
         public static DaySlot Get(long utcSeconds, int utcOffsetSeconds)
         {
             return FromHour((int)(SecondsOfDay(utcSeconds, utcOffsetSeconds) / 3600));

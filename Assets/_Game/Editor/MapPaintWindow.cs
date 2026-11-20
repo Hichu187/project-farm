@@ -24,7 +24,7 @@ namespace VeQue.EditorTools
         private Vector2 _scroll;
         private Action _pendingAction;
 
-        [MenuItem("Về Quê/Tạo map")]
+        [MenuItem("Về Quê/Dựng scene/Tạo map", priority = 100)]
         private static void Open()
         {
             GetWindow<MapPaintWindow>("Tạo map");

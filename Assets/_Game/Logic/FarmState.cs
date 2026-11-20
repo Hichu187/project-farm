@@ -19,8 +19,14 @@ namespace VeQue.Logic
         // OrderDay = 0: chưa có (save cũ), Farm đặt theo hôm nay.
         public long OrderDay;
         public int DeliveredToday;
-        // Độ lệch múi giờ so với UTC (giây), lấy từ trình duyệt / máy mỗi lần mở game; lưu lại để dùng lúc nạp.
-        public int UtcOffsetSeconds;
+        // Đơn có thoại (Đợt 2 Phần 11): câu đặt đơn vừa dùng của từng người, câu cảm ơn vừa dùng (-1 = chưa có),
+        // để không lặp liền nhau.
+        public Dictionary<string, int> LastOrderLines = new Dictionary<string, int>();
+        public int LastThanksLine = -1;
+        // GameCalendar (Đợt 2 Phần 2): ngày lớn nhất đã thấy (DayKey, giờ VN), để ngày không lùi khi chỉnh giờ máy.
+        public int LastSeenDayKey = int.MinValue;
+        // Hộp thư (Đợt 2 Phần 3).
+        public MailboxState Mailbox = new MailboxState();
         // Trạng thái SeededRandom; 0 = chưa có, Farm tự gieo từ đồng hồ.
         public uint RandomState;
         // Tên + ngoại hình nhân vật (màn tạo nhân vật).

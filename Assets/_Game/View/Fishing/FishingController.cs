@@ -11,8 +11,10 @@ namespace VeQue.View.Fishing
 {
     // Một lượt câu ở vùng câu (MVP-Plan Phần 10 giai đoạn 4, Đợt C): tới chỗ câu → giữ Ném (thanh lực) → nhả:
     // Farm.Cast + hoạt ảnh ném → phao ở đầu dây vẽ sẵn của art (cố định, độ sâu chỉ hiện bằng chữ) → phao rỉa,
-    // chìm + "!" → Giật (Strike) hoặc quá giờ (Timeout) → kéo cá: nhập đúng chuỗi mũi tên trước khi hết giờ
-    // (nhanh thì hạng cao; sai = đứt dây, hết giờ = cá thoát) → CompleteFishing → về Sẵn sàng.
+    // chìm hẳn + "!" nảy → Giật (Strike) hoặc quá giờ (Timeout) → kéo cá: xem trước chuỗi mũi tên
+    // (FishingTuning.PullPreviewSeconds, chưa tính giờ) rồi nhập đúng chuỗi trước khi hết giờ
+    // (nhanh thì hạng cao; bấm sai = nhập lại từ đầu, giờ vẫn chạy; hết giờ = cá thoát);
+    // bóng cá dưới nước lao theo mũi tên → CompleteFishing → về Sẵn sàng.
     // Phần thời gian thực ở đây (Time.time); chọn cá, rỉa, cắn, kết quả do FishingSession (Logic).
     // Bỏ lượt (mất mồi): Thu cần, chuyển vùng, ẩn tab. Đang câu thì chạm đất không đi.
     public sealed class FishingController : MonoBehaviour
@@ -42,14 +44,34 @@ namespace VeQue.View.Fishing
         [SerializeField] private SpriteRenderer _bobber;
         [Tooltip("Dấu \"!\" khi cá cắn (con của GameObject này).")]
         [SerializeField] private SpriteRenderer _alert;
+        [Tooltip("Bóng cá dưới nước lúc kéo (con của GameObject này).")]
+        [SerializeField] private FishShadow _shadow;
+        [Tooltip("Bóng cá hiện sau khi phao chạm nước bao lâu (giây, ngẫu nhiên trong khoảng); luôn trước lúc cá cắn.")]
+        [SerializeField] private Vector2 _shadowAppearSeconds = new Vector2(0.5f, 1f);
+        [Tooltip("Hình cá bay từ phao về tay khi câu được (con của GameObject này).")]
+        [SerializeField] private CaughtFishFlyer _flyer;
+        [Tooltip("Tay nhân vật (chỗ cá bay tới) so với chân, nhìn sang phải (pixel).")]
+        [SerializeField] private Vector2Int _handPixels = new Vector2Int(8, 10);
+        [Tooltip("Chữ nổi (Hoàn hảo! / Mất mồi!…) so với chân nhân vật (pixel).")]
+        [SerializeField] private Vector2Int _headPixels = new Vector2Int(0, 26);
         [Tooltip("Đầu dây câu vẽ sẵn trong art WAITING so với chân nhân vật, nhìn sang phải (pixel).")]
         [SerializeField] private Vector2Int _lineEndPixels = new Vector2Int(30, -22);
         [Tooltip("Dấu \"!\" so với chân nhân vật (pixel).")]
         [SerializeField] private Vector2Int _alertPixels = new Vector2Int(0, 22);
         [SerializeField] private float _nibbleSeconds = 0.15f;
         [SerializeField] private int _nibbleDropPixels = 1;
-        [SerializeField] private int _biteDropPixels = 2;
+        [Tooltip("Cá cắn: phao chìm bao nhiêu pixel (13/11/2026: 2 → 3 cho dễ thấy).")]
+        [SerializeField] private int _biteSinkPixels = 3;
+        [Tooltip("Dấu \"!\" nảy lên xuống (pixel, số lần / giây).")]
+        [SerializeField] private int _alertBouncePixels = 1;
+        [SerializeField] private float _alertBounceRate = 6f;
         [SerializeField] private int _vibrateMilliseconds = 120;
+        [Header("Kéo cá – bấm sai (Đợt 2 Phần 6)")]
+        [Tooltip("Phao giật ngược về phía nhân vật trong bao lâu (giây).")]
+        [SerializeField] private float _jerkSeconds = 0.3f;
+        [Tooltip("Phao giật ngược bao nhiêu pixel.")]
+        [SerializeField] private float _jerkPixels = 4f;
+        [SerializeField] private int _mistakeVibrateMilliseconds = 30;
         [SerializeField] private float _resultPauseSeconds = 0.6f;
 
         private Phase _phase;
@@ -60,7 +82,13 @@ namespace VeQue.View.Fishing
         private bool _biteShown;
         private string _baitId;
         private Vector3 _bobberBase;
+        private float _jerkStart = -1f;
         private float _landEnd;
+        // Kéo cá: lúc bắt đầu tính giờ (sau khung xem trước, hoặc lúc bấm đúng mũi tên đầu).
+        private float _pullStart;
+        private Vector3 _alertBase;
+        // Lần rỉa đang diễn ra ở khung trước (để báo bóng cá đớp thử đúng 1 lần mỗi lần rỉa).
+        private bool _wasNibbling;
 
         public Phase CurrentPhase => _phase;
         public FishingSession Session => _session;
@@ -71,7 +99,13 @@ namespace VeQue.View.Fishing
         // Kéo cá: đề, số mũi tên đã nhập đúng, giây đã dùng.
         public PullRound Pull => _phase == Phase.Pulling && _session != null ? _session.Pull : null;
         public int PullIndex { get; private set; }
-        public float PullElapsed => _phase == Phase.Pulling ? Time.time - _phaseStart : 0f;
+        // Vị trí mũi tên vừa bấm sai (trước khi về đầu chuỗi) – bảng kéo cá rung ô này.
+        public int LastMistakeIndex { get; private set; } = -1;
+        public float PullElapsed => _phase == Phase.Pulling ? Mathf.Max(0f, Time.time - _pullStart) : 0f;
+        // Kéo cá: đang xem trước chuỗi mũi tên (chưa tính giờ).
+        public bool PullPreviewing => _phase == Phase.Pulling && Time.time < _pullStart;
+        // Đang chờ và cá đã cắn (phao chìm, "!"): lúc này mới nên bấm Giật.
+        public bool BiteShown => _phase == Phase.Waiting && _biteShown;
         public FishingTuning Tuning => _game.Farm.FishingDefinition.Tuning;
 
         // Lực ném hiện tại khi đang giữ nút (0..1).
@@ -81,7 +115,25 @@ namespace VeQue.View.Fishing
         public event Action Changed;
         // Kéo cá: nhập đúng thêm 1 mũi tên.
         public event Action PullProgressed;
+        // Kéo cá: bấm sai, chuỗi về mũi tên đầu (bảng kéo nháy đỏ).
+        public event Action PullMistake;
         public event Action<string> Message;
+        // Vừa ném: đánh giá cú ném (HUD hiện chữ trên đầu nhân vật).
+        public event Action<CastQuality> CastJudged;
+        // Lượt câu không ra cá (cá sợ, ăn mồi, trượt, thoát) – chữ trên đầu nhân vật. Thu cần / rời đi không báo ở đây.
+        public event Action<FishingOutcome> Missed;
+        // Câu được: phiên đã áp vào tiến trình (bảng cá vừa câu).
+        public event Action<FishingSession> FishCaught;
+
+        // Điểm đặt chữ nổi trên đầu nhân vật.
+        public Vector3 HeadPosition
+        {
+            get
+            {
+                Vector3 feet = _character.Body.position;
+                return new Vector3(feet.x + _headPixels.x / PixelsPerUnit, feet.y + _headPixels.y / PixelsPerUnit, 0f);
+            }
+        }
 
         public bool TryGetEquippedRod(out RodDef rod) => _game.Farm.TryGetEquippedRod(out rod, out _);
 
@@ -103,7 +155,8 @@ namespace VeQue.View.Fishing
                 Cast();
         }
 
-        // Kéo cá: bấm 1 mũi tên. Đúng thì sang mũi tên kế (hết chuỗi = câu được); sai thì đứt dây.
+        // Kéo cá: bấm 1 mũi tên. Đúng thì sang mũi tên kế (hết chuỗi = câu được);
+        // sai thì về mũi tên đầu, nhập lại (chốt 13/11/2026, phương án B – không đứt dây, giờ vẫn chạy).
         public void PressArrow(Arrow arrow)
         {
             PullRound pull = Pull;
@@ -113,23 +166,48 @@ namespace VeQue.View.Fishing
             if (arrow != pull.Expected(PullIndex))
             {
                 _session.WrongArrow();
-                Finish();
+                LastMistakeIndex = PullIndex;
+                PullIndex = 0;
+                _jerkStart = Time.time;
+                if (_shadow != null)
+                    _shadow.Flinch();
+                WebBridge.Vibrate(_mistakeVibrateMilliseconds);
+                PullMistake?.Invoke();
                 return;
             }
 
+            // Bấm đúng trong lúc xem trước: bắt đầu tính giờ luôn.
+            if (Time.time < _pullStart)
+                _pullStart = Time.time;
             PullIndex++;
+            // Bóng cá lao theo hướng mũi tên kế tiếp (chỉ là hình ảnh).
+            if (_shadow != null)
+                _shadow.Dart(PullIndex < pull.Count ? pull.Expected(PullIndex) : arrow);
             PullProgressed?.Invoke();
             if (PullIndex < pull.Count)
                 return;
 
-            if (_session.CompletePull(Time.time - _phaseStart) == FishingOutcome.Caught)
+            if (_session.CompletePull(PullElapsed) == FishingOutcome.Caught)
             {
+                // Cá bật khỏi nước ở chỗ phao, bay dọc dây về tay; bóng dưới nước tắt.
+                if (_shadow != null)
+                    _shadow.Hide();
+                float flight = 0f;
+                if (_flyer != null)
+                {
+                    FishingDefinition data = _game.Definition.Fishing;
+                    _flyer.Launch(FishIcon(_session.Fish.Id), _bobberBase, HandPosition(),
+                        data != null ? data.GetShiny(_session.Shiny) : null, _session.Grams);
+                    flight = _flyer.Seconds;
+                }
                 _character.View.Play(CharacterAnim.Caught, _spot.Facing, true);
-                _landEnd = Time.time + Mathf.Max(0.1f, _character.View.GetDuration(CharacterAnim.Caught));
+                _landEnd = Time.time + Mathf.Max(0.1f, Mathf.Max(flight, _character.View.GetDuration(CharacterAnim.Caught)));
                 ShowBobber(false);
                 SetPhase(Phase.Landing);
                 return;
             }
+            if (_shadow != null)
+                _shadow.Escape();
             Finish();
         }
 
@@ -149,18 +227,12 @@ namespace VeQue.View.Fishing
             }
         }
 
-        // Đổi sang loại mồi kế tiếp đang có.
-        public void CycleBait()
+        // Chọn mồi để ném (bảng Mồi). Đang câu hoặc hết loại đó thì bỏ qua.
+        public void SelectBait(string baitId)
         {
-            if (InSession)
+            if (InSession || _game.Farm.State.Fishing.GetBaits(baitId) <= 0)
                 return;
-            string next = FindBait(_baitId, true);
-            if (next == null)
-            {
-                Message?.Invoke("Hết mồi rồi");
-                return;
-            }
-            _baitId = next;
+            _baitId = baitId;
             Changed?.Invoke();
         }
 
@@ -183,6 +255,10 @@ namespace VeQue.View.Fishing
                 _character = FindFirstObjectByType<FarmCharacterController>();
             ShowBobber(false);
             ShowAlert(false);
+            if (_shadow != null)
+                _shadow.Hide();
+            if (_flyer != null)
+                _flyer.Hide();
         }
 
         private void OnEnable()
@@ -318,7 +394,7 @@ namespace VeQue.View.Fishing
             }
 
             _session = session;
-            Message?.Invoke(UiFormat.CastResult(session.Quality, session.Depth));
+            CastJudged?.Invoke(session.Quality);
             _character.View.Play(CharacterAnim.Cast, _spot.Facing, true);
             _castEnd = Time.time + Mathf.Max(0.1f, _character.View.GetDuration(CharacterAnim.Cast));
             SetPhase(Phase.Casting);
@@ -329,7 +405,18 @@ namespace VeQue.View.Fishing
             _character.View.Play(CharacterAnim.Wait, _spot.Facing, true);
             _bobberBase = LineEnd();
             _biteShown = false;
+            _wasNibbling = false;
             ShowBobber(true);
+            if (_shadow != null)
+            {
+                // Hiện trước lần rỉa / cắn đầu tiên để người chơi kịp thấy cá tới.
+                float delay = UnityEngine.Random.Range(_shadowAppearSeconds.x, _shadowAppearSeconds.y);
+                float first = _session.BiteTime;
+                foreach (float nibble in _session.NibbleTimes)
+                    first = Mathf.Min(first, nibble);
+                delay = Mathf.Clamp(delay, 0f, Mathf.Max(0f, first - 0.3f));
+                _shadow.Approach(_bobberBase, _session.Fish.Rarity, _spot.Facing == Facing.Left, delay);
+            }
             SetPhase(Phase.Waiting);
         }
 
@@ -345,17 +432,30 @@ namespace VeQue.View.Fishing
             int drop = 0;
             if (t >= _session.BiteTime)
             {
-                drop = _biteDropPixels;
+                drop = _biteSinkPixels;
                 if (!_biteShown)
                 {
                     _biteShown = true;
                     ShowAlert(true);
                     WebBridge.Vibrate(_vibrateMilliseconds);
+                    if (_shadow != null)
+                        _shadow.Bite();
+                    // HUD đổi nút "Chờ…" → "GIẬT!".
+                    Changed?.Invoke();
                 }
+                int bounce = Mathf.FloorToInt((t - _session.BiteTime) * _alertBounceRate * 2f) % 2 == 0 ? _alertBouncePixels : 0;
+                _alert.transform.position = _alertBase + new Vector3(0f, bounce / PixelsPerUnit, 0f);
             }
             else if (FishingMath.IsNibbling(_session, t, _nibbleSeconds))
             {
                 drop = _nibbleDropPixels;
+                if (!_wasNibbling && _shadow != null)
+                    _shadow.Nibble();
+                _wasNibbling = true;
+            }
+            else
+            {
+                _wasNibbling = false;
             }
             _bobber.transform.position = _bobberBase + new Vector3(0f, -drop / PixelsPerUnit, 0f);
         }
@@ -369,23 +469,46 @@ namespace VeQue.View.Fishing
                 ShowAlert(false);
                 PullIndex = 0;
                 _character.View.Play(CharacterAnim.Reel, _spot.Facing, true);
+                LastMistakeIndex = -1;
+                _jerkStart = -1f;
+                if (_shadow != null)
+                {
+                    _shadow.Hook();
+                    _shadow.Dart(_session.Pull.Expected(0));
+                }
+                // Đặt trước SetPhase để HUD đọc đúng trạng thái xem trước.
+                _pullStart = Time.time + Mathf.Max(0f, Tuning.PullPreviewSeconds);
                 SetPhase(Phase.Pulling);
                 return;
             }
             Finish();
         }
 
-        // Phao giật qua lại 1 px trong lúc kéo; hết giờ thì cá thoát.
+        // Phao giật qua lại 1 px trong lúc kéo; hết giờ (tính sau khung xem trước) thì cá thoát.
         private void UpdatePulling(float t)
         {
-            if (t > _session.Pull.TimeLimitSeconds)
+            if (PullElapsed > _session.Pull.TimeLimitSeconds)
             {
                 _session.PullTimeout();
+                if (_shadow != null)
+                    _shadow.Escape();
                 Finish();
                 return;
             }
+            if (_shadow != null)
+                _shadow.SetTension(PullElapsed / _session.Pull.TimeLimitSeconds);
             int jitter = Mathf.FloorToInt(t * 10f) % 2 == 0 ? 1 : -1;
-            _bobber.transform.position = _bobberBase + new Vector3(jitter / PixelsPerUnit, -_biteDropPixels / PixelsPerUnit, 0f);
+            Vector3 position = _bobberBase + new Vector3(jitter / PixelsPerUnit, -_biteSinkPixels / PixelsPerUnit, 0f);
+            // Bấm sai: phao giật về phía nhân vật rồi trả lại trong _jerkSeconds.
+            if (_jerkStart >= 0f && _jerkSeconds > 0f && Time.time - _jerkStart < _jerkSeconds)
+            {
+                float k = 1f - (Time.time - _jerkStart) / _jerkSeconds;
+                Vector3 toCharacter = _character.Body.position - _bobberBase;
+                toCharacter.z = 0f;
+                if (toCharacter.sqrMagnitude > 0.0001f)
+                    position += toCharacter.normalized * (Mathf.Round(_jerkPixels * k) / PixelsPerUnit);
+            }
+            _bobber.transform.position = position;
         }
 
         // Áp kết quả lượt câu vào tiến trình, về tư thế đứng.
@@ -398,25 +521,28 @@ namespace VeQue.View.Fishing
             ShowBobber(false);
             ShowAlert(false);
             _character.View.Play(CharacterAnim.Idle, _spot != null ? _spot.Facing : _character.Facing, true);
+            if (_flyer != null)
+                _flyer.Hide();
+            // Hụt (sợ, ăn mồi, trượt, thoát): bóng quay đầu bơi đi. Câu được thì bóng đã tắt lúc cá bay lên.
+            if (_shadow != null && outcome != FishingOutcome.Caught)
+                _shadow.Escape();
+            SetPhase(Phase.Result);
+            // Sau SetPhase để bảng / chữ nổi mở trên trạng thái đã xong lượt.
             if (announce)
             {
-                string text = outcome == FishingOutcome.Caught
-                    ? UiFormat.CaughtText(FishName(session.Fish.Id), session.Grams, session.Grade, session.Xp)
-                    : UiFormat.FishingOutcomeText(outcome);
-                // Đứt dây làm gãy cần thì báo luôn.
-                if (outcome == FishingOutcome.LineSnapped
-                    && _game.Farm.State.Fishing.TryGetRod(session.Rod.Id, out RodState rod) && rod.Snapped)
-                    text += " Cần gãy!";
-                if (!string.IsNullOrEmpty(text))
-                    Message?.Invoke(text);
+                if (outcome == FishingOutcome.Caught)
+                    FishCaught?.Invoke(session);
+                else
+                    Missed?.Invoke(outcome);
             }
-            SetPhase(Phase.Result);
         }
 
         private void AbandonSession()
         {
             if (_session == null)
                 return;
+            if (_shadow != null)
+                _shadow.Escape();
             _session.Abandon();
             Finish(false);
         }
@@ -471,7 +597,8 @@ namespace VeQue.View.Fishing
             if (show)
             {
                 Vector3 feet = _character.Body.position;
-                _alert.transform.position = new Vector3(feet.x + _alertPixels.x / PixelsPerUnit, feet.y + _alertPixels.y / PixelsPerUnit, 0f);
+                _alertBase = new Vector3(feet.x + _alertPixels.x / PixelsPerUnit, feet.y + _alertPixels.y / PixelsPerUnit, 0f);
+                _alert.transform.position = _alertBase;
             }
         }
 
@@ -502,10 +629,20 @@ namespace VeQue.View.Fishing
             return null;
         }
 
-        private string FishName(string fishId)
+        private Sprite FishIcon(string fishId)
         {
             FishingDefinition data = _game.Definition.Fishing;
-            return data != null && data.TryGetFish(fishId, out FishDefinition fish) ? fish.DisplayName : fishId;
+            return data != null && data.TryGetFish(fishId, out FishDefinition fish) ? fish.Icon : null;
+        }
+
+        // Tay nhân vật: art nhìn phải, quay trái thì lật ngang.
+        private Vector3 HandPosition()
+        {
+            Vector3 feet = _character.Body.position;
+            float dx = _handPixels.x / PixelsPerUnit;
+            if (_spot.Facing == Facing.Left)
+                dx = -dx;
+            return new Vector3(feet.x + dx, feet.y + _handPixels.y / PixelsPerUnit, 0f);
         }
     }
 }

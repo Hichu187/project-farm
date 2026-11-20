@@ -12,6 +12,20 @@ namespace VeQue.Logic
         Legendary = 4,  // Huyền thoại
     }
 
+    // Cá đột biến lấp lánh (Đợt 2 Phần 18). Số cố định vì lưu trong save: không đổi số, kiểu mới thêm số mới.
+    public enum ShinyKind
+    {
+        None = 0,
+        Gold = 1,        // Hoàng kim
+        Aurora = 2,      // Cực quang (bậc hiếm)
+        Ice = 3,         // Băng tinh
+        Nebula = 4,      // Tinh vân
+        Ruby = 5,        // Hồng ngọc
+        Onyx = 6,        // Hư không
+        Silver = 7,      // Bạc
+        DarkAurora = 8,  // Tinh dạ (bậc hiếm)
+    }
+
     // Phao rơi gần / vừa / xa bờ (theo lực ném). Cá có thể sống ở nhiều độ sâu.
     [Flags]
     public enum FishDepth
@@ -120,10 +134,9 @@ namespace VeQue.Logic
         public int MaxDurability { get; }
         public long Price { get; }
         public int UnlockLevel { get; }
-        public long RepairPrice { get; }
 
         public RodDef(string id, int rank, float perfectHalfWidth, float barPeriodSeconds, int bonusTimePercent,
-            int slipReductionPercent, int rareBonusPercent, int maxDurability, long price, int unlockLevel, long repairPrice)
+            int slipReductionPercent, int rareBonusPercent, int maxDurability, long price, int unlockLevel)
         {
             if (string.IsNullOrEmpty(id))
                 throw new ArgumentException("Cần câu cần id.", nameof(id));
@@ -131,7 +144,7 @@ namespace VeQue.Logic
                 throw new ArgumentOutOfRangeException(nameof(perfectHalfWidth));
             if (bonusTimePercent < 0 || maxDurability <= 0)
                 throw new ArgumentOutOfRangeException(nameof(bonusTimePercent));
-            if (slipReductionPercent < 0 || rareBonusPercent < 0 || price < 0 || repairPrice < 0 || unlockLevel < 1)
+            if (slipReductionPercent < 0 || rareBonusPercent < 0 || price < 0 || unlockLevel < 1)
                 throw new ArgumentOutOfRangeException(nameof(price));
 
             Id = id;
@@ -144,7 +157,6 @@ namespace VeQue.Logic
             MaxDurability = maxDurability;
             Price = price;
             UnlockLevel = unlockLevel;
-            RepairPrice = repairPrice;
         }
     }
 
@@ -156,17 +168,22 @@ namespace VeQue.Logic
         // false = không bán ở Cửa hàng (chỉ đào được / tặng).
         public bool Buyable { get; }
         public int RareBonusPercent { get; }
+        // Cấp tối thiểu để mua (13/11/2026). Mồi đang có thì dùng được ở mọi cấp.
+        public int UnlockLevel { get; }
 
-        public BaitDef(string id, long price, int rareBonusPercent = 0, bool buyable = true)
+        public BaitDef(string id, long price, int rareBonusPercent = 0, bool buyable = true, int unlockLevel = 1)
         {
             if (string.IsNullOrEmpty(id))
                 throw new ArgumentException("Mồi cần id.", nameof(id));
             if (price < 0 || rareBonusPercent < 0)
                 throw new ArgumentOutOfRangeException(nameof(price));
+            if (unlockLevel < 1)
+                throw new ArgumentOutOfRangeException(nameof(unlockLevel));
             Id = id;
             Price = price;
             Buyable = buyable;
             RareBonusPercent = rareBonusPercent;
+            UnlockLevel = unlockLevel;
         }
     }
 
@@ -190,9 +207,9 @@ namespace VeQue.Logic
         public int PerfectRareBonusPercent = 50;
         public int GoodRareBonusPercent = 15;
 
-        // Chờ cắn (giây); mồi ưa thích / ném Perfect nhân thêm hệ số < 1.
-        public float BiteMinSeconds = 3f;
-        public float BiteMaxSeconds = 15f;
+        // Chờ cắn (giây); mồi ưa thích / ném Perfect nhân thêm hệ số < 1. (13/11/2026: 3–15 → 2–8 cho nhịp nhanh hơn.)
+        public float BiteMinSeconds = 2f;
+        public float BiteMaxSeconds = 8f;
         public float PreferredBiteFactor = 0.7f;
         public float PerfectBiteFactor = 0.7f;
         public int MaxNibbles = 3;
@@ -209,57 +226,110 @@ namespace VeQue.Logic
         public float GoodWeightExponent = 2f;
         public float NormalWeightExponent = 3f;
         public int RedArrowPercent = 25;
+        // Chuỗi mũi tên ít nhất bao nhiêu (sau khi ném Perfect bớt 1). 14/11/2026: tối thiểu 4.
+        public int MinPullArrows = 4;
+        // Móc được cá: hiện chuỗi mũi tên PullPreviewSeconds giây rồi mới tính giờ (bấm đúng mũi tên đầu thì tính luôn).
+        // Thời gian xem trước không tính vào xếp hạng (View đo giờ từ lúc bắt đầu tính).
+        public float PullPreviewSeconds = 1.2f;
+        // Đợt 2 Phần 6 (20/11/2026): thời gian kéo = (giây kéo của cá + số mũi tên × PullSecondsPerArrow) × (1 + thưởng cần),
+        // để chuỗi dài bị reset gần cuối vẫn kịp làm lại trên điện thoại.
+        public float PullSecondsPerArrow = 0.45f;
 
-        // Độ bền: mỗi lượt câu trừ 1 lúc ném (chốt 13/11/2026: mọi mức trừ là 1); đứt dây không trừ thêm, chỉ có thể gãy cần.
+        // Độ bền: mỗi lượt câu trừ 1 lúc ném (chốt 13/11/2026). Cần chỉ hỏng khi hết độ bền (không còn gãy khi kéo).
         public int CastDurabilityCost = 1;
-        public int SnapDurabilityCost = 0;
-        // Xác suất gãy cần khi đứt dây: độ bền đầy = Min, về 0 = Max, tuyến tính ở giữa.
-        public int SnapBreakMinPercent = 20;
-        public int SnapBreakMaxPercent = 60;
-        // Mỗi lần sửa, độ bền tối đa giảm RepairMaxLossPercent% độ bền gốc;
-        // khi độ bền tối đa đã dưới RepairMinPercent% thì không sửa được nữa (mua lại cần).
-        public int RepairMaxLossPercent = 10;
-        public int RepairMinPercent = 15;
+        // Sửa cần (Đợt 2 Phần 1, 20/11/2026): về đầy độ bền, độ bền tối đa giữ nguyên.
+        // Giá sửa = giá cần × RepairPricePercent% × phần độ bền còn thiếu, làm tròn lên, tối thiểu 1 xu.
+        public int RepairPricePercent = 30;
+        // Cảnh báo "sắp hỏng" khi độ bền còn ≤ LowDurabilityPercent% độ bền tối đa.
+        public int LowDurabilityPercent = 10;
 
         // Giá / XP theo cân nặng: nhẹ nhất × WeightValueMinPercent%, nặng nhất × WeightValueMaxPercent%.
         public int WeightValueMinPercent = 60;
         public int WeightValueMaxPercent = 140;
 
+        // Cá shiny (Đợt 2 Phần 18, chốt 20/11/2026): mỗi lần câu được cá có ShinyChancePer10000 / 10000 ra shiny.
+        // Ra shiny thì tung bậc (ShinyRareTierPercent% là bậc hiếm) rồi chọn đều 1 kiểu trong bậc.
+        // Giá = giá theo cân nặng × hệ số của bậc. XP không đổi.
+        public int ShinyChancePer10000 = 100;
+        public float ShinyRareTierPercent = 3.2f;
+        public ShinyKind[] ShinyCommonKinds =
+        {
+            ShinyKind.Gold, ShinyKind.Ice, ShinyKind.Nebula, ShinyKind.Ruby, ShinyKind.Onyx, ShinyKind.Silver,
+        };
+        public ShinyKind[] ShinyRareKinds = { ShinyKind.Aurora, ShinyKind.DarkAurora };
+        public int ShinyCommonPriceMultiplier = 3;
+        public int ShinyRarePriceMultiplier = 10;
+
+        public bool IsRareShiny(ShinyKind kind) => kind != ShinyKind.None && Array.IndexOf(ShinyRareKinds, kind) >= 0;
+
+        // Hệ số giá: không shiny = 1.
+        public int ShinyPriceMultiplier(ShinyKind kind)
+        {
+            if (kind == ShinyKind.None)
+                return 1;
+            return IsRareShiny(kind) ? ShinyRarePriceMultiplier : ShinyCommonPriceMultiplier;
+        }
+
         internal void Validate()
         {
+            if (ShinyChancePer10000 < 0 || ShinyChancePer10000 > 10000)
+                throw new ArgumentException("Tỉ lệ cá shiny không hợp lệ.");
+            if (ShinyRareTierPercent < 0f || ShinyRareTierPercent > 100f)
+                throw new ArgumentException("Tỉ lệ bậc shiny hiếm không hợp lệ.");
+            if (ShinyCommonPriceMultiplier < 1 || ShinyRarePriceMultiplier < 1)
+                throw new ArgumentException("Hệ số giá cá shiny không hợp lệ.");
+            ValidateShinyKinds(ShinyCommonKinds, ShinyRareKinds);
+            ValidateShinyKinds(ShinyRareKinds, ShinyCommonKinds);
             if (RarityWeights == null || RarityWeights.Length != 5)
                 throw new ArgumentException("Cần 5 trọng số độ hiếm.");
             if (BiteMinSeconds <= 0f || BiteMaxSeconds < BiteMinSeconds)
                 throw new ArgumentException("Thời gian chờ cắn không hợp lệ.");
             if (PerfectTimePercent <= 0 || GoodTimePercent < PerfectTimePercent || GoodTimePercent > 100 || PerfectXpBonusPercent < 0)
                 throw new ArgumentException("Xếp hạng kéo cá không hợp lệ.");
+            if (MinPullArrows < 1)
+                throw new ArgumentException("Số mũi tên tối thiểu không hợp lệ.");
+            if (PullPreviewSeconds < 0f || PullSecondsPerArrow < 0f)
+                throw new ArgumentException("Thời gian xem trước chuỗi mũi tên không hợp lệ.");
             if (PerfectWeightExponent <= 0f || GoodWeightExponent <= 0f || NormalWeightExponent <= 0f)
                 throw new ArgumentException("Số mũ cân nặng không hợp lệ.");
-            if (CastDurabilityCost < 0 || SnapDurabilityCost < 0)
-                throw new ArgumentException("Mức trừ độ bền không hợp lệ.");            if (SnapBreakMinPercent < 0 || SnapBreakMaxPercent > 100 || SnapBreakMaxPercent < SnapBreakMinPercent)
-                throw new ArgumentException("Tỉ lệ gãy cần không hợp lệ.");
-            if (RepairMaxLossPercent < 0 || RepairMaxLossPercent > 100 || RepairMinPercent < 0 || RepairMinPercent > 100)
+            if (CastDurabilityCost < 0)
+                throw new ArgumentException("Mức trừ độ bền không hợp lệ.");
+            if (RepairPricePercent < 0 || LowDurabilityPercent < 0 || LowDurabilityPercent > 100)
                 throw new ArgumentException("Thông số sửa cần không hợp lệ.");
         }
 
-        // % độ bền gốc còn lại sau số lần sửa (không âm).
-        public int MaxDurabilityPercent(int repairCount) => Math.Max(0, 100 - RepairMaxLossPercent * Math.Max(0, repairCount));
+        // Mỗi bậc có ít nhất 1 kiểu; không None, không kiểu lạ, không trùng trong bậc hay với bậc kia.
+        private static void ValidateShinyKinds(ShinyKind[] kinds, ShinyKind[] other)
+        {
+            if (kinds == null || kinds.Length == 0)
+                throw new ArgumentException("Mỗi bậc cá shiny cần ít nhất 1 kiểu.");
+            for (int i = 0; i < kinds.Length; i++)
+            {
+                ShinyKind kind = kinds[i];
+                if (kind == ShinyKind.None || !Enum.IsDefined(typeof(ShinyKind), kind))
+                    throw new ArgumentException($"Kiểu cá shiny không hợp lệ: {kind}.");
+                if (Array.IndexOf(kinds, kind) != i || (other != null && Array.IndexOf(other, kind) >= 0))
+                    throw new ArgumentException($"Trùng kiểu cá shiny: {kind}.");
+            }
+        }
 
-        // Độ bền tối đa thực tế sau số lần sửa (ít nhất 1).
-        public int MaxDurabilityAfterRepairs(int baseMax, int repairCount)
-            => Math.Max(1, (int)((long)baseMax * MaxDurabilityPercent(repairCount) / 100));
-
-        // Còn sửa được khi độ bền tối đa hiện tại chưa xuống dưới RepairMinPercent%.
-        public bool CanRepairAgain(int repairCount) => MaxDurabilityPercent(repairCount) >= RepairMinPercent;
-
-        // Tỉ lệ gãy cần (%) khi đứt dây, theo độ bền còn lại sau khi trừ.
-        public int SnapBreakPercentAt(int durability, int maxDurability)
+        // Giá sửa cần về đầy: 0 khi đã đầy, còn lại ít nhất 1 xu.
+        public long RepairPrice(long rodPrice, int durability, int maxDurability)
         {
             if (maxDurability <= 0)
-                return SnapBreakMaxPercent;
-            int clamped = Math.Max(0, Math.Min(durability, maxDurability));
-            return SnapBreakMinPercent + (SnapBreakMaxPercent - SnapBreakMinPercent) * (maxDurability - clamped) / maxDurability;
+                return 0;
+            long missing = Math.Max(0, Math.Min(maxDurability, maxDurability - durability));
+            if (missing == 0)
+                return 0;
+            long numerator = Math.Max(0, rodPrice) * RepairPricePercent * missing;
+            long denominator = 100L * maxDurability;
+            return Math.Max(1, (numerator + denominator - 1) / denominator);
         }
+
+        // Độ bền còn ≤ LowDurabilityPercent% (gồm cả khi đã hỏng).
+        public bool IsLowDurability(int durability, int maxDurability)
+            => (long)durability * 100 <= (long)maxDurability * LowDurabilityPercent;
+
     }
 
     // Toàn bộ data câu cá (Phần 10). FishingDef.None = chưa có câu cá.
@@ -280,9 +350,11 @@ namespace VeQue.Logic
         public string StarterRodId { get; }
         public string StarterBaitId { get; }
         public int StarterBaitCount { get; }
-        // Sức chứa giỏ theo mức nâng cấp (mức 0 = ban đầu) và giá lên từng mức (phần tử 0 bỏ qua).
-        public IReadOnlyList<int> BasketCapacities { get; }
-        public IReadOnlyList<long> BasketUpgradePrices { get; }
+        // Giỏ cá (chốt 13/11/2026): mở sẵn BasketStartSlots ô, mua lần lượt từng ô; BasketSlotPrices[k] = giá ô thứ
+        // BasketStartSlots + k + 1. Tối đa BasketMaxSlots ô.
+        public int BasketStartSlots { get; }
+        public IReadOnlyList<long> BasketSlotPrices { get; }
+        public int BasketMaxSlots => BasketStartSlots + BasketSlotPrices.Count;
         // Đào được mồi khi thu hoạch.
         public string WormBaitId { get; }
         public int WormChancePercent { get; }
@@ -294,7 +366,7 @@ namespace VeQue.Logic
 
         public FishingDef(IEnumerable<FishDef> fish, IEnumerable<RodDef> rods, IEnumerable<BaitDef> baits,
             string starterRodId, string starterBaitId, int starterBaitCount, int unlockLevel = 1,
-            IReadOnlyList<int> basketCapacities = null, IReadOnlyList<long> basketUpgradePrices = null,
+            int basketStartSlots = 8, IReadOnlyList<long> basketSlotPrices = null,
             string wormBaitId = null, int wormChancePercent = 0, int wormMin = 1, int wormMax = 1,
             FishingTuning tuning = null)
         {
@@ -313,29 +385,21 @@ namespace VeQue.Logic
             if (starterBaitCount < 0 || wormChancePercent < 0 || wormChancePercent > 100 || wormMin < 0 || wormMax < wormMin)
                 throw new ArgumentOutOfRangeException(nameof(wormChancePercent));
 
-            var capacities = new List<int>(basketCapacities ?? new[] { 8 });
-            if (capacities.Count == 0)
-                capacities.Add(8);
-            for (int i = 0; i < capacities.Count; i++)
-            {
-                if (capacities[i] <= 0 || (i > 0 && capacities[i] <= capacities[i - 1]))
-                    throw new ArgumentException("Sức chứa giỏ phải dương và tăng dần.", nameof(basketCapacities));
-            }
-            var prices = new List<long>(basketUpgradePrices ?? Array.Empty<long>());
-            while (prices.Count < capacities.Count)
-                prices.Add(0);
+            if (basketStartSlots < 1)
+                throw new ArgumentOutOfRangeException(nameof(basketStartSlots), "Giỏ phải có ít nhất 1 ô mở sẵn.");
+            var prices = new List<long>(basketSlotPrices ?? Array.Empty<long>());
             foreach (long price in prices)
             {
                 if (price < 0)
-                    throw new ArgumentOutOfRangeException(nameof(basketUpgradePrices));
+                    throw new ArgumentOutOfRangeException(nameof(basketSlotPrices));
             }
 
             UnlockLevel = unlockLevel;
             StarterRodId = starterRodId;
             StarterBaitId = starterBaitId;
             StarterBaitCount = starterBaitCount;
-            BasketCapacities = capacities.AsReadOnly();
-            BasketUpgradePrices = prices.AsReadOnly();
+            BasketStartSlots = basketStartSlots;
+            BasketSlotPrices = prices.AsReadOnly();
             WormBaitId = wormBaitId;
             WormChancePercent = wormChancePercent;
             WormMin = wormMin;

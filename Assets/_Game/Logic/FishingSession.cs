@@ -31,8 +31,6 @@ namespace VeQue.Logic
         BaitStolen,
         // Giật đúng lúc nhưng trượt lưỡi.
         Slipped,
-        // Kéo cá bấm sai mũi tên: đứt dây, cá thoát; có thể gãy cần.
-        LineSnapped,
         // Kéo cá hết giờ: cá thoát (chỉ mất mồi).
         Escaped,
     }
@@ -102,6 +100,8 @@ namespace VeQue.Logic
         public float Power { get; }
         public CastQuality Quality { get; }
         public FishDepth Depth { get; }
+        // Cá shiny (Đợt 2 Phần 18): tung ngay khi chọn ra cá, để View biết trước. Chỉ có tác dụng khi câu được.
+        public ShinyKind Shiny { get; }
 
         // Lịch phao (giây tính từ lúc phao chạm nước): các lần rỉa, lúc cắn, khung giật.
         public IReadOnlyList<float> NibbleTimes => _nibbles;
@@ -123,6 +123,16 @@ namespace VeQue.Logic
 
         internal bool Applied { get; set; }
 
+        // Kỷ lục (Đợt E, 14/11/2026): ghi lúc Farm.CompleteFishing áp con cá câu được; chỉ để hiển thị, không lưu.
+        // Kỷ lục cũ của loài (gam, 0 = chưa từng câu được loài này).
+        public int PreviousRecordGrams { get; internal set; }
+        // Con này nặng hơn kỷ lục cũ (kể cả lần đầu câu được loài).
+        public bool IsNewRecord { get; internal set; }
+        // Lần đầu câu được loài này.
+        public bool IsNewSpecies => IsNewRecord && PreviousRecordGrams == 0;
+        // Lần đầu câu được cặp (loài, kiểu shiny) này – ghi lúc Farm.CompleteFishing.
+        public bool IsNewShiny { get; internal set; }
+
         internal FishingSession(FishingDef def, RodDef rod, BaitDef bait, DaySlot slot, float power, uint seed)
         {
             _tuning = def.Tuning;
@@ -134,6 +144,9 @@ namespace VeQue.Logic
             Quality = Classify(Power, rod, _tuning);
             Depth = DepthOf(Power, Quality, _tuning);
             Fish = PickFish(def);
+            // Random riêng sinh từ seed phiên (băm phi tuyến, không dính chuỗi xorshift chính) → các lần tung cũ không xê dịch.
+            uint shinyRandom = MixSeed(seed);
+            Shiny = RollShiny(ref shinyRandom, _tuning);
             Phase = FishingPhase.Waiting;
 
             float delay = Lerp(_tuning.BiteMinSeconds, _tuning.BiteMaxSeconds, NextFloat());
@@ -164,6 +177,28 @@ namespace VeQue.Logic
             if (distance <= rod.PerfectHalfWidth * tuning.GoodWidthMultiplier)
                 return CastQuality.Good;
             return power < tuning.WeakBelow ? CastQuality.Weak : CastQuality.Normal;
+        }
+
+        // Tung shiny: ShinyChancePer10000 / 10000 → tung bậc (hiếm ShinyRareTierPercent%) → chọn đều 1 kiểu trong bậc.
+        public static ShinyKind RollShiny(ref uint random, FishingTuning tuning)
+        {
+            if (SeededRandom.Range(ref random, 0, 10000) >= tuning.ShinyChancePer10000)
+                return ShinyKind.None;
+            float tier = NextFloat(ref random) * 100f;
+            ShinyKind[] kinds = tier < tuning.ShinyRareTierPercent ? tuning.ShinyRareKinds : tuning.ShinyCommonKinds;
+            return kinds[SeededRandom.Range(ref random, 0, kinds.Length)];
+        }
+
+        // Băm seed (murmur3 fmix32) cho random riêng của shiny.
+        private static uint MixSeed(uint seed)
+        {
+            uint h = seed ^ 0x5348494Eu;
+            h ^= h >> 16;
+            h *= 0x85EBCA6Bu;
+            h ^= h >> 13;
+            h *= 0xC2B2AE35u;
+            h ^= h >> 16;
+            return h == 0 ? 1u : h;
         }
 
         // Xếp hạng theo phần thời gian đã dùng.
@@ -212,11 +247,15 @@ namespace VeQue.Logic
             return Finish(FishingOutcome.Caught);
         }
 
-        // Bấm sai mũi tên: đứt dây.
+        // Bấm sai mũi tên (chốt 13/11/2026, phương án B): không đứt dây, chỉ phải nhập lại chuỗi từ đầu
+        // (thời gian vẫn chạy – View đưa vị trí về 0). Đếm số lần sai để hiển thị / thống kê.
+        public int Mistakes { get; private set; }
+
         public FishingOutcome WrongArrow()
         {
             RequirePhase(FishingPhase.Pulling);
-            return Finish(FishingOutcome.LineSnapped);
+            Mistakes++;
+            return FishingOutcome.None;
         }
 
         // Hết giờ nhập: cá thoát.
@@ -234,12 +273,13 @@ namespace VeQue.Logic
             return Finish(FishingOutcome.BaitStolen);
         }
 
-        // Chuỗi mũi tên: độ dài theo cá (ném Perfect bớt 1), thời gian theo cá + thưởng của cần.
+        // Chuỗi mũi tên: độ dài theo cá (ném Perfect bớt 1, không dưới MinPullArrows), thời gian theo cá + thưởng của cần.
         private PullRound MakePull()
         {
             int count = SeededRandom.Range(ref _random, Fish.MinArrows, Fish.MaxArrows + 1);
             if (Quality == CastQuality.Perfect)
-                count = Math.Max(1, count - 1);
+                count--;
+            count = Math.Max(_tuning.MinPullArrows, count);
 
             var arrows = new Arrow[count];
             var red = new bool[count];
@@ -248,7 +288,7 @@ namespace VeQue.Logic
                 arrows[i] = (Arrow)SeededRandom.Range(ref _random, 0, 4);
                 red[i] = Fish.RedArrows && SeededRandom.Range(ref _random, 0, 100) < _tuning.RedArrowPercent;
             }
-            float time = Fish.PullSeconds * (1f + Rod.BonusTimePercent / 100f);
+            float time = (Fish.PullSeconds + count * _tuning.PullSecondsPerArrow) * (1f + Rod.BonusTimePercent / 100f);
             return new PullRound(arrows, red, time);
         }
 
@@ -261,9 +301,8 @@ namespace VeQue.Logic
             float u = (float)Math.Pow(NextFloat(), exponent);
             int span = Fish.MaxGrams - Fish.MinGrams;
             Grams = Fish.MinGrams + (int)Math.Round(span * u);
-            float ratio = span == 0 ? 0.5f : (Grams - Fish.MinGrams) / (float)span;
-            float percent = Lerp(_tuning.WeightValueMinPercent, _tuning.WeightValueMaxPercent, ratio);
-            Price = Math.Max(1, (int)Math.Round(Fish.BasePrice * percent / 100f));
+            float percent = FishingMath.WeightValuePercent(Fish, Grams, _tuning);
+            Price = FishingMath.FishPrice(Fish, Grams, _tuning, Shiny);
             int xpPercent = grade == PullGrade.Perfect ? 100 + _tuning.PerfectXpBonusPercent : 100;
             Xp = Math.Max(1, (int)Math.Round(Fish.BaseXp * percent / 100f * xpPercent / 100f));
         }
@@ -346,7 +385,9 @@ namespace VeQue.Logic
         }
 
         // [0, 1).
-        private float NextFloat() => (SeededRandom.Next(ref _random) >> 8) / 16777216f;
+        private float NextFloat() => NextFloat(ref _random);
+
+        private static float NextFloat(ref uint random) => (SeededRandom.Next(ref random) >> 8) / 16777216f;
 
         private static float Lerp(float a, float b, float t) => a + (b - a) * t;
 

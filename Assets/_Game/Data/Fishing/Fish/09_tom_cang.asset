@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.FishDefinition
   _id: tom_cang
   _displayName: "T\xF4m c\xE0ng xanh"
-  _icon: {fileID: 21300000, guid: c5273c9ee7c5e00429cbc408f75db6ef, type: 3}
+  _icon: {fileID: 21300000, guid: d177a3da99ffd3948b4b42895e0caaeb, type: 3}
   _rarity: 2
   _minGrams: 50
   _maxGrams: 400
@@ -31,9 +31,9 @@ MonoBehaviour:
   _depths: 3
   _preferredBaits:
   - {fileID: 11400000, guid: faa4f59eca662784ebde4db1be560fe9, type: 2}
-  _minArrows: 5
-  _maxArrows: 7
+  _minArrows: 6
+  _maxArrows: 8
   _pullSeconds: 3.5
-  _hookWindowSeconds: 0.6
+  _hookWindowSeconds: 1.2
   _slipPercent: 12
   _redArrows: 0

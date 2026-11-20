@@ -22,6 +22,18 @@ namespace VeQue.Logic
             return x;
         }
 
+        // Băm 32 bit (murmur3 fmix32) để tạo random riêng từ một seed mà không dính chuỗi xorshift gốc. Không trả 0.
+        public static uint Mix(uint value)
+        {
+            uint h = value ^ 0x9E3779B9u;
+            h ^= h >> 16;
+            h *= 0x85EBCA6Bu;
+            h ^= h >> 13;
+            h *= 0xC2B2AE35u;
+            h ^= h >> 16;
+            return h == 0 ? 1u : h;
+        }
+
         // Số nguyên trong [minInclusive, maxExclusive).
         public static int Range(ref uint state, int minInclusive, int maxExclusive)
         {

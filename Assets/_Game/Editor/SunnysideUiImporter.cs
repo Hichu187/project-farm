@@ -57,10 +57,13 @@ namespace VeQue.EditorTools
         // Màu xanh của greenbar_06.
         public static readonly Color BarFill = new Color32(0x63, 0xc7, 0x4d, 0xff);
 
-        // Icon chép nguyên từ Sunnyside: confirm, cancel, sandtimer, stopwatch, rod (chỗ câu),
-        // mũi tên kéo cá (arrow_up-1 của Sunnyside là mũi tên xuống).
+        // Icon chép nguyên từ Sunnyside: confirm, cancel, sandtimer, stopwatch, rod (chỗ câu, nút Cần), basket (nút Giỏ),
+        // rod alt (cần có mồi đỏ – tạm cho nút Mồi, chưa có icon giun), mũi tên kéo cá (arrow_up-1 của Sunnyside là mũi tên xuống).
         public static string IconPath(string name) => $"{OutputFolder}/ui_icon_{name}.png";
 
+        public const string RodIcon = "rod";
+        public const string BasketIcon = "basket";
+        public const string BaitIcon = "rod alt";
         public const string ArrowUp = "arrow_up";
         public const string ArrowDown = "arrow_up-1";
         public const string ArrowLeft = "arrow_left";
@@ -68,7 +71,8 @@ namespace VeQue.EditorTools
 
         private static readonly string[] Icons =
         {
-            "confirm", "cancel", "sandtimer", "stopwatch", "rod", ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
+            "confirm", "cancel", "sandtimer", "stopwatch", ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
+            RodIcon, BasketIcon, BaitIcon,
         };
 
         // Tên file của bản ghép đầu tiên (12/11/2026), xóa khi chạy lại cho gọn.
@@ -88,7 +92,7 @@ namespace VeQue.EditorTools
             { "bl", "bc", "br" },
         };
 
-        [MenuItem("Về Quê/UI Sunnyside: ghép 9-slice")]
+        [MenuItem("Về Quê/Import art/UI Sunnyside (ghép 9-slice)", priority = 301)]
         private static void Build()
         {
             var errors = new List<string>();

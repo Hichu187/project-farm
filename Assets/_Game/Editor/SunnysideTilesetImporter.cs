@@ -15,7 +15,7 @@ namespace VeQue.EditorTools
             "Assets/Art/Sunnyside_World_ASSET_PACK_V2.1/Sunnyside_World_Assets/Tileset/spr_tileset_sunnysideworld_16px.png";
         private const int Cell = 16;
 
-        [MenuItem("Về Quê/Sunnyside: import tileset 16px")]
+        [MenuItem("Về Quê/Import art/Tileset Sunnyside 16px", priority = 300)]
         private static void Run()
         {
             var importer = AssetImporter.GetAtPath(TilesetPath) as TextureImporter;

@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2e979cdb28539141b4e3d7a1326d738, type: 3}
+  m_Name: DayNightProfile
+  m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.DayNightProfile
+  _keys:
+  - Hour: 0
+    Color: {r: 0.65882355, g: 0.7019608, b: 0.92156863, a: 1}
+  - Hour: 4.5
+    Color: {r: 0.65882355, g: 0.7019608, b: 0.92156863, a: 1}
+  - Hour: 6
+    Color: {r: 0.98039216, g: 0.8392157, b: 0.8, a: 1}
+  - Hour: 7.5
+    Color: {r: 1, g: 1, b: 1, a: 1}
+  - Hour: 12
+    Color: {r: 1, g: 1, b: 1, a: 1}
+  - Hour: 15.5
+    Color: {r: 1, g: 0.98039216, b: 0.92941177, a: 1}
+  - Hour: 17.5
+    Color: {r: 1, g: 0.85882354, b: 0.7019608, a: 1}
+  - Hour: 19
+    Color: {r: 0.81960785, g: 0.7607843, b: 0.9019608, a: 1}
+  - Hour: 21
+    Color: {r: 0.65882355, g: 0.7019608, b: 0.92156863, a: 1}
+  _lightsOnBelow: 0.92
+  _dayLengthMinutes: 30
+  _phaseMinutes: 0

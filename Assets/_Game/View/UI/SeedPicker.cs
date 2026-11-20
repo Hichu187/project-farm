@@ -9,13 +9,15 @@ using VeQue.View.Map;
 
 namespace VeQue.View.UI
 {
-    // Thanh chọn hạt nhỏ bám ngay trên ô trống vừa chạm (thay bảng trượt): mỗi cây đang bật một icon + số hạt,
-    // cây gieo gần nhất đứng đầu. Chạm icon = xếp việc gieo ô đó; kéo icon = xếp việc gieo hàng loạt qua FarmGesture.
-    // Số hạt hiện đã trừ hạt giữ chỗ cho việc gieo đang chờ.
-    // Hết hạt hoặc chưa tới cấp: icon mờ; chạm vào hết hạt thì mở Cửa hàng.
+    // Thanh chọn hạt nhỏ bám ngay trên ô trống vừa chạm (thay bảng trượt): chỉ hiện cây đang có hạt trong kho,
+    // mỗi cây một icon + số hạt, cây gieo gần nhất đứng đầu. Chạm icon = xếp việc gieo ô đó;
+    // kéo icon = xếp việc gieo hàng loạt qua FarmGesture.
+    // Số hạt đã trừ hạt giữ chỗ cho việc gieo đang chờ; về 0 thì icon ẩn (đang kéo thì đợi thả tay mới ẩn).
+    // Không còn hạt nào: không mở thanh, báo và mở Cửa hàng. Có hạt nhưng chưa tới cấp: icon mờ.
     public sealed class SeedPicker : MonoBehaviour
     {
         private const float GapAbovePlot = 2f;
+        private const string NoSeedsMessage = "Hết hạt giống, mua ở Cửa hàng";
 
         [SerializeField] private GameBootstrap _game;
         [SerializeField] private FarmInteraction _interaction;
@@ -27,7 +29,13 @@ namespace VeQue.View.UI
         [SerializeField] private RectTransform _box;
         // Ẩn thanh khi kéo bằng alpha, không tắt GameObject: icon đang kéo là con của thanh, tắt thì hết nhận sự kiện kéo.
         [SerializeField] private CanvasGroup _boxGroup;
-        [SerializeField] private Transform _content;
+        [SerializeField] private RectTransform _content;
+        [Tooltip("Cuộn ngang khi nhiều cây hơn số icon hiện được.")]
+        [SerializeField] private ScrollRect _scroll;
+        [Tooltip("Số icon hiện tối đa; để lẻ .5 để thấy nửa icon cuối, biết còn cuộn được.")]
+        [SerializeField] private float _maxVisibleItems = 5.5f;
+        [Tooltip("Lề hai bên màn hình khi thanh rộng hơn màn hình.")]
+        [SerializeField] private float _screenMargin = 16f;
         [SerializeField] private SeedPickerItem _itemTemplate;
         [Tooltip("Icon hạt đi theo ngón tay khi kéo, nâng lên để ngón tay không che.")]
         [SerializeField] private Image _dragIcon;
@@ -41,12 +49,26 @@ namespace VeQue.View.UI
         public event Action<string> Message;
         public event Action ShopRequested;
 
+        // Icon chuyển lượt kéo ngang sang đây để cuộn thanh.
+        public ScrollRect Scroll => _scroll;
+
         public void Show(PlotId plot)
         {
+            if (_dragging)
+                EndDrag();
+            if (RefreshItems() == 0)
+            {
+                Hide();
+                Message?.Invoke(NoSeedsMessage);
+                ShopRequested?.Invoke();
+                return;
+            }
+
             _plot = plot;
             _isShowing = true;
             MoveLastUsedFirst();
-            RefreshItems();
+            ResizeBox();
+            ScrollToStart();
             _boxGroup.alpha = 1f;
             _boxGroup.blocksRaycasts = true;
             _box.gameObject.SetActive(true);
@@ -76,8 +98,8 @@ namespace VeQue.View.UI
             }
 
             _dragIcon.gameObject.SetActive(false);
-            _game.Farm.Changed += RefreshItems;
-            _game.Tasks.Changed += RefreshItems;
+            _game.Farm.Changed += HandleSeedsChanged;
+            _game.Tasks.Changed += HandleSeedsChanged;
             RefreshItems();
         }
 
@@ -85,9 +107,59 @@ namespace VeQue.View.UI
         {
             if (_game != null && _game.Farm != null)
             {
-                _game.Farm.Changed -= RefreshItems;
-                _game.Tasks.Changed -= RefreshItems;
+                _game.Farm.Changed -= HandleSeedsChanged;
+                _game.Tasks.Changed -= HandleSeedsChanged;
             }
+        }
+
+        // Số hạt đổi khi đang mở thanh: hết sạch thì đóng thanh.
+        private void HandleSeedsChanged()
+        {
+            int withSeeds = RefreshItems();
+            if (!_isShowing || _dragging)
+                return;
+            if (withSeeds == 0)
+                Hide();
+            else
+                ResizeBox();
+        }
+
+        // Bề ngang thanh = vừa số icon đang hiện, tối đa _maxVisibleItems icon và không quá bề ngang màn hình.
+        private void ResizeBox()
+        {
+            int visible = 0;
+            foreach (SeedPickerItem item in _items)
+            {
+                if (item.gameObject.activeSelf)
+                    visible++;
+            }
+
+            float itemWidth = ((RectTransform)_itemTemplate.transform).rect.width;
+            float spacing = _content.TryGetComponent(out HorizontalLayoutGroup layout) ? layout.spacing : 0f;
+            float padding = _box.rect.width - _scroll.viewport.rect.width;
+            float contentWidth = visible * itemWidth + Mathf.Max(0, visible - 1) * spacing;
+            float maxWidth = _maxVisibleItems * itemWidth + Mathf.Floor(_maxVisibleItems) * spacing;
+            float screenWidth = _area.rect.width - _screenMargin * 2f - padding;
+            float limit = Mathf.Min(maxWidth, screenWidth);
+            float width = contentWidth;
+            if (contentWidth > limit)
+            {
+                // Phải cuộn: cắt sao cho icon cuối lộ một nửa, để biết còn kéo sang được.
+                float step = itemWidth + spacing;
+                int whole = Mathf.Max(0, Mathf.FloorToInt((limit - itemWidth * 0.5f) / step));
+                width = whole * step + itemWidth * 0.5f;
+            }
+
+            _box.sizeDelta = new Vector2(width + padding, _box.sizeDelta.y);
+            // Đặt thẳng bề ngang Content (không dựa vào ContentSizeFitter): ScrollRect chỉ cuộn khi Content rộng hơn khung nhìn.
+            _content.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, contentWidth);
+        }
+
+        // Content neo mép trái (pivot trái) nên x = 0 là đầu danh sách; đặt thẳng vì thanh có thể đang tắt.
+        private void ScrollToStart()
+        {
+            _scroll.StopMovement();
+            _content.anchoredPosition = new Vector2(0f, _content.anchoredPosition.y);
         }
 
         // Số hạt còn dùng được: trừ hạt đã giữ chỗ cho việc gieo đang chờ.
@@ -106,11 +178,22 @@ namespace VeQue.View.UI
             }
         }
 
-        private void RefreshItems()
+        // Cập nhật số hạt, ẩn cây hết hạt; trả về số cây còn hạt.
+        // Đang kéo thì không bật / tắt icon: icon đang kéo là con của thanh, tắt đi thì mất sự kiện kéo.
+        private int RefreshItems()
         {
             Farm farm = _game.Farm;
+            int withSeeds = 0;
             foreach (SeedPickerItem item in _items)
-                item.Refresh(AvailableSeeds(item.Crop.Id), farm.IsCropUnlocked(item.Crop.Id));
+            {
+                int seeds = AvailableSeeds(item.Crop.Id);
+                if (seeds > 0)
+                    withSeeds++;
+                item.Refresh(seeds, farm.IsCropUnlocked(item.Crop.Id));
+                if (!_dragging)
+                    item.gameObject.SetActive(seeds > 0);
+            }
+            return withSeeds;
         }
 
         // Trả về false (kèm thông báo) nếu không gieo được bằng cây này.

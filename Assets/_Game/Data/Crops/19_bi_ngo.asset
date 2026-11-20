@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d79a68c2214c76c4cb9a6ea0e8fa6ff8, type: 3}
+  m_Name: 19_bi_ngo
+  m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.CropDefinition
+  _id: bi_ngo
+  _displayName: "B\xED ng\xF4"
+  _enabled: 1
+  _growMinutes: 360
+  _buyPrice: 121
+  _sellPrice: 440
+  _harvestYield: 1
+  _xp: 29
+  _unlockLevel: 7
+  _group: 2
+  _seedSprite: {fileID: 21300000, guid: 8909507438b94ebaa5a261008f33f65f, type: 3}
+  _stageSprites:
+  - {fileID: 21300000, guid: e6b028b56d0d4a68b5b622f66cae8c40, type: 3}
+  - {fileID: 21300000, guid: 6074d244517d42da860cf47186283f86, type: 3}
+  - {fileID: 21300000, guid: 850264325f3b4294b1fe61f147e72cb0, type: 3}
+  - {fileID: 21300000, guid: ed2f25987d22414a9ff7183b0f01aa8c, type: 3}
+  _produceIcon: {fileID: 21300000, guid: 7c451638ac4149a285e26d924e5bd47f, type: 3}

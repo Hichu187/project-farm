@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.BaitDefinition
   _id: giun
   _displayName: Giun
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 2f3d0b54d2d35854db4d40ddb7a11cf7, type: 3}
   _price: 2
   _buyable: 0
   _rareBonusPercent: 0
+  _unlockLevel: 1

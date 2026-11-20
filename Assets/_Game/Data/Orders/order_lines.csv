@@ -1,0 +1,66 @@
+npcId,kind,text,cropTag
+# Đơn hàng có thoại (Đợt 2 Phần 11) – BẢN NHÁP, sửa thoải mái.
+# kind: Request (đơn thường), Urgent (đơn khẩn), Fish (đơn cá), Thanks (cảm ơn khi giao). npcId trống = câu dùng chung.
+# Chỗ trống: {title} = cách người đó tự xưng (bà, chú, cô, em, bác), {qty} = số lượng, {crop} = tên cây / cá, {dish} = món.
+# Câu có {dish} chỉ dùng cho cây có món trong dishes.json. cropTag: câu chỉ dùng khi món đầu của đơn là cây / cá đó.
+# Giữ mỗi câu (sau khi điền) dưới khoảng 70 ký tự. Chữ đầu câu tự viết hoa.
+#
+# ---------- Bà Lụa: hàng xóm, hay kể chuyện ngày xưa ----------
+ba_lua,Request,"{title} định làm {dish}. Cháu mang sang giúp {title} nhé!",
+ba_lua,Request,"Ngày xưa ông nhà thích {dish} lắm. Cháu giúp {title} nhé!",
+ba_lua,Request,"{title} già rồi, chân chậm. Cháu mang hộ {qty} {crop} sang nhé!",
+ba_lua,Request,"Hồi con gái, {title} trồng {crop} khéo nhất làng. Cho {title} {qty} nhé!",
+ba_lua,Request,"Mồng tơi nhà cháu non thế! {title} lấy {qty} mớ nấu canh nhé.",mong_toi
+ba_lua,Urgent,"Nhà có khách đột xuất! Cháu mang gấp {qty} {crop} sang cho {title} nhé!",
+ba_lua,Fish,"Câu được {crop} thì để {title} {qty} con nấu cháo cho cháu nội nhé!",
+ba_lua,Thanks,"Cháu ngoan quá! Mai sang {title} cho ít bánh đa nhé.",
+#
+# ---------- Chú Thành: trưởng thôn, nói như loa xã ----------
+chu_thanh,Request,"A lô a lô! Thôn cần {qty} {crop}, đề nghị cháu mang lên nhà văn hóa!",
+chu_thanh,Request,"{title} đang họp thôn, cháu mang giúp {qty} {crop} lên nhé!",
+chu_thanh,Request,"Thôn làm {dish} đãi các cụ, cháu giúp {title} nhé!",
+chu_thanh,Request,"Thông báo: nhà {title} cần {qty} {crop}. Ai có thì mang sang ngay!",
+chu_thanh,Request,"Lúa nhà cháu vàng đẹp quá! {title} lấy {qty} bó về làm giống nhé.",lua
+chu_thanh,Urgent,"Khẩn! Mai có đoàn huyện về, {title} cần gấp {qty} {crop}!",
+chu_thanh,Thanks,"Thay mặt thôn, {title} cảm ơn cháu! Cuối năm thôn khen thưởng!",
+#
+# ---------- Cô Hạnh: bán bún đầu chợ ----------
+co_hanh,Request,"Sáng mai {title} bán bún, cần {qty} {crop} tươi. Cháu mang ra chợ nhé!",
+co_hanh,Request,"Khách gọi {dish} đông quá! Cháu giúp {title} nhé!",
+co_hanh,Request,"{title} lấy {qty} {crop}, tiền nong sòng phẳng, cháu yên tâm nhé!",
+co_hanh,Request,"Rau nhà cháu ngon, khách khen mãi. Cho {title} {qty} {crop} nhé!",
+co_hanh,Request,"Bát bún mà thiếu hành thì nhạt lắm. {title} lấy {qty} mớ hành nhé!",hanh_la
+co_hanh,Urgent,"Chợ phiên đông khách! {title} cần gấp {qty} {crop}, cháu nhanh lên nhé!",
+co_hanh,Fish,"Cháu có {crop} không? {title} cần {qty} con nấu bún cá.",
+co_hanh,Thanks,"Cảm ơn cháu! Hôm nào ra chợ {title} mời bát bún riêu nhé!",
+#
+# ---------- Cu Tí: trẻ chăn trâu, mê câu cá (gọi người chơi là anh chị) ----------
+cu_ti,Request,"Anh chị ơi, {title} thèm {crop} lắm! Cho {title} {qty} nhé!",
+cu_ti,Request,"Trâu nhà {title} hôm nay ngoan, cho {title} xin {qty} {crop} nhé!",
+cu_ti,Request,"Mẹ dặn {title} mua đồ về làm {dish}. Anh chị bán cho {title} nhé!",
+cu_ti,Request,"Chiều nay {title} ra đồng thả diều, cần {qty} {crop} ăn cho no!",
+cu_ti,Request,"Trưa nắng mà có miếng dưa hấu thì mát lắm! Cho {title} {qty} quả nhé!",dua_hau
+cu_ti,Urgent,"Mẹ {title} sắp về rồi! Anh chị cho {title} gấp {qty} {crop} nhé!",
+cu_ti,Fish,"Anh chị câu giỏi thế! Cho {title} {qty} con {crop} về thả chum nhé!",
+cu_ti,Fish,"Bố {title} thèm {crop} kho. Anh chị để cho {title} {qty} con nhé!",
+cu_ti,Fish,"{title} câu cả buổi chẳng được con nào. Cho {title} {qty} con {crop} nhé!",
+cu_ti,Fish,"Lũ bạn không tin {title} có {crop}. Cho {title} {qty} con để khoe nhé!",
+cu_ti,Thanks,"Hay quá! Mai {title} dắt trâu qua cho anh chị cưỡi nhé!",
+#
+# ---------- Bác Cả: trưởng họ, nhà hay có giỗ chạp (hay đặt đơn khẩn) ----------
+bac_ca,Request,"{title} làm {dish} cúng các cụ. Cháu giúp {title} nhé.",
+bac_ca,Request,"Họ nhà mình sắp họp, {title} cần {qty} {crop}. Cháu mang sang sớm nhé.",
+bac_ca,Request,"Mâm cỗ nhà {title} không thể thiếu {dish}. Nhờ cháu nhé!",
+bac_ca,Request,"Con cháu về đông, {title} cần thêm {qty} {crop}. Cháu chịu khó nhé!",
+bac_ca,Request,"Mai giỗ cụ, {title} cần {qty} đậu xanh đồ xôi. Nhờ cháu nhé!",dau_xanh
+bac_ca,Urgent,"Nhà có giỗ! Cháu mang gấp {qty} {crop} sang cho {title} nhé!",
+bac_ca,Urgent,"Cỗ sắp dọn rồi mà còn thiếu {crop}! Cháu mang gấp {qty} sang!",
+bac_ca,Urgent,"Khách đến đầy nhà! {title} cần gấp đồ làm {dish}!",
+bac_ca,Thanks,"Cháu chu đáo lắm! Hôm nào sang ăn cỗ với {title} nhé.",
+#
+# ---------- Câu dùng chung ----------
+,Request,"Cho {title} {qty} {crop} nhé, cảm ơn trước!",
+,Thanks,"Cảm ơn nhiều nhé!",
+,Thanks,"Đúng thứ đang cần, hay quá!",
+,Thanks,"Tươi ngon thật đấy!",
+,Thanks,"Nhanh thế! Cảm ơn nhé!",

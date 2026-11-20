@@ -39,7 +39,7 @@ namespace VeQue.EditorTools
         // Cổng trái Map D: ô (0, 8) cao 2 ô (MVP-Plan Phần 3: [0, 16, 1, 2] → originY = 26 − 16 − 2).
         private static readonly Vector2Int FarmGate = new Vector2Int(0, 8);
 
-        [MenuItem("Về Quê/Vùng câu: tạo tạm")]
+        [MenuItem("Về Quê/Dựng scene/Vùng câu (tạm)", priority = 104)]
         private static void Build()
         {
             var walk = Object.FindFirstObjectByType<WalkGridSource>();
@@ -78,6 +78,7 @@ namespace VeQue.EditorTools
             DestroyChild(gridTransform, WaterName);
             Tilemap fishingGround = CreateTilemap(gridTransform, GroundName, ground, 0);
             Tilemap fishingWater = CreateTilemap(gridTransform, WaterName, ground, 1);
+            PixelWaterSetup.ApplyTo(fishingWater); // shader nước pixel (thiếu shader/noise thì báo, vẫn dựng tiếp)
 
             PaintRegion(fishingGround, fishingWater, grass, dirt, water);
 
@@ -125,7 +126,7 @@ namespace VeQue.EditorTools
             characterSo.ApplyModifiedProperties();
 
             EditorSceneManager.MarkSceneDirty(regionsGo.scene);
-            string note = rod == null ? "\nChưa có icon cần câu: chạy Về Quê → UI Sunnyside: ghép 9-slice rồi chạy lại menu này." : "";
+            string note = rod == null ? "\nChưa có icon cần câu: chạy Về Quê → Import art → UI Sunnyside (ghép 9-slice) rồi chạy lại menu này." : "";
             EditorUtility.DisplayDialog(Title,
                 $"Đã dựng vùng câu tạm tại x = {Origin.x} ({Size.x}×{Size.y} ô), 3 chỗ câu.{note}\n"
                 + "Tiếp theo: Về Quê → Tạo UI (nút Đi câu / Về nhà, màn tối), rồi Ctrl+S.\n"

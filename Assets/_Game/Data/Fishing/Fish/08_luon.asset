@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.FishDefinition
   _id: luon
   _displayName: "L\u01B0\u01A1n"
-  _icon: {fileID: 21300000, guid: c5273c9ee7c5e00429cbc408f75db6ef, type: 3}
+  _icon: {fileID: 21300000, guid: 9e5a5e9e95692724bbf5b8c800430875, type: 3}
   _rarity: 2
   _minGrams: 200
   _maxGrams: 1200
@@ -31,9 +31,9 @@ MonoBehaviour:
   _depths: 1
   _preferredBaits:
   - {fileID: 11400000, guid: ae5b8469ca5dc774cac64a70424f31aa, type: 2}
-  _minArrows: 5
-  _maxArrows: 7
+  _minArrows: 6
+  _maxArrows: 8
   _pullSeconds: 3.5
-  _hookWindowSeconds: 0.6
+  _hookWindowSeconds: 1.2
   _slipPercent: 12
   _redArrows: 0

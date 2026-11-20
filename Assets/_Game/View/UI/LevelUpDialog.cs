@@ -68,6 +68,18 @@ namespace VeQue.View.UI
                 _text.Append("Mở Đơn hàng\n");
             foreach (int zone in unlocks.ZoneIndices)
                 _text.Append("Đủ cấp mở ").Append(UiFormat.ZoneName(zone)).Append('\n');
+            // Cần / mồi mua được từ cấp này (Cửa hàng → Đồ câu).
+            FishingDefinition fishing = _game.Definition.Fishing;
+            foreach (string rodId in unlocks.RodIds)
+            {
+                string name = fishing != null && fishing.TryGetRod(rodId, out RodDefinition rod) ? rod.DisplayName : rodId;
+                _text.Append("Mở ").Append(name).Append('\n');
+            }
+            foreach (string baitId in unlocks.BaitIds)
+            {
+                string name = fishing != null && fishing.TryGetBait(baitId, out BaitDefinition bait) ? bait.DisplayName : baitId;
+                _text.Append("Mở ").Append(name).Append('\n');
+            }
 
             _body.text = _text.ToString().TrimEnd('\n');
             _root.SetActive(true);

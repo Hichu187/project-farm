@@ -1,0 +1,107 @@
+{
+  "cell": 16,
+  "columns": 5,
+  "rows": 2,
+  "bait": [
+    {
+      "index": 0,
+      "no": 1,
+      "id": "bait_01_giun_dat",
+      "name_vi": "Giun đất",
+      "name_en": "earthworm",
+      "rarity": "common",
+      "col": 0,
+      "row": 0
+    },
+    {
+      "index": 1,
+      "no": 2,
+      "id": "bait_02_cam",
+      "name_vi": "Cám",
+      "name_en": "rice bran",
+      "rarity": "common",
+      "col": 1,
+      "row": 0
+    },
+    {
+      "index": 2,
+      "no": 3,
+      "id": "bait_03_bot",
+      "name_vi": "Bột",
+      "name_en": "dough ball",
+      "rarity": "common",
+      "col": 2,
+      "row": 0
+    },
+    {
+      "index": 3,
+      "no": 4,
+      "id": "bait_04_ruoi",
+      "name_vi": "Ruồi",
+      "name_en": "fly",
+      "rarity": "uncommon",
+      "col": 3,
+      "row": 0
+    },
+    {
+      "index": 4,
+      "no": 5,
+      "id": "bait_05_de",
+      "name_vi": "Dế",
+      "name_en": "cricket",
+      "rarity": "uncommon",
+      "col": 4,
+      "row": 0
+    },
+    {
+      "index": 5,
+      "no": 6,
+      "id": "bait_06_tep",
+      "name_vi": "Tép",
+      "name_en": "freshwater shrimp",
+      "rarity": "uncommon",
+      "col": 0,
+      "row": 1
+    },
+    {
+      "index": 6,
+      "no": 7,
+      "id": "bait_07_nhai",
+      "name_vi": "Nhái",
+      "name_en": "frog",
+      "rarity": "rare",
+      "col": 1,
+      "row": 1
+    },
+    {
+      "index": 7,
+      "no": 8,
+      "id": "bait_08_moi_gia_ca",
+      "name_vi": "Mồi giả cá nhỏ",
+      "name_en": "minnow lure",
+      "rarity": "rare",
+      "col": 2,
+      "row": 1
+    },
+    {
+      "index": 8,
+      "no": 9,
+      "id": "bait_09_nhai_hoi",
+      "name_vi": "Mồi giả nhái hơi",
+      "name_en": "frog lure",
+      "rarity": "precious",
+      "col": 3,
+      "row": 1
+    },
+    {
+      "index": 9,
+      "no": 10,
+      "id": "bait_10_thia_vang",
+      "name_vi": "Mồi thìa vàng",
+      "name_en": "golden spoon lure",
+      "rarity": "legendary",
+      "col": 4,
+      "row": 1
+    }
+  ]
+}

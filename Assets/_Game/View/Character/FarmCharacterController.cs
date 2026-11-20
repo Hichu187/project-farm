@@ -48,7 +48,7 @@ namespace VeQue.View.Character
 
         [Header("Dấu điểm đến: khung 4 góc thở quanh ô đích")]
         [SerializeField] private bool _showTargetMarker = true;
-        [Tooltip("Sunnyside UI/selectbox_*. Gán bằng menu Về Quê → Khung chọn: tạo asset + gán vào scene.")]
+        [Tooltip("Sunnyside UI/selectbox_*. Gán bằng menu Về Quê → Dựng scene → Khung chọn.")]
         [SerializeField] private SelectBoxSkin _selectBoxSkin;
         [SerializeField] private Color _targetBoxColor = new Color(1f, 1f, 1f, 0.8f);
         // Trên cây và nhân vật, dưới icon gợi ý tưới (cùng mức khung chọn ô).

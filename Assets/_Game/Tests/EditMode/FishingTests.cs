@@ -22,11 +22,14 @@ namespace VeQue.Tests
         private const string MoiThom = "moi_thom";
 
         private const int UnlockLevel = 1;
-        private static readonly int[] Capacities = { 8, 10, 12 };
-        private static readonly long[] UpgradePrices = { 0, 300, 1000 };
+        private const int MoiThomLevel = 5;
+        private const int StartSlots = 8;
+        private static readonly long[] SlotPrices = { 300, 1000 };
 
         // 1/1/2027 00:00 UTC là thứ Sáu; dùng mốc ngày tròn để đặt giờ địa phương dễ đọc.
         private const long Midnight = 1798761600;
+        // Khung giờ câu cá tính theo giờ VN cố định (Đợt 2 Phần 2).
+        private const long VietnamOffset = GameCalendar.OffsetSeconds;
         private static readonly PlotId Plot0 = new PlotId(Zone1, 0, 0, 0);
 
         private FakeClock _clock;
@@ -34,7 +37,8 @@ namespace VeQue.Tests
         [SetUp]
         public void SetUp()
         {
-            _clock = new FakeClock { UtcNowSeconds = Midnight + 8 * 3600 };
+            // Giờ game là giờ VN (UTC+7, GameCalendar): 8 giờ sáng VN.
+            _clock = new FakeClock { UtcNowSeconds = Midnight + 8 * 3600 - VietnamOffset };
         }
 
         // ---------- Khung giờ ----------
@@ -136,11 +140,12 @@ namespace VeQue.Tests
             Assert.AreEqual(FarmResult.NotEnoughBait, farm.Cast(Tep, 0.6f, out _));
 
             farm.TryGetEquippedRod(out _, out RodState rod);
-            rod.Snapped = true;
+            int durability = rod.Durability;
+            rod.Durability = 0;
             Assert.AreEqual(FarmResult.RodBroken, farm.Cast(Giun, 0.6f, out _));
-            rod.Snapped = false;
+            rod.Durability = durability;
 
-            for (int i = 0; i < Capacities[0]; i++)
+            for (int i = 0; i < StartSlots; i++)
                 farm.State.Fishing.Basket.Add(new CaughtFish { FishId = Ro, Grams = 100 });
             Assert.AreEqual(FarmResult.BasketFull, farm.Cast(Giun, 0.6f, out _));
             Assert.AreEqual(10, farm.State.Fishing.GetBaits(Giun));
@@ -152,7 +157,7 @@ namespace VeQue.Tests
         [TestCase(0.1f, CastQuality.Weak)]
         public void Classify_ByPower(float power, CastQuality expected)
         {
-            var rod = new RodDef(Tre, 1, 0.03f, 1.2f, 100, 0, 0, 30, 0, 1, 50);
+            var rod = new RodDef(Tre, 1, 0.03f, 1.2f, 100, 0, 0, 30, 0, 1);
 
             Assert.AreEqual(expected, FishingSession.Classify(power, rod, new FishingTuning()));
         }
@@ -259,9 +264,30 @@ namespace VeQue.Tests
             Assert.AreEqual(FishingOutcome.None, session.Strike(session.BiteTime + 0.1f));
             Assert.AreEqual(FishingPhase.Pulling, session.Phase);
             Assert.IsNotNull(session.Pull);
-            Assert.That(session.Pull.Count, Is.InRange(1, session.Fish.MaxArrows));
-            // Cần tre không thêm thời gian.
-            Assert.AreEqual(session.Fish.PullSeconds, session.Pull.TimeLimitSeconds, 0.0001f);
+            Assert.That(session.Pull.Count, Is.InRange(4, session.Fish.MaxArrows));
+            // Cần tre không thêm thời gian: giây kéo của cá + 0,45 giây mỗi mũi tên.
+            Assert.AreEqual(session.Fish.PullSeconds + session.Pull.Count * 0.45f, session.Pull.TimeLimitSeconds, 0.0001f);
+        }
+
+        // 14/11/2026: ném Perfect bớt 1 mũi tên nhưng không dưới MinPullArrows (cá rô test có 3–4 mũi tên).
+        [Test]
+        public void Pull_PerfectCast_NeverBelowMinPullArrows()
+        {
+            int minArrows = new FishingTuning().MinPullArrows;
+            float perfectPower = new FishingTuning().PerfectCenter;
+            int roHooked = 0;
+            for (uint seed = 1; seed <= 40; seed++)
+            {
+                Farm farm = CreateFarm(randomState: seed);
+                Assert.AreEqual(FarmResult.Ok, farm.Cast(Giun, perfectPower, out FishingSession session));
+                Assert.AreEqual(CastQuality.Perfect, session.Quality);
+                if (session.Strike(session.BiteTime) != FishingOutcome.None)
+                    continue;
+                Assert.That(session.Pull.Count, Is.GreaterThanOrEqualTo(minArrows), session.Fish.Id);
+                if (session.Fish.Id == Ro)
+                    roHooked++;
+            }
+            Assert.Greater(roHooked, 0, "Cần ít nhất 1 lần móc cá rô (3–4 mũi tên) để kiểm tra chặn dưới.");
         }
 
         [Test]
@@ -309,11 +335,22 @@ namespace VeQue.Tests
         }
 
         [Test]
-        public void Pull_WrongArrow_SnapsLine()
+        public void Pull_WrongArrow_KeepsPullingAndCanStillCatch()
         {
-            FishingSession session = HookOne(CreateFarm(roSlip: 0));
+            Farm farm = CreateFarm(roSlip: 0);
+            farm.TryGetEquippedRod(out RodDef def, out RodState rod);
+            FishingSession session = HookOne(farm);
 
-            Assert.AreEqual(FishingOutcome.LineSnapped, session.WrongArrow());
+            Assert.AreEqual(FishingOutcome.None, session.WrongArrow());
+            Assert.AreEqual(FishingOutcome.None, session.WrongArrow());
+            Assert.AreEqual(FishingPhase.Pulling, session.Phase);
+            Assert.AreEqual(2, session.Mistakes);
+
+            // Nhập lại đúng cả chuỗi vẫn câu được; cần không gãy, chỉ trừ 1 độ bền lúc ném.
+            Assert.AreEqual(FishingOutcome.Caught, session.CompletePull(0.5f));
+            farm.CompleteFishing(session);
+            Assert.AreEqual(def.MaxDurability - 1, rod.Durability);
+            Assert.IsFalse(rod.IsBroken);
         }
 
         [Test]
@@ -357,8 +394,23 @@ namespace VeQue.Tests
 
             FishingSession session = HookOne(farm);
 
-            // Cần carbon +30% thời gian.
-            Assert.AreEqual(session.Fish.PullSeconds * 1.3f, session.Pull.TimeLimitSeconds, 0.0001f);
+            // Cần carbon +30% thời gian (tính cả phần theo số mũi tên).
+            Assert.AreEqual((session.Fish.PullSeconds + session.Pull.Count * 0.45f) * 1.3f, session.Pull.TimeLimitSeconds, 0.0001f);
+        }
+
+        // Đợt 2 Phần 6: chuỗi dài hơn thì thêm thời gian; 0 giây mỗi mũi tên thì về như cũ.
+        [Test]
+        public void Pull_TimeGrowsWithArrowCount()
+        {
+            var tuning = new FishingTuning();
+            Assert.AreEqual(0.45f, tuning.PullSecondsPerArrow, 0.0001f);
+
+            Farm farm = CreateFarm(roSlip: 0);
+            FishingSession session = HookOne(farm);
+            float perArrow = (session.Pull.TimeLimitSeconds - session.Fish.PullSeconds) / session.Pull.Count;
+            Assert.AreEqual(0.45f, perArrow, 0.0001f);
+            // Ví dụ thiết kế: cá 3 giây, 10 mũi tên → 7,5 giây; reset ở mũi 9 còn 19 lần bấm ≈ 0,39 giây mỗi lần.
+            Assert.AreEqual(7.5f, 3f + 10 * tuning.PullSecondsPerArrow, 0.0001f);
         }
 
         [Test]
@@ -432,20 +484,45 @@ namespace VeQue.Tests
             Assert.AreEqual(best, farm.State.Fishing.GetRecord(Ro));
         }
 
+        // Đợt E: cờ kỷ lục trên phiên (bảng cá vừa câu đọc để hiện "Loài mới!" / "Kỷ lục mới!").
         [Test]
-        public void Complete_Snap_OnlyCastCostAndCanBreak()
+        public void Record_FirstCatch_IsNewSpecies()
         {
-            Farm farm = CreateFarm(roSlip: 0, snapBreakPercent: 100);
-            farm.TryGetEquippedRod(out RodDef def, out RodState rod);
-            FishingSession session = HookOne(farm);
-            session.WrongArrow();
+            Farm farm = CreateFarm(roSlip: 0);
+            FishingSession session = CatchOne(farm);
+            Assert.AreEqual(FarmResult.Ok, farm.CompleteFishing(session));
 
+            Assert.IsTrue(session.IsNewRecord);
+            Assert.IsTrue(session.IsNewSpecies);
+            Assert.AreEqual(0, session.PreviousRecordGrams);
+        }
+
+        [Test]
+        public void Record_Heavier_IsNewRecordWithPrevious()
+        {
+            Farm farm = CreateFarm(roSlip: 0);
+            farm.State.Fishing.RecordGrams[Ro] = 1;
+            FishingSession session = CatchOne(farm);
             farm.CompleteFishing(session);
 
-            // Chốt 13/11/2026: mọi mức trừ là 1 (lúc ném); đứt dây không trừ thêm, chỉ có thể gãy.
-            Assert.AreEqual(def.MaxDurability - 1, rod.Durability);
-            Assert.IsTrue(rod.IsBroken);
-            Assert.AreEqual(FarmResult.RodBroken, farm.CanCast(Giun));
+            Assert.IsTrue(session.IsNewRecord);
+            Assert.IsFalse(session.IsNewSpecies);
+            Assert.AreEqual(1, session.PreviousRecordGrams);
+            Assert.AreEqual(session.Grams, farm.State.Fishing.GetRecord(Ro));
+        }
+
+        [Test]
+        public void Record_Lighter_NotNewRecord()
+        {
+            Farm farm = CreateFarm(roSlip: 0);
+            farm.State.Fishing.RecordGrams[Ro] = 100000;
+            FishingSession session = CatchOne(farm);
+            farm.CompleteFishing(session);
+
+            Assert.IsFalse(session.IsNewRecord);
+            Assert.IsFalse(session.IsNewSpecies);
+            Assert.AreEqual(100000, session.PreviousRecordGrams);
+            Assert.AreEqual(100000, farm.State.Fishing.GetRecord(Ro));
         }
 
         [Test]
@@ -463,116 +540,194 @@ namespace VeQue.Tests
             Assert.AreEqual(FarmResult.RodBroken, farm.CanCast(Giun));
         }
 
+        // ---------- Giỏ cá ----------
+
+        [Test]
+        public void ReleaseFish_RemovesOneKeepsRecord()
+        {
+            Farm farm = CreateFarm(roSlip: 0, baits: 10);
+            for (int i = 0; i < 2; i++)
+            {
+                farm.CompleteFishing(CatchOne(farm));
+            }
+            List<CaughtFish> basket = farm.State.Fishing.Basket;
+            Assert.AreEqual(2, basket.Count);
+            CaughtFish second = basket[1];
+            int record = farm.State.Fishing.GetRecord(basket[0].FishId);
+
+            Assert.AreEqual(FarmResult.Ok, farm.ReleaseFish(0));
+
+            Assert.AreEqual(1, basket.Count);
+            Assert.AreSame(second, basket[0]);
+            Assert.AreEqual(record, farm.State.Fishing.GetRecord(second.FishId));
+        }
+
+        [Test]
+        public void SellFish_AddsPriceRemovesOne()
+        {
+            Farm farm = CreateFarm(roSlip: 0);
+            farm.CompleteFishing(CatchOne(farm));
+            farm.CompleteFishing(CatchOne(farm));
+            long coins = farm.State.Coins;
+            long price = farm.GetFishPrice(farm.State.Fishing.Basket[0]);
+
+            Assert.AreEqual(FarmResult.Ok, farm.SellFish(0, out long earned));
+
+            Assert.AreEqual(price, earned);
+            Assert.AreEqual(coins + price, farm.State.Coins);
+            Assert.AreEqual(1, farm.State.Fishing.Basket.Count);
+            Assert.AreEqual(FarmResult.UnknownFish, farm.SellFish(5, out _));
+        }
+
+        [Test]
+        public void SellAllFish_SumsAndEmpties()
+        {
+            Farm farm = CreateFarm(roSlip: 0);
+            farm.CompleteFishing(CatchOne(farm));
+            farm.CompleteFishing(CatchOne(farm));
+            long value = farm.GetBasketValue();
+            long coins = farm.State.Coins;
+
+            Assert.AreEqual(FarmResult.Ok, farm.SellAllFish(out long earned));
+
+            Assert.AreEqual(value, earned);
+            Assert.AreEqual(coins + value, farm.State.Coins);
+            CollectionAssert.IsEmpty(farm.State.Fishing.Basket);
+            Assert.AreEqual(FarmResult.UnknownFish, farm.SellAllFish(out _));
+        }
+
+        [TestCase(-1)]
+        [TestCase(0)]
+        public void ReleaseFish_BadIndex_Unknown(int index)
+        {
+            Farm farm = CreateFarm();
+            Assert.AreEqual(FarmResult.UnknownFish, farm.ReleaseFish(index));
+        }
+
+        [Test]
+        public void GetFishPrice_MatchesPriceWhenCaught()
+        {
+            Farm farm = CreateFarm(roSlip: 0);
+            FishingSession session = CatchOne(farm);
+            farm.CompleteFishing(session);
+
+            Assert.AreEqual(session.Price, farm.GetFishPrice(farm.State.Fishing.Basket[0]));
+        }
+
         // ---------- Cửa hàng ----------
 
+        // Đợt 2 Phần 1: sửa về đầy, độ bền tối đa giữ nguyên, giá = giá cần × 30% × phần thiếu (tròn lên, tối thiểu 1).
         [Test]
-        public void Repair_RestoresAndCosts()
-        {
-            Farm farm = CreateFarm(coins: 1000);
-            farm.TryGetEquippedRod(out RodDef def, out RodState rod);
-            Assert.AreEqual(FarmResult.RodNotDamaged, farm.RepairRod(Tre));
-
-            rod.Durability = 0;
-            rod.Snapped = true;
-            Assert.AreEqual(FarmResult.Ok, farm.RepairRod(Tre));
-
-            // Cần tre gốc 30: sửa lần 1 còn 90% = 27.
-            Assert.AreEqual(27, rod.Durability);
-            Assert.AreEqual(1, rod.RepairCount);
-            Assert.AreEqual(27, farm.GetRodMaxDurability(Tre));
-            Assert.IsFalse(rod.IsBroken);
-            Assert.AreEqual(1000 - def.RepairPrice, farm.State.Coins);
-            Assert.AreEqual(FarmResult.RodNotDamaged, farm.RepairRod(Tre));
-        }
-
-        [Test]
-        public void Repair_EachTimeLowersMax_UntilBelow15Percent()
-        {
-            Farm farm = CreateFarm(coins: 100000);
-            farm.TryGetEquippedRod(out _, out RodState rod);
-            var expected = new[] { 27, 24, 21, 18, 15, 12, 9, 6, 3 };
-
-            for (int i = 0; i < expected.Length; i++)
-            {
-                rod.Durability = 0;
-                Assert.AreEqual(FarmResult.Ok, farm.RepairRod(Tre), $"Lần sửa {i + 1}");
-                Assert.AreEqual(expected[i], rod.Durability, $"Lần sửa {i + 1}");
-            }
-
-            // Còn 10% < 15%: hết sửa, không mất xu.
-            rod.Durability = 0;
-            long coins = farm.State.Coins;
-            Assert.IsFalse(farm.CanRepairAgain(Tre));
-            Assert.AreEqual(FarmResult.RodWornOut, farm.RepairRod(Tre));
-            Assert.AreEqual(coins, farm.State.Coins);
-            Assert.AreEqual(9, rod.RepairCount);
-        }
-
-        [Test]
-        public void BuyRod_AgainWhenBrokenOrRepaired_LikeNew()
+        public void Repair_RestoresFull_PriceByMissingDurability()
         {
             Farm farm = CreateFarm(coins: 100000);
             farm.State.Level = 9;
             Assert.AreEqual(FarmResult.Ok, farm.BuyRod(Carbon));
             Assert.IsTrue(farm.State.Fishing.TryGetRod(Carbon, out RodState rod));
 
-            // Còn dùng được (dù đã mòn chút) và chưa sửa: không mua lại.
-            rod.Durability -= 3;
-            Assert.AreEqual(FarmResult.AlreadyOwned, farm.BuyRod(Carbon));
+            Assert.AreEqual(0, farm.GetRodRepairPrice(Carbon));
+            Assert.AreEqual(FarmResult.RodNotDamaged, farm.RepairRod(Carbon));
 
-            // Gãy: mua lại được, vẫn chỉ 1 cần.
-            rod.Snapped = true;
-            long coins = farm.State.Coins;
-            Assert.AreEqual(FarmResult.Ok, farm.BuyRod(Carbon));
-            Assert.AreEqual(coins - 6000, farm.State.Coins);
-            Assert.IsFalse(rod.IsBroken);
-            Assert.AreEqual(120, rod.Durability);
-            Assert.AreEqual(1, CountRods(farm, Carbon));
-
-            // Đã sửa: mua lại được, số lần sửa về 0, độ bền tối đa về gốc.
+            // Carbon: giá 6000, bền 120.
+            rod.Durability = 119;
+            Assert.AreEqual(15, farm.GetRodRepairPrice(Carbon));
+            rod.Durability = 60;
+            Assert.AreEqual(900, farm.GetRodRepairPrice(Carbon));
             rod.Durability = 0;
+            Assert.AreEqual(1800, farm.GetRodRepairPrice(Carbon));
+
+            long coins = farm.State.Coins;
             Assert.AreEqual(FarmResult.Ok, farm.RepairRod(Carbon));
-            Assert.AreEqual(108, farm.GetRodMaxDurability(Carbon));
-            Assert.AreEqual(FarmResult.Ok, farm.BuyRod(Carbon));
-            Assert.AreEqual(0, rod.RepairCount);
+            Assert.AreEqual(coins - 1800, farm.State.Coins);
             Assert.AreEqual(120, rod.Durability);
             Assert.AreEqual(120, farm.GetRodMaxDurability(Carbon));
+            Assert.IsFalse(rod.IsBroken);
+            Assert.AreEqual(FarmResult.RodNotDamaged, farm.RepairRod(Carbon));
         }
 
         [Test]
-        public void BuyRod_WornOut_CanBuyAgain()
+        public void Repair_FreeRod_CostsAtLeastOneCoin()
+        {
+            Farm farm = CreateFarm(coins: 5);
+            farm.TryGetEquippedRod(out _, out RodState rod);
+            rod.Durability = 0;
+
+            Assert.AreEqual(1, farm.GetRodRepairPrice(Tre));
+            Assert.AreEqual(FarmResult.Ok, farm.RepairRod(Tre));
+            Assert.AreEqual(4, farm.State.Coins);
+            Assert.AreEqual(30, rod.Durability);
+        }
+
+        [TestCase(11L, 2, 3, 2L)]
+        [TestCase(10L, 2, 3, 1L)]
+        [TestCase(100L, 0, 7, 30L)]
+        [TestCase(100L, 7, 7, 0L)]
+        [TestCase(0L, 0, 30, 1L)]
+        public void RepairPrice_RoundsUp_MinOne(long rodPrice, int durability, int max, long expected)
+        {
+            Assert.AreEqual(expected, new FishingTuning().RepairPrice(rodPrice, durability, max));
+        }
+
+        [Test]
+        public void Repair_ManyTimes_MaxDurabilityNeverDrops()
         {
             Farm farm = CreateFarm(coins: 100000);
             farm.TryGetEquippedRod(out _, out RodState rod);
-            rod.RepairCount = 9;
-            rod.Durability = 0;
-            Assert.AreEqual(FarmResult.RodWornOut, farm.RepairRod(Tre));
 
-            Assert.AreEqual(FarmResult.Ok, farm.BuyRod(Tre));
-            Assert.AreEqual(30, rod.Durability);
-            Assert.AreEqual(FarmResult.Ok, farm.CanCast(Giun));
-        }
-
-        [TestCase(30, 30, 20)]
-        [TestCase(15, 30, 40)]
-        [TestCase(0, 30, 60)]
-        [TestCase(-5, 30, 60)]
-        [TestCase(40, 30, 20)]
-        public void SnapBreakPercent_RisesAsDurabilityDrops(int durability, int max, int expected)
-        {
-            Assert.AreEqual(expected, new FishingTuning().SnapBreakPercentAt(durability, max));
+            for (int i = 0; i < 20; i++)
+            {
+                rod.Durability = 0;
+                Assert.AreEqual(FarmResult.Ok, farm.RepairRod(Tre), $"Lần sửa {i + 1}");
+                Assert.AreEqual(30, rod.Durability, $"Lần sửa {i + 1}");
+                Assert.AreEqual(30, farm.GetRodMaxDurability(Tre), $"Lần sửa {i + 1}");
+            }
         }
 
         [Test]
-        public void Snap_LowDurability_BreaksMoreOften()
+        public void Repair_NotEnoughCoins_NoChange()
         {
-            // Tỉ lệ 0% (đầy) → 100% (về 0) để thấy rõ chênh lệch.
-            int full = CountSnapBreaks(30);
-            int low = CountSnapBreaks(2);
+            Farm farm = CreateFarm(coins: 100000);
+            farm.State.Level = 9;
+            farm.BuyRod(Carbon);
+            farm.State.Fishing.TryGetRod(Carbon, out RodState rod);
+            rod.Durability = 0;
+            farm.State.Coins = 1799;
 
-            // Đầy: 30 → còn 29 sau ném ≈ 3%; thấp: 2 → còn 1 ≈ 97% (đứt dây không trừ thêm độ bền).
-            Assert.Less(full, 80);
-            Assert.Greater(low, 170);
+            Assert.AreEqual(FarmResult.NotEnoughCoins, farm.RepairRod(Carbon));
+            Assert.AreEqual(1799, farm.State.Coins);
+            Assert.AreEqual(0, rod.Durability);
+        }
+
+        [Test]
+        public void IsRodLow_AtOrBelowTenPercent()
+        {
+            Farm farm = CreateFarm(coins: 100000);
+            farm.State.Level = 9;
+            farm.BuyRod(Carbon);
+            farm.State.Fishing.TryGetRod(Carbon, out RodState rod);
+
+            rod.Durability = 13;
+            Assert.IsFalse(farm.IsRodLow(Carbon));
+            rod.Durability = 12;
+            Assert.IsTrue(farm.IsRodLow(Carbon));
+            rod.Durability = 0;
+            Assert.IsTrue(farm.IsRodLow(Carbon));
+            Assert.IsFalse(farm.IsRodLow("khong_co"));
+        }
+
+        [Test]
+        public void BuyRod_OwnedEvenBroken_AlreadyOwned()
+        {
+            Farm farm = CreateFarm(coins: 100000);
+            farm.State.Level = 9;
+            Assert.AreEqual(FarmResult.Ok, farm.BuyRod(Carbon));
+            farm.State.Fishing.TryGetRod(Carbon, out RodState rod);
+            rod.Durability = 0;
+
+            long coins = farm.State.Coins;
+            Assert.AreEqual(FarmResult.AlreadyOwned, farm.BuyRod(Carbon));
+            Assert.AreEqual(coins, farm.State.Coins);
+            Assert.AreEqual(1, CountRods(farm, Carbon));
         }
 
         [Test]
@@ -605,18 +760,57 @@ namespace VeQue.Tests
         }
 
         [Test]
-        public void UpgradeBasket_UntilMax()
+        public void BuyBait_NeedsLevel()
+        {
+            Farm farm = CreateFarm(coins: 1000);
+
+            Assert.AreEqual(FarmResult.LevelTooLow, farm.BuyBait(MoiThom, 1));
+            Assert.AreEqual(1000, farm.State.Coins);
+
+            farm.State.Level = MoiThomLevel;
+            Assert.AreEqual(FarmResult.Ok, farm.BuyBait(MoiThom, 2));
+            Assert.AreEqual(950, farm.State.Coins);
+        }
+
+        [Test]
+        public void GetUnlocksAtLevel_ListsRodsAndBaits()
+        {
+            Farm farm = CreateFarm();
+
+            CollectionAssert.AreEqual(new[] { Carbon }, farm.GetUnlocksAtLevel(9).RodIds);
+            CollectionAssert.AreEqual(new[] { MoiThom }, farm.GetUnlocksAtLevel(MoiThomLevel).BaitIds);
+            CollectionAssert.IsEmpty(farm.GetUnlocksAtLevel(MoiThomLevel).RodIds);
+            // Cấp 1 không báo (cần tre / mồi cấp 1 có sẵn từ đầu).
+            CollectionAssert.IsEmpty(farm.GetUnlocksAtLevel(1).RodIds);
+            CollectionAssert.IsEmpty(farm.GetUnlocksAtLevel(1).BaitIds);
+        }
+
+        [Test]
+        public void UnlockBasketSlot_OneByOneUntilMax()
         {
             Farm farm = CreateFarm(coins: 2000);
             Assert.AreEqual(8, farm.BasketCapacity);
-            Assert.AreEqual(300, farm.NextBasketPrice);
+            Assert.AreEqual(300, farm.NextBasketSlotPrice);
 
-            Assert.AreEqual(FarmResult.Ok, farm.UpgradeBasket());
+            Assert.AreEqual(FarmResult.Ok, farm.UnlockBasketSlot());
+            Assert.AreEqual(9, farm.BasketCapacity);
+            Assert.AreEqual(1000, farm.NextBasketSlotPrice);
+            Assert.AreEqual(FarmResult.Ok, farm.UnlockBasketSlot());
             Assert.AreEqual(10, farm.BasketCapacity);
-            Assert.AreEqual(FarmResult.Ok, farm.UpgradeBasket());
-            Assert.AreEqual(12, farm.BasketCapacity);
-            Assert.AreEqual(FarmResult.BasketMaxed, farm.UpgradeBasket());
+            Assert.IsFalse(farm.CanUnlockBasketSlot);
+            Assert.AreEqual(-1, farm.NextBasketSlotPrice);
+            Assert.AreEqual(FarmResult.BasketMaxed, farm.UnlockBasketSlot());
             Assert.AreEqual(700, farm.State.Coins);
+        }
+
+        [Test]
+        public void UnlockBasketSlot_NotEnoughCoins()
+        {
+            Farm farm = CreateFarm(coins: 299);
+
+            Assert.AreEqual(FarmResult.NotEnoughCoins, farm.UnlockBasketSlot());
+            Assert.AreEqual(8, farm.BasketCapacity);
+            Assert.AreEqual(299, farm.State.Coins);
         }
 
         // ---------- Đào giun ----------
@@ -657,15 +851,10 @@ namespace VeQue.Tests
             Farm farm = CreateFarm(roSlip: 0, coins: 10000);
             farm.State.Level = 9;
             farm.BuyRod(Carbon);
-            farm.UpgradeBasket();
+            farm.UnlockBasketSlot();
             farm.CompleteFishing(CatchOne(farm));
             farm.TryGetEquippedRod(out _, out RodState rod);
-            rod.Durability = 0;
-            farm.RepairRod(Tre);
-            rod.Durability = 0;
-            farm.RepairRod(Tre);
             rod.Durability -= 2;
-            rod.Snapped = true;
 
             Farm loaded = RoundTrip(farm);
             FishingState a = farm.State.Fishing;
@@ -674,12 +863,11 @@ namespace VeQue.Tests
             Assert.AreEqual(a.Rods.Count, b.Rods.Count);
             Assert.IsTrue(b.TryGetRod(Tre, out RodState loadedRod));
             Assert.AreEqual(rod.Durability, loadedRod.Durability);
-            Assert.IsTrue(loadedRod.Snapped);
-            Assert.AreEqual(2, loadedRod.RepairCount);
-            Assert.AreEqual(24, loaded.GetRodMaxDurability(Tre));
+            Assert.AreEqual(30, loaded.GetRodMaxDurability(Tre));
             Assert.AreEqual(a.EquippedRodId, b.EquippedRodId);
             Assert.AreEqual(a.GetBaits(Giun), b.GetBaits(Giun));
-            Assert.AreEqual(a.BasketLevel, b.BasketLevel);
+            Assert.AreEqual(9, loaded.BasketCapacity);
+            Assert.AreEqual(a.BasketSlots, b.BasketSlots);
             Assert.AreEqual(1, b.Basket.Count);
             Assert.AreEqual(a.Basket[0].FishId, b.Basket[0].FishId);
             Assert.AreEqual(a.Basket[0].Grams, b.Basket[0].Grams);
@@ -689,50 +877,17 @@ namespace VeQue.Tests
         }
 
         [Test]
-        public void Save_Version4WithoutFishing_GetsStarter()
+        public void Load_DurabilityAboveMax_Clamped()
         {
             Farm farm = CreateFarm();
             SaveData data = SaveMapper.ToSave(farm.State, farm.Definition, _clock.UtcNowSeconds);
-            data.version = 4;
-            data.fishing = null;
-
-            Assert.AreEqual(SaveLoadResult.Ok, SaveMapper.TryFromSave(data, farm.Definition, out FarmState state));
-            var loaded = new Farm(farm.Definition, state, _clock);
-
-            Assert.IsTrue(loaded.State.Fishing.StarterGranted);
-            Assert.AreEqual(Tre, loaded.State.Fishing.EquippedRodId);
-            Assert.AreEqual(10, loaded.State.Fishing.GetBaits(Giun));
-        }
-
-        [Test]
-        public void Save_Version5WithoutRepairCount_NotRepaired()
-        {
-            Farm farm = CreateFarm();
-            SaveData data = SaveMapper.ToSave(farm.State, farm.Definition, _clock.UtcNowSeconds);
-            data.version = 5;
-            data.fishing.rods = new[] { new SaveRod { id = Tre, durability = 12 } };
-
-            Assert.AreEqual(SaveLoadResult.Ok, SaveMapper.TryFromSave(data, farm.Definition, out FarmState state));
-            var loaded = new Farm(farm.Definition, state, _clock);
-
-            Assert.IsTrue(loaded.State.Fishing.TryGetRod(Tre, out RodState rod));
-            Assert.AreEqual(0, rod.RepairCount);
-            Assert.AreEqual(12, rod.Durability);
-            Assert.AreEqual(30, loaded.GetRodMaxDurability(Tre));
-        }
-
-        [Test]
-        public void Load_DurabilityAboveRepairedMax_Clamped()
-        {
-            Farm farm = CreateFarm();
-            SaveData data = SaveMapper.ToSave(farm.State, farm.Definition, _clock.UtcNowSeconds);
-            data.fishing.rods = new[] { new SaveRod { id = Tre, durability = 30, repairCount = 3 } };
+            data.fishing.rods = new[] { new SaveRod { id = Tre, durability = 99 } };
 
             Assert.AreEqual(SaveLoadResult.Ok, SaveMapper.TryFromSave(data, farm.Definition, out FarmState state));
             var loaded = new Farm(farm.Definition, state, _clock);
 
             loaded.State.Fishing.TryGetRod(Tre, out RodState rod);
-            Assert.AreEqual(21, rod.Durability);
+            Assert.AreEqual(30, rod.Durability);
         }
 
         [Test]
@@ -753,6 +908,220 @@ namespace VeQue.Tests
             Assert.AreEqual(1, state.Fishing.Basket.Count);
             Assert.AreEqual(DaySlot.Dawn, state.Fishing.Basket[0].Slot);
             Assert.AreEqual(0, state.Fishing.GetBaits(Giun));
+        }
+
+        // ---------- Cá shiny (Đợt 2 Phần 18) ----------
+
+        [Test]
+        public void RollShiny_100k_AboutOnePercent()
+        {
+            var tuning = new FishingTuning();
+            uint random = 12345;
+            int shiny = 0;
+            const int Rolls = 100000;
+            for (int i = 0; i < Rolls; i++)
+            {
+                if (FishingSession.RollShiny(ref random, tuning) != ShinyKind.None)
+                    shiny++;
+            }
+            Assert.AreEqual(1.0, shiny * 100.0 / Rolls, 0.15);
+        }
+
+        [Test]
+        public void RollShiny_TierAndKinds_Distribution()
+        {
+            // Luôn ra shiny để đếm phân bố bậc / kiểu.
+            var tuning = new FishingTuning { ShinyChancePer10000 = 10000 };
+            uint random = 777;
+            var counts = new Dictionary<ShinyKind, int>();
+            const int Rolls = 100000;
+            for (int i = 0; i < Rolls; i++)
+            {
+                ShinyKind kind = FishingSession.RollShiny(ref random, tuning);
+                Assert.AreNotEqual(ShinyKind.None, kind);
+                counts[kind] = counts.TryGetValue(kind, out int c) ? c + 1 : 1;
+            }
+
+            int rare = 0;
+            foreach (ShinyKind kind in tuning.ShinyRareKinds)
+                rare += counts.TryGetValue(kind, out int c) ? c : 0;
+            Assert.AreEqual(3.2, rare * 100.0 / Rolls, 0.3, "Bậc hiếm ≈ 3,2%");
+
+            foreach (ShinyKind kind in tuning.ShinyRareKinds)
+                Assert.AreEqual(50.0, counts[kind] * 100.0 / rare, 5.0, $"{kind} ≈ 50% bậc hiếm");
+
+            int common = Rolls - rare;
+            foreach (ShinyKind kind in tuning.ShinyCommonKinds)
+                Assert.AreEqual(100.0 / 6, counts[kind] * 100.0 / common, 1.0, $"{kind} ≈ 1/6 bậc thường");
+            Assert.AreEqual(8, counts.Count);
+        }
+
+        [Test]
+        public void RollShiny_ZeroChance_NeverShiny()
+        {
+            var tuning = new FishingTuning { ShinyChancePer10000 = 0 };
+            uint random = 1;
+            for (int i = 0; i < 10000; i++)
+                Assert.AreEqual(ShinyKind.None, FishingSession.RollShiny(ref random, tuning));
+        }
+
+        [Test]
+        public void ShinyPrice_CommonTimesThree_RareTimesTen()
+        {
+            var tuning = new FishingTuning();
+            var fish = new FishDef(Ro, FishRarity.Common, 100, 300, 10, 1, new float[] { 1, 1, 1, 1, 1, 1, 1 },
+                FishDepth.All, null, 3, 4, 4f, 0.9f, 0);
+            int normal = FishingMath.FishPrice(fish, 200, tuning);
+
+            Assert.AreEqual(normal, FishingMath.FishPrice(fish, 200, tuning, ShinyKind.None));
+            foreach (ShinyKind kind in tuning.ShinyCommonKinds)
+                Assert.AreEqual(normal * 3, FishingMath.FishPrice(fish, 200, tuning, kind), kind.ToString());
+            Assert.AreEqual(normal * 10, FishingMath.FishPrice(fish, 200, tuning, ShinyKind.Aurora));
+            Assert.AreEqual(normal * 10, FishingMath.FishPrice(fish, 200, tuning, ShinyKind.DarkAurora));
+        }
+
+        [Test]
+        public void Shiny_DoesNotShiftOtherRandomRolls()
+        {
+            // Cùng trạng thái random: bật / tắt shiny không đổi cá, lịch phao, đề kéo, cân nặng.
+            Farm plain = CreateFarm();
+            Farm shiny = CreateFarm(shiny: ShinyKind.Gold);
+            FishingSession a = CatchOne(plain);
+            FishingSession b = CatchOne(shiny);
+
+            Assert.AreEqual(ShinyKind.None, a.Shiny);
+            Assert.AreEqual(ShinyKind.Gold, b.Shiny);
+            Assert.AreEqual(a.Fish.Id, b.Fish.Id);
+            Assert.AreEqual(a.BiteTime, b.BiteTime);
+            CollectionAssert.AreEqual(a.NibbleTimes, b.NibbleTimes);
+            CollectionAssert.AreEqual(a.Pull.Arrows, b.Pull.Arrows);
+            Assert.AreEqual(a.Grams, b.Grams);
+            Assert.AreEqual(a.Xp, b.Xp);
+            Assert.AreEqual(a.Price * 3, b.Price);
+        }
+
+        [Test]
+        public void Shiny_Caught_GoesToBasketAndDexOnce()
+        {
+            Farm farm = CreateFarm(shiny: ShinyKind.Aurora);
+            FishingSession first = CatchOne(farm);
+            farm.CompleteFishing(first);
+            FishingSession second = CatchOne(farm);
+            farm.CompleteFishing(second);
+
+            FishingState fishing = farm.State.Fishing;
+            Assert.AreEqual(ShinyKind.Aurora, fishing.Basket[0].Shiny);
+            Assert.AreEqual(first.Price, farm.GetFishPrice(fishing.Basket[0]));
+            Assert.IsTrue(first.IsNewShiny);
+            Assert.IsFalse(second.IsNewShiny);
+            Assert.AreEqual(1, fishing.ShinyDex.Count);
+            Assert.AreEqual(Ro, fishing.ShinyDex[0].FishId);
+            Assert.AreEqual(ShinyKind.Aurora, fishing.ShinyDex[0].Kind);
+            Assert.AreEqual(_clock.UtcNowSeconds, fishing.ShinyDex[0].FirstCaughtAt);
+        }
+
+        [Test]
+        public void Shiny_NotCaught_NoDex()
+        {
+            Farm farm = CreateFarm(shiny: ShinyKind.Gold);
+            FishingSession session = CastOne(farm);
+            session.Timeout();
+            farm.CompleteFishing(session);
+
+            CollectionAssert.IsEmpty(farm.State.Fishing.ShinyDex);
+            CollectionAssert.IsEmpty(farm.State.Fishing.Basket);
+        }
+
+        [Test]
+        public void SellAllFish_SkipsShiny()
+        {
+            Farm farm = CreateFarm(shiny: ShinyKind.Ruby);
+            farm.CompleteFishing(CatchOne(farm));
+            farm.Definition.Fishing.Tuning.ShinyChancePer10000 = 0;
+            farm.CompleteFishing(CatchOne(farm));
+            farm.CompleteFishing(CatchOne(farm));
+            List<CaughtFish> basket = farm.State.Fishing.Basket;
+            long normalValue = farm.GetFishPrice(basket[1]) + farm.GetFishPrice(basket[2]);
+
+            Assert.AreEqual(2, farm.GetSellAllCount());
+            Assert.AreEqual(normalValue, farm.GetBasketValue());
+            Assert.AreEqual(FarmResult.Ok, farm.SellAllFish(out long earned));
+
+            Assert.AreEqual(normalValue, earned);
+            Assert.AreEqual(1, basket.Count);
+            Assert.AreEqual(ShinyKind.Ruby, basket[0].Shiny);
+            // Chỉ còn cá shiny: Bán hết không bán gì.
+            Assert.AreEqual(FarmResult.UnknownFish, farm.SellAllFish(out _));
+            Assert.AreEqual(1, basket.Count);
+            // Bán lẻ vẫn được.
+            Assert.AreEqual(FarmResult.Ok, farm.SellFish(0, out _));
+        }
+
+        [Test]
+        public void Save_RoundTrip_KeepsShinyAndDex()
+        {
+            Farm farm = CreateFarm(shiny: ShinyKind.DarkAurora);
+            farm.CompleteFishing(CatchOne(farm));
+
+            Farm loaded = RoundTrip(farm);
+
+            Assert.AreEqual(ShinyKind.DarkAurora, loaded.State.Fishing.Basket[0].Shiny);
+            Assert.AreEqual(1, loaded.State.Fishing.ShinyDex.Count);
+            ShinyRecord record = loaded.State.Fishing.ShinyDex[0];
+            Assert.AreEqual(Ro, record.FishId);
+            Assert.AreEqual(ShinyKind.DarkAurora, record.Kind);
+            Assert.AreEqual(farm.State.Fishing.ShinyDex[0].FirstCaughtAt, record.FirstCaughtAt);
+        }
+
+        [Test]
+        public void Load_UnknownShinyKind_ReadsAsNone()
+        {
+            Farm farm = CreateFarm();
+            SaveData data = SaveMapper.ToSave(farm.State, farm.Definition, _clock.UtcNowSeconds);
+            data.fishing.basket = new[] { new SaveFish { id = Ro, grams = 120, shiny = 99 } };
+            data.fishing.shinyDex = new[]
+            {
+                new SaveShiny { fishId = Ro, kind = 99 },
+                new SaveShiny { fishId = Ro, kind = (int)ShinyKind.Gold, firstCaughtAt = 5 },
+                new SaveShiny { fishId = Ro, kind = (int)ShinyKind.Gold, firstCaughtAt = 9 },
+                new SaveShiny { fishId = "", kind = (int)ShinyKind.Ice },
+                null,
+            };
+
+            Assert.AreEqual(SaveLoadResult.Ok, SaveMapper.TryFromSave(data, farm.Definition, out FarmState state));
+
+            Assert.AreEqual(ShinyKind.None, state.Fishing.Basket[0].Shiny);
+            Assert.AreEqual(1, state.Fishing.ShinyDex.Count);
+            Assert.AreEqual(5, state.Fishing.ShinyDex[0].FirstCaughtAt);
+        }
+
+        [Test]
+        public void Tuning_InvalidShinyKinds_Throws()
+        {
+            Assert.Throws<System.ArgumentException>(() => MakeFishing(new FishingTuning
+            {
+                ShinyCommonKinds = new[] { ShinyKind.Gold, ShinyKind.Aurora },
+            }));
+            Assert.Throws<System.ArgumentException>(() => MakeFishing(new FishingTuning
+            {
+                ShinyRareKinds = new ShinyKind[0],
+            }));
+            Assert.Throws<System.ArgumentException>(() => MakeFishing(new FishingTuning
+            {
+                ShinyCommonKinds = new[] { ShinyKind.None },
+            }));
+        }
+
+        private static FishingDef MakeFishing(FishingTuning tuning)
+        {
+            var fish = new[]
+            {
+                new FishDef(Ro, FishRarity.Common, 80, 300, 10, 1, new float[] { 1, 1, 1, 1, 1, 1, 1 }, FishDepth.All, null,
+                    3, 4, 4f, 0.9f, 0),
+            };
+            var rods = new[] { new RodDef(Tre, 1, 0.03f, 1.2f, 0, 0, 0, 30, 0, 1) };
+            var baits = new[] { new BaitDef(Giun, 2) };
+            return new FishingDef(fish, rods, baits, Tre, Giun, 1, tuning: tuning);
         }
 
         // ---------- Phép tính cho View (Đợt C) ----------
@@ -831,28 +1200,9 @@ namespace VeQue.Tests
             return count;
         }
 
-        // Số lần gãy cần trên 200 lần đứt dây (seed khác nhau), bắt đầu với độ bền cho trước.
-        private int CountSnapBreaks(int startDurability)
-        {
-            int broken = 0;
-            for (uint seed = 1; seed <= 200; seed++)
-            {
-                Farm farm = CreateFarm(roSlip: 0, randomState: seed * 7919u, snapBreakMin: 0, snapBreakMax: 100);
-                farm.TryGetEquippedRod(out _, out RodState rod);
-                rod.Durability = startDurability;
-                FishingSession session = HookOne(farm);
-                session.WrongArrow();
-                Assert.AreEqual(FishingOutcome.LineSnapped, session.Outcome);
-                farm.CompleteFishing(session);
-                if (rod.Snapped)
-                    broken++;
-            }
-            return broken;
-        }
-
         private void SetLocalHour(int hour)
         {
-            _clock.UtcNowSeconds = Midnight + hour * 3600;
+            _clock.UtcNowSeconds = Midnight + hour * 3600 - VietnamOffset;
         }
 
         private HashSet<string> CastMany(Farm farm, string bait, float power, int count)
@@ -890,7 +1240,6 @@ namespace VeQue.Tests
         {
             farm.TryGetEquippedRod(out RodDef def, out RodState rod);
             rod.Durability = def.MaxDurability;
-            rod.Snapped = false;
         }
 
         private static FishingSession CastOne(Farm farm)
@@ -932,12 +1281,10 @@ namespace VeQue.Tests
         }
 
         private Farm CreateFarm(bool withFishing = true, int unlockLevel = UnlockLevel, int baits = 10,
-            uint randomState = 12345, int roSlip = 0, int roXp = 1, int snapBreakPercent = 20,
-            int wormChance = 0, long coins = 0, bool roRed = false, int snapBreakMin = -1, int snapBreakMax = -1)
+            uint randomState = 12345, int roSlip = 0, int roXp = 1,
+            int wormChance = 0, long coins = 0, bool roRed = false, ShinyKind shiny = ShinyKind.None)
         {
-            FarmDef def = CreateDef(withFishing, unlockLevel, baits, roSlip, roXp,
-                snapBreakMin >= 0 ? snapBreakMin : snapBreakPercent, snapBreakMax >= 0 ? snapBreakMax : snapBreakPercent,
-                wormChance, roRed);
+            FarmDef def = CreateDef(withFishing, unlockLevel, baits, roSlip, roXp, wormChance, roRed, shiny);
             FarmState state = FarmState.CreateNew(def);
             state.RandomState = randomState;
             state.Coins = coins;
@@ -945,7 +1292,7 @@ namespace VeQue.Tests
         }
 
         private static FarmDef CreateDef(bool withFishing, int unlockLevel, int starterBaits, int roSlip, int roXp,
-            int snapBreakMin, int snapBreakMax, int wormChance, bool roRed)
+            int wormChance, bool roRed, ShinyKind shiny = ShinyKind.None)
         {
             var zones = new[] { new ZoneDef(Zone1, new[] { new BedDef(2, 3) }, 2, new[] { 10, 10, 10, 10 }) };
             var crops = new[] { new CropDef(RauMuong, GrowSeconds, 5, 5, 2, xp: 1) };
@@ -969,23 +1316,32 @@ namespace VeQue.Tests
                 };
                 var rods = new[]
                 {
-                    new RodDef(Tre, 1, 0.03f, 1.2f, 0, 0, 0, 30, 0, 1, 50),
-                    new RodDef(Carbon, 4, 0.06f, 1.6f, 30, 10, 30, 120, 6000, 9, 2400),
+                    new RodDef(Tre, 1, 0.03f, 1.2f, 0, 0, 0, 30, 0, 1),
+                    new RodDef(Carbon, 4, 0.06f, 1.6f, 30, 10, 30, 120, 6000, 9),
                 };
                 var baitDefs = new[]
                 {
                     new BaitDef(Giun, 2, buyable: false),
                     new BaitDef(Tep, 5),
-                    new BaitDef(MoiThom, 25, rareBonusPercent: 100),
+                    new BaitDef(MoiThom, 25, rareBonusPercent: 100, unlockLevel: MoiThomLevel),
                 };
+                // Mặc định tắt shiny để test cũ không đổi giá ngẫu nhiên; shiny != None thì luôn ra đúng kiểu đó.
                 var tuning = new FishingTuning
                 {
-                    SnapBreakMinPercent = snapBreakMin,
-                    SnapBreakMaxPercent = snapBreakMax,
                     RedArrowPercent = 100,
+                    ShinyChancePer10000 = shiny == ShinyKind.None ? 0 : 10000,
                 };
+                if (shiny != ShinyKind.None)
+                {
+                    bool rare = tuning.IsRareShiny(shiny);
+                    tuning.ShinyRareTierPercent = rare ? 100f : 0f;
+                    if (rare)
+                        tuning.ShinyRareKinds = new[] { shiny };
+                    else
+                        tuning.ShinyCommonKinds = new[] { shiny };
+                }
                 fishing = new FishingDef(fish, rods, baitDefs, Tre, Giun, starterBaits, unlockLevel,
-                    Capacities, UpgradePrices, Giun, wormChance, 1, 2, tuning);
+                    StartSlots, SlotPrices, Giun, wormChance, 1, 2, tuning);
             }
 
             return new FarmDef(zones, crops, 0, seeds, 0, levels, null, null, fishing);
