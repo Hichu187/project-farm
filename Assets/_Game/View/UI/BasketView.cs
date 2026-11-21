@@ -14,6 +14,7 @@ namespace VeQue.View.UI
     // - Hàng trên: số cá / sức chứa, nút "Bán hết (tổng xu)" → hộp xác nhận.
     // - Khung chi tiết cá đang chọn: tên, độ hiếm, cân nặng, giá, khung giờ bắt; nút Bán (giá), Thả.
     // - Lưới ô vuông tới 25 ô, cuộn dọc: cá (nền theo độ hiếm), ô trống, ô khóa (ô kế tiếp hiện giá → xác nhận mở ô).
+    // - Đợt 2 Phần 5: rác nằm sau cá (chiếm ô chung), chạm → bán cho cô đồng nát (không có Thả); nút "Tự bán rác: Bật/Tắt".
     // Tự vẽ lại khi bật và khi tiến trình đổi trong lúc đang bật.
     public sealed class BasketView : MonoBehaviour
     {
@@ -21,6 +22,10 @@ namespace VeQue.View.UI
         [SerializeField] private TMP_Text _capacity;
         [SerializeField] private Button _sellAll;
         [SerializeField] private TMP_Text _sellAllLabel;
+        [Tooltip("Bật / tắt tự bán rác cho cô đồng nát (Đợt 2 Phần 5).")]
+        [SerializeField] private Button _autoSell;
+        [SerializeField] private TMP_Text _autoSellLabel;
+        [SerializeField] private Color _junkColor = new Color(0.55f, 0.48f, 0.38f);
         [Tooltip("Ô theo thứ tự (đủ cho giỏ lớn nhất); ô thừa bị ẩn.")]
         [SerializeField] private FishCell[] _cells = Array.Empty<FishCell>();
         [Header("Chi tiết")]
@@ -59,6 +64,8 @@ namespace VeQue.View.UI
             _release.onClick.AddListener(ReleaseSelected);
             _sell.onClick.AddListener(SellSelected);
             _sellAll.onClick.AddListener(AskSellAll);
+            if (_autoSell != null)
+                _autoSell.onClick.AddListener(ToggleAutoSell);
             _confirmOk.onClick.AddListener(ConfirmOk);
             _confirmCancel.onClick.AddListener(HideConfirm);
             _wired = true;
@@ -90,30 +97,44 @@ namespace VeQue.View.UI
                 return;
             Farm farm = _game.Farm;
             List<CaughtFish> basket = farm.State.Fishing.Basket;
+            List<CaughtJunk> junk = farm.State.Fishing.JunkBasket;
+            int used = farm.State.Fishing.BasketUsed;
             int capacity = farm.BasketCapacity;
-            if (_selected >= basket.Count)
+            if (_selected >= used)
                 _selected = -1;
-            _capacity.text = $"Giỏ {basket.Count}/{capacity}";
-            // "Bán hết" bỏ qua cá shiny (bán lẻ từng con).
+            _capacity.text = $"Giỏ {used}/{capacity}";
+            // "Bán hết" bỏ qua cá shiny (bán lẻ từng con), gồm cả rác.
             bool canSellAll = farm.GetSellAllCount() > 0;
             _sellAll.interactable = canSellAll;
             _sellAllLabel.text = canSellAll ? $"Bán hết {UiFormat.Coins(farm.GetBasketValue())}" : "Bán hết";
+            if (_autoSellLabel != null)
+                _autoSellLabel.text = UiFormat.AutoSellJunk(farm.State.Fishing.AutoSellJunk);
 
-            int maxSlots = Mathf.Max(farm.FishingDefinition.BasketMaxSlots, basket.Count);
+            int maxSlots = Mathf.Max(farm.FishingDefinition.BasketMaxSlots, used);
             string nextPrice = farm.CanUnlockBasketSlot ? $"{UiFormat.Coins(farm.NextBasketSlotPrice)} xu" : "";
             for (int i = 0; i < _cells.Length; i++)
             {
                 FishCell cell = _cells[i];
-                bool used = i < maxSlots;
-                cell.gameObject.SetActive(used);
-                if (!used)
+                bool shown = i < maxSlots;
+                cell.gameObject.SetActive(shown);
+                if (!shown)
                     continue;
-                if (i >= basket.Count)
+                if (i >= used)
                 {
                     if (i < capacity)
                         cell.SetEmpty();
                     else
                         cell.SetLocked(i == capacity, nextPrice, AskUnlock);
+                    continue;
+                }
+                if (i >= basket.Count)
+                {
+                    // Rác sau cá: nền màu rác, chữ = giá cô đồng nát trả.
+                    CaughtJunk item = junk[i - basket.Count];
+                    int junkIndex = i;
+                    TryGetJunk(item.JunkId, out JunkDefinition junkArt);
+                    cell.SetFish(junkArt != null ? junkArt.Icon : null, $"{UiFormat.Coins(farm.GetJunkPrice(item))} xu", _junkColor,
+                        i == _selected, () => Select(junkIndex));
                     continue;
                 }
                 CaughtFish fish = basket[i];
@@ -122,18 +143,24 @@ namespace VeQue.View.UI
                 cell.SetFish(art != null ? art.Icon : null, UiFormat.Weight(fish.Grams), RarityColor(def), i == _selected,
                     () => Select(index), Shiny(fish.Shiny), ShinySeed(fish));
             }
-            ShowDetail(basket);
+            ShowDetail(basket, junk);
         }
 
-        private void ShowDetail(List<CaughtFish> basket)
+        private void ShowDetail(List<CaughtFish> basket, List<CaughtJunk> junk)
         {
-            bool has = _selected >= 0 && _selected < basket.Count;
+            bool has = _selected >= 0 && _selected < basket.Count + junk.Count;
             _detail.SetActive(has);
             if (_hint != null)
                 _hint.SetActive(!has);
             if (!has)
                 return;
 
+            if (_selected >= basket.Count)
+            {
+                ShowJunkDetail(junk[_selected - basket.Count]);
+                return;
+            }
+            _release.gameObject.SetActive(true);
             CaughtFish fish = basket[_selected];
             TryGetFish(fish.FishId, out FishDefinition art, out FishDef def);
             _detailIcon.sprite = art != null ? art.Icon : null;
@@ -148,6 +175,20 @@ namespace VeQue.View.UI
             // 21/11/2026: bỏ dòng "Bắt lúc <khung giờ>" – giờ ra cá không hiển thị cho người chơi (vẫn lưu trong save).
             _detailInfo.text = $"{shinyLine}{rarity}{UiFormat.Weight(fish.Grams)}";
             _sellLabel.text = $"Bán {UiFormat.Coins(_game.Farm.GetFishPrice(fish))}";
+        }
+
+        // Rác: không có nút Thả (không vứt lại xuống sông), chỉ bán cho cô đồng nát.
+        private void ShowJunkDetail(CaughtJunk item)
+        {
+            TryGetJunk(item.JunkId, out JunkDefinition art);
+            _detailIcon.sprite = art != null ? art.Icon : null;
+            _detailIcon.enabled = _detailIcon.sprite != null;
+            ShinyLook.Apply(_detailIcon, null, 0);
+            _detailName.text = art != null ? art.DisplayName : item.JunkId;
+            int price = _game.Farm.GetJunkPrice(item);
+            _detailInfo.text = $"<color=#{ColorUtility.ToHtmlStringRGB(_junkColor)}>Đồ vớt được</color> · Cô đồng nát trả {UiFormat.Coins(price)} xu";
+            _sellLabel.text = $"Bán {UiFormat.Coins(price)}";
+            _release.gameObject.SetActive(false);
         }
 
         private void Select(int index)
@@ -165,15 +206,32 @@ namespace VeQue.View.UI
             int index = _selected;
             // Bỏ chọn trước: lệnh phát Farm.Changed → Rebuild ngay.
             _selected = -1;
+            int fishCount = _game.Farm.State.Fishing.Basket.Count;
+            if (index >= fishCount)
+            {
+                if (_game.Farm.SellJunk(index - fishCount, out long junkEarned) == FarmResult.Ok)
+                    ShowToast(UiFormat.JunkSold(junkEarned));
+                else
+                    Rebuild();
+                return;
+            }
             if (_game.Farm.SellFish(index, out long earned) == FarmResult.Ok)
                 ShowToast($"+{UiFormat.Coins(earned)} xu");
             else
                 Rebuild();
         }
 
+        private void ToggleAutoSell()
+        {
+            Farm farm = _game.Farm;
+            bool on = !farm.State.Fishing.AutoSellJunk;
+            farm.SetAutoSellJunk(on);
+            ShowToast(on ? "Vớt được rác sẽ bán ngay cho cô đồng nát" : "Rác vớt được sẽ cho vào giỏ");
+        }
+
         private void ReleaseSelected()
         {
-            if (_selected < 0)
+            if (_selected < 0 || _selected >= _game.Farm.State.Fishing.Basket.Count)
                 return;
             int index = _selected;
             _selected = -1;
@@ -187,9 +245,9 @@ namespace VeQue.View.UI
             int count = farm.GetSellAllCount();
             if (count == 0)
                 return;
-            int kept = farm.State.Fishing.Basket.Count - count;
-            string keptNote = kept > 0 ? $"\n(Giữ lại {kept} con cá đột biến)" : "";
-            ShowConfirm($"Bán hết {count} con cá trong giỏ?\nĐược {UiFormat.Coins(farm.GetBasketValue())} xu{keptNote}", "Bán", true, () =>
+            int kept = farm.State.Fishing.BasketUsed - count;
+            string keptNote = kept > 0 ? $"\n(Giữ lại {kept} con cá đột biến / cho đơn)" : "";
+            ShowConfirm($"Bán hết {count} món trong giỏ?\nĐược {UiFormat.Coins(farm.GetBasketValue())} xu{keptNote}", "Bán", true, () =>
             {
                 _selected = -1;
                 if (_game.Farm.SellAllFish(out long earned) == FarmResult.Ok)
@@ -260,6 +318,13 @@ namespace VeQue.View.UI
             if (data != null)
                 data.TryGetFish(id, out art);
             return _game.Farm.FishingDefinition.TryGetFish(id, out def);
+        }
+
+        private bool TryGetJunk(string id, out JunkDefinition art)
+        {
+            art = null;
+            FishingDefinition data = _game.Definition.Fishing;
+            return data != null && data.TryGetJunk(id, out art);
         }
 
         private Color RarityColor(FishDef def)

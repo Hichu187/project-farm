@@ -15,6 +15,8 @@ namespace VeQue.Logic
         Produce = 3,
         // Mồi câu (Id = id mồi).
         Bait = 4,
+        // Cần câu (Id = id cần, Amount = 1). Đã có cần đó thì sửa đầy độ bền (Đợt 2 Phần 10).
+        Rod = 5,
     }
 
     public sealed class Reward
@@ -35,7 +37,7 @@ namespace VeQue.Logic
             Amount = amount;
         }
 
-        public bool NeedsId => Kind == RewardKind.Seeds || Kind == RewardKind.Produce || Kind == RewardKind.Bait;
+        public bool NeedsId => Kind == RewardKind.Seeds || Kind == RewardKind.Produce || Kind == RewardKind.Bait || Kind == RewardKind.Rod;
     }
 
     // Một lá thư trong hộp thư (lưu nguyên nội dung trong save, để thư sinh trong code vẫn hiện đúng khi data đổi).

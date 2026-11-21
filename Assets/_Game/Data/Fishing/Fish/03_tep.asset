@@ -20,6 +20,8 @@ MonoBehaviour:
   _maxGrams: 30
   _basePrice: 8
   _baseXp: 1
+  _hint: "B\xE9 t\xED, ch\u1EC9 quanh qu\u1EA9n s\xE1t b\u1EDD. R\u1EAFc ch\xFAt
+    c\xE1m l\xE0 k\xE9o \u0111\u1EBFn."
   _slotFactors:
   - 1
   - 1

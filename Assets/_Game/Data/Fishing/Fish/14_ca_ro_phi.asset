@@ -20,6 +20,7 @@ MonoBehaviour:
   _maxGrams: 1200
   _basePrice: 14
   _baseXp: 1
+  _hint: "D\u1EC5 t\xEDnh, \u0103n kh\u1ECFe, hay ra g\u1EA7n b\u1EDD."
   _slotFactors:
   - 1
   - 1

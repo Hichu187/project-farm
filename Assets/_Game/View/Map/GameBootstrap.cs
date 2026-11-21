@@ -84,6 +84,9 @@ namespace VeQue.View.Map
                 Farm.RefreshOrders();
                 // Sang ngày mới: dọn thư, phát thư theo build (Đợt 2 Phần 3).
                 Farm.RefreshMail();
+                // Điểm danh (Đợt 2 Phần 10): 22/11 người chơi tự bấm Nhận trong popup (CheckInPopup tự mở khi đủ điều kiện).
+                // Quà sự kiện hôm nay (Đợt 2 Phần 7): mỗi (sự kiện, ngày) gửi 1 thư.
+                Farm.TryEventMail();
             }
 
             if (_saveAt != NoPendingSave && now >= _saveAt)
@@ -112,8 +115,9 @@ namespace VeQue.View.Map
         {
             Farm.TryGetOrder(slot, out OrderState order);
             string customer = order?.NpcId;
-            long coins = order?.RewardCoins ?? 0;
-            long xp = order?.RewardXp ?? 0;
+            long coins = 0, xp = 0;
+            if (order != null)
+                Farm.GetOrderReward(order, out coins, out xp);
 
             FarmResult result = Farm.DeliverOrder(slot);
             if (result == FarmResult.Ok)

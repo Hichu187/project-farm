@@ -78,9 +78,9 @@ namespace VeQue.EditorTools
             DestroyChild(gridTransform, WaterName);
             Tilemap fishingGround = CreateTilemap(gridTransform, GroundName, ground, 0);
             Tilemap fishingWater = CreateTilemap(gridTransform, WaterName, ground, 1);
-            PixelWaterSetup.ApplyTo(fishingWater); // shader nước pixel (thiếu shader/noise thì báo, vẫn dựng tiếp)
 
             PaintRegion(fishingGround, fishingWater, grass, dirt, water);
+            PixelWaterSetup.ApplyTo(fishingWater); // nước pixel: bake bờ hồ + gán material (thiếu texture thì báo, vẫn dựng tiếp)
 
             // Regions + chỗ câu.
             GameObject old = GameObject.Find(RegionsName);

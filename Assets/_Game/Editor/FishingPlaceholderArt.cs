@@ -142,6 +142,37 @@ namespace VeQue.EditorTools
                 : $"Về Quê: đã tạo art tạm câu cá → {Folder}. Chưa có {FishingDataGenerator.FishingPath}: chạy Về Quê → Data → Tạo data câu cá rồi chạy lại menu này để gán icon.");
         }
 
+        // Rác (Đợt 2 Phần 5): icon tạm = ô vuông màu 12×12 có viền trong khung 16×16, ở Folder/junk_tam/. Art thật đặt chỗ khác
+        // rồi gán vào JunkDefinition thì FishingDataGenerator giữ nguyên.
+        public const string JunkFolder = Folder + "/junk_tam";
+
+        public static bool IsPlaceholderJunkIcon(string path) => path != null && path.StartsWith(JunkFolder + "/");
+
+        // Tạo (nếu chưa có) và trả về ô vuông tạm cho món rác.
+        public static Sprite JunkSquare(string id, Color32 color)
+        {
+            EnsureFolder(Folder);
+            EnsureFolder(JunkFolder);
+            string path = $"{JunkFolder}/junk_{id}.png";
+            var existing = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (existing != null)
+                return existing;
+            var pattern = new string[16];
+            for (int row = 0; row < 16; row++)
+            {
+                var line = new char[16];
+                for (int x = 0; x < 16; x++)
+                {
+                    bool inside = x >= 2 && x <= 13 && row >= 2 && row <= 13;
+                    bool edge = x == 2 || x == 13 || row == 2 || row == 13;
+                    line[x] = !inside ? '.' : edge ? 'o' : 'b';
+                }
+                pattern[row] = new string(line);
+            }
+            Save(Draw(pattern, c => c == 'b' ? color : Outline), path, new Vector2(0.5f, 0.5f));
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+
         // Icon tạm = fish_<độ hiếm>.png ngay trong Folder (icon thật ở Folder/fish/ không tính).
         private static bool IsPlaceholderIcon(string path)
         {

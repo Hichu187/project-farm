@@ -25,6 +25,12 @@ namespace VeQue.View.UI
         [SerializeField] private TMP_Text _record;
         [Tooltip("Dòng \"Đột biến: <kiểu>!\" (+ \"Lần đầu!\"); ẩn khi cá thường.")]
         [SerializeField] private TMP_Text _shiny;
+        [Tooltip("Câu đùa khi vớt được rác (Đợt 2 Phần 5); thay chỗ cân nặng + kỷ lục.")]
+        [SerializeField] private TMP_Text _flavor;
+        [Tooltip("Báo đạt mốc album (có thư mới) lúc đóng bảng.")]
+        [SerializeField] private Toast _toast;
+        [SerializeField] private Color _junkColor = new Color(0.55f, 0.48f, 0.38f);
+        [SerializeField] private Color _newJunkColor = new Color(0.95f, 0.75f, 0.20f);
         [SerializeField] private Button _ok;
         [Tooltip("Màu chữ độ hiếm: Thường, Khá, Hiếm, Quý, Huyền thoại.")]
         [SerializeField] private Color[] _rarityColors =
@@ -60,8 +66,19 @@ namespace VeQue.View.UI
                 _controller.FishCaught -= Show;
         }
 
+        private int _pendingMilestones;
+
         private void Show(FishingSession session)
         {
+            _pendingMilestones = session.ReachedMilestones.Count;
+            if (session.IsJunk)
+            {
+                ShowJunk(session);
+                return;
+            }
+            if (_flavor != null)
+                _flavor.gameObject.SetActive(false);
+            _weight.gameObject.SetActive(true);
             FishingDefinition data = _game.Definition.Fishing;
             FishDefinition fish = null;
             if (data != null)
@@ -96,9 +113,45 @@ namespace VeQue.View.UI
             _root.SetActive(true);
         }
 
+        // Rác: tên, hình, "Đồ vớt được", "Món mới!" (chỗ dòng shiny), câu đùa (chỗ cân nặng + kỷ lục), giá / đã bán.
+        private void ShowJunk(FishingSession session)
+        {
+            FishingDefinition data = _game.Definition.Fishing;
+            JunkDefinition junk = null;
+            if (data != null)
+                data.TryGetJunk(session.Junk.Id, out junk);
+
+            _name.text = junk != null ? junk.DisplayName : session.Junk.Id;
+            _icon.sprite = junk != null ? junk.Icon : null;
+            _icon.enabled = _icon.sprite != null;
+            ShinyLook.Apply(_icon, null, 0);
+            if (_shiny != null)
+            {
+                _shiny.gameObject.SetActive(session.IsNewJunk);
+                _shiny.text = "Món mới!";
+                _shiny.color = _newJunkColor;
+            }
+            _rarity.text = "Đồ vớt được";
+            _rarity.color = _junkColor;
+            _weight.gameObject.SetActive(false);
+            if (_record != null)
+                _record.gameObject.SetActive(false);
+            if (_flavor != null)
+            {
+                _flavor.gameObject.SetActive(true);
+                _flavor.text = junk != null ? junk.FlavorText : "";
+            }
+            _price.text = UiFormat.JunkPrice(session.Price, session.JunkAutoSold);
+            _detail.text = "Mất mồi";
+            _root.SetActive(true);
+        }
+
         private void Close()
         {
             _root.SetActive(false);
+            if (_pendingMilestones > 0 && _toast != null)
+                _toast.Show(UiFormat.AlbumMilestoneToast(_pendingMilestones));
+            _pendingMilestones = 0;
         }
     }
 }

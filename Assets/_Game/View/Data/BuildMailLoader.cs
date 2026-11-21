@@ -28,11 +28,28 @@ namespace VeQue.View.Data
         }
 
         [Serializable]
-        private sealed class RewardRow
+        internal sealed class RewardRow
         {
             public string kind;
             public string id;
             public long amount;
+        }
+
+        // Dòng quà JSON → Reward (dùng chung với mốc album). owner chỉ để báo lỗi.
+        internal static List<Reward> ParseRewards(RewardRow[] rows, string fileName, string owner)
+        {
+            var rewards = new List<Reward>();
+            if (rows == null)
+                return rewards;
+            foreach (RewardRow r in rows)
+            {
+                if (r == null)
+                    continue;
+                if (!Enum.TryParse(r.kind, true, out RewardKind kind) || !Enum.IsDefined(typeof(RewardKind), kind))
+                    throw new FormatException($"{fileName}: '{owner}' có loại quà lạ '{r.kind}'.");
+                rewards.Add(new Reward(kind, string.IsNullOrEmpty(r.id) ? null : r.id, r.amount));
+            }
+            return rewards;
         }
 
         public static List<BuildMailDef> Load(TextAsset json)
@@ -49,18 +66,7 @@ namespace VeQue.View.Data
                     continue;
                 if (!GameCalendar.TryParseDate(row.start, out int start) || !GameCalendar.TryParseDate(row.end, out int end))
                     throw new FormatException($"{json.name}: thư '{row.id}' cần start / end dạng yyyy-MM-dd.");
-                var rewards = new List<Reward>();
-                if (row.rewards != null)
-                {
-                    foreach (RewardRow r in row.rewards)
-                    {
-                        if (r == null)
-                            continue;
-                        if (!Enum.TryParse(r.kind, true, out RewardKind kind) || !Enum.IsDefined(typeof(RewardKind), kind))
-                            throw new FormatException($"{json.name}: thư '{row.id}' có loại quà lạ '{r.kind}'.");
-                        rewards.Add(new Reward(kind, string.IsNullOrEmpty(r.id) ? null : r.id, r.amount));
-                    }
-                }
+                List<Reward> rewards = ParseRewards(row.rewards, json.name, row.id);
                 result.Add(new BuildMailDef(row.id, start, end, row.sender, row.title, row.body, rewards, row.expireDays));
             }
             return result;

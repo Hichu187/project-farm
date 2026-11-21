@@ -210,43 +210,8 @@ namespace VeQue.View.UI
             return parts.Count > 0 ? string.Join(", ", parts) : "Đã nhận quà";
         }
 
-        private string RewardLabel(Reward reward)
-        {
-            switch (reward.Kind)
-            {
-                case RewardKind.Coins: return $"{UiFormat.Coins(reward.Amount)} xu";
-                case RewardKind.Xp: return $"{reward.Amount} XP";
-                case RewardKind.Seeds: return $"{reward.Amount} hạt {CropName(reward.Id)}";
-                case RewardKind.Produce: return $"{reward.Amount} {CropName(reward.Id)}";
-                case RewardKind.Bait: return $"{reward.Amount} {BaitName(reward.Id)}";
-                default: return reward.Amount.ToString();
-            }
-        }
+        private string RewardLabel(Reward reward) => RewardDisplay.Label(_game, reward);
 
-        private Sprite RewardIcon(Reward reward)
-        {
-            switch (reward.Kind)
-            {
-                case RewardKind.Coins:
-                    return _coinIcon;
-                case RewardKind.Seeds:
-                    return _game.TryGetCrop(reward.Id, out CropDefinition seedCrop) ? seedCrop.SeedSprite : null;
-                case RewardKind.Produce:
-                    return _game.TryGetCrop(reward.Id, out CropDefinition crop) ? crop.ProduceIcon : null;
-                case RewardKind.Bait:
-                    FishingDefinition fishing = _game.Definition.Fishing;
-                    return fishing != null && fishing.TryGetBait(reward.Id, out BaitDefinition bait) ? bait.Icon : null;
-                default:
-                    return null;
-            }
-        }
-
-        private string CropName(string id) => _game.TryGetCrop(id, out CropDefinition crop) ? crop.DisplayName : id;
-
-        private string BaitName(string id)
-        {
-            FishingDefinition fishing = _game.Definition.Fishing;
-            return fishing != null && fishing.TryGetBait(id, out BaitDefinition bait) ? bait.DisplayName : id;
-        }
+        private Sprite RewardIcon(Reward reward) => RewardDisplay.Icon(_game, reward, _coinIcon);
     }
 }

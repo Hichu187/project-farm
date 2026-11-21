@@ -297,10 +297,10 @@ namespace VeQue.Tests
         // ---------- Save ----------
 
         [Test]
-        public void Save_CurrentVersionIs13()
+        public void Save_CurrentVersionIs16()
         {
-            Assert.AreEqual(13, SaveData.CurrentVersion);
-            Assert.AreEqual(13, SaveData.MinSupportedVersion);
+            Assert.AreEqual(16, SaveData.CurrentVersion);
+            Assert.AreEqual(16, SaveData.MinSupportedVersion);
         }
 
         [Test]

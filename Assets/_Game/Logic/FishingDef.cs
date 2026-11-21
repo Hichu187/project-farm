@@ -170,8 +170,11 @@ namespace VeQue.Logic
         public int RareBonusPercent { get; }
         // Cấp tối thiểu để mua (13/11/2026). Mồi đang có thì dùng được ở mọi cấp.
         public int UnlockLevel { get; }
+        // Tỉ lệ ra rác (%) trước hệ số kiểu ném (Đợt 2 Phần 5). 0 = không bao giờ dính rác.
+        public int JunkChancePercent { get; }
 
-        public BaitDef(string id, long price, int rareBonusPercent = 0, bool buyable = true, int unlockLevel = 1)
+        public BaitDef(string id, long price, int rareBonusPercent = 0, bool buyable = true, int unlockLevel = 1,
+            int junkChancePercent = 0)
         {
             if (string.IsNullOrEmpty(id))
                 throw new ArgumentException("Mồi cần id.", nameof(id));
@@ -179,8 +182,11 @@ namespace VeQue.Logic
                 throw new ArgumentOutOfRangeException(nameof(price));
             if (unlockLevel < 1)
                 throw new ArgumentOutOfRangeException(nameof(unlockLevel));
+            if (junkChancePercent < 0 || junkChancePercent > 100)
+                throw new ArgumentOutOfRangeException(nameof(junkChancePercent), $"Tỉ lệ rác của mồi '{id}' không hợp lệ.");
             Id = id;
             Price = price;
+            JunkChancePercent = junkChancePercent;
             Buyable = buyable;
             RareBonusPercent = rareBonusPercent;
             UnlockLevel = unlockLevel;
@@ -260,6 +266,24 @@ namespace VeQue.Logic
         public int ShinyCommonPriceMultiplier = 3;
         public int ShinyRarePriceMultiplier = 10;
 
+        // Câu rác (Đợt 2 Phần 5): tỉ lệ rác = BaitDef.JunkChancePercent × hệ số kiểu ném (Thường / hỏng 100%).
+        public int JunkGoodPercent = 60;
+        public int JunkPerfectPercent = 30;
+        // Kéo rác: JunkMinArrows..JunkMaxArrows mũi tên (không áp MinPullArrows), không có mũi đỏ, không trượt lưỡi.
+        public int JunkMinArrows = 2;
+        public int JunkMaxArrows = 3;
+        public float JunkPullSeconds = 3f;
+
+        // Tỉ lệ ra rác (phần vạn) với mồi và kiểu ném này.
+        public int JunkChancePer10000(BaitDef bait, CastQuality quality)
+        {
+            if (bait == null || bait.JunkChancePercent <= 0)
+                return 0;
+            int percent = quality == CastQuality.Perfect ? JunkPerfectPercent
+                : quality == CastQuality.Good ? JunkGoodPercent : 100;
+            return bait.JunkChancePercent * percent;
+        }
+
         public bool IsRareShiny(ShinyKind kind) => kind != ShinyKind.None && Array.IndexOf(ShinyRareKinds, kind) >= 0;
 
         // Hệ số giá: không shiny = 1.
@@ -296,6 +320,10 @@ namespace VeQue.Logic
                 throw new ArgumentException("Mức trừ độ bền không hợp lệ.");
             if (RepairPricePercent < 0 || LowDurabilityPercent < 0 || LowDurabilityPercent > 100)
                 throw new ArgumentException("Thông số sửa cần không hợp lệ.");
+            if (JunkGoodPercent < 0 || JunkPerfectPercent < 0 || JunkGoodPercent > 100 || JunkPerfectPercent > 100)
+                throw new ArgumentException("Hệ số rác theo kiểu ném không hợp lệ.");
+            if (JunkMinArrows < 1 || JunkMaxArrows < JunkMinArrows || JunkPullSeconds <= 0f)
+                throw new ArgumentException("Thông số kéo rác không hợp lệ.");
         }
 
         // Mỗi bậc có ít nhất 1 kiểu; không None, không kiểu lạ, không trùng trong bậc hay với bậc kia.
@@ -341,10 +369,15 @@ namespace VeQue.Logic
         private readonly Dictionary<string, FishDef> _fish = new Dictionary<string, FishDef>();
         private readonly Dictionary<string, RodDef> _rods = new Dictionary<string, RodDef>();
         private readonly Dictionary<string, BaitDef> _baits = new Dictionary<string, BaitDef>();
+        private readonly Dictionary<string, JunkDef> _junk = new Dictionary<string, JunkDef>();
 
         public IReadOnlyList<FishDef> Fish { get; }
         public IReadOnlyList<RodDef> Rods { get; }
         public IReadOnlyList<BaitDef> Baits { get; }
+        // Rác vớt được (Đợt 2 Phần 5); rỗng = không bao giờ ra rác.
+        public IReadOnlyList<JunkDef> Junk { get; }
+        // Mốc thưởng album (gửi qua hộp thư).
+        public IReadOnlyList<DexMilestoneDef> DexMilestones { get; }
         public int UnlockLevel { get; }
         // Tặng khi mở câu cá (1 lần).
         public string StarterRodId { get; }
@@ -368,11 +401,28 @@ namespace VeQue.Logic
             string starterRodId, string starterBaitId, int starterBaitCount, int unlockLevel = 1,
             int basketStartSlots = 8, IReadOnlyList<long> basketSlotPrices = null,
             string wormBaitId = null, int wormChancePercent = 0, int wormMin = 1, int wormMax = 1,
-            FishingTuning tuning = null)
+            FishingTuning tuning = null, IEnumerable<JunkDef> junk = null, IEnumerable<DexMilestoneDef> dexMilestones = null)
         {
             Fish = Index(fish, _fish, f => f.Id, "cá");
             Rods = Index(rods, _rods, r => r.Id, "cần");
             Baits = Index(baits, _baits, b => b.Id, "mồi");
+            Junk = Index(junk, _junk, j => j.Id, "rác");
+            foreach (JunkDef item in Junk)
+            {
+                if (_fish.ContainsKey(item.Id))
+                    throw new ArgumentException($"Id rác '{item.Id}' trùng id cá.");
+            }
+            var milestoneIds = new HashSet<string>();
+            var milestones = new List<DexMilestoneDef>();
+            foreach (DexMilestoneDef milestone in dexMilestones ?? Array.Empty<DexMilestoneDef>())
+            {
+                if (milestone == null)
+                    throw new ArgumentException("Có mốc album null.");
+                if (!milestoneIds.Add(milestone.Id))
+                    throw new ArgumentException($"Trùng id mốc album '{milestone.Id}'.");
+                milestones.Add(milestone);
+            }
+            DexMilestones = milestones.AsReadOnly();
 
             if (unlockLevel < 1)
                 throw new ArgumentOutOfRangeException(nameof(unlockLevel));
@@ -411,6 +461,7 @@ namespace VeQue.Logic
         public bool TryGetFish(string id, out FishDef fish) => TryGet(_fish, id, out fish);
         public bool TryGetRod(string id, out RodDef rod) => TryGet(_rods, id, out rod);
         public bool TryGetBait(string id, out BaitDef bait) => TryGet(_baits, id, out bait);
+        public bool TryGetJunk(string id, out JunkDef junk) => TryGet(_junk, id, out junk);
 
         private static bool TryGet<T>(Dictionary<string, T> map, string id, out T value) where T : class
         {

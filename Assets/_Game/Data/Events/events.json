@@ -1,0 +1,101 @@
+{
+  "_ghiChu": "Sự kiện theo ngày (Đợt 2 Phần 7). randomChancePercent: ngày không có sự kiện cố định có bấy nhiêu % ra 1 sự kiện ngẫu nhiên (chốt 33 – 22/11/2026). trigger.kind: Random | Solar (day/month dương) | Lunar (day/month âm, không tính tháng nhuận) | LunarMonthly (day âm mọi tháng); lengthDays = số ngày kéo dài. Sự kiện cố định chạy chồng, priority cao hiện trước. windows: khung giờ thật hiệu ứng có tác dụng (Dawn, Morning, Noon, Afternoon, Sunset, Evening, Night), bỏ trống = cả ngày. minLevel: dưới cấp này coi như ngày thường. effects.type: CropPriceMult, FishWeightMult, FishSizeMult (mult), GrowTimeMult (mult, chốt lúc gieo), AutoWater, YieldBonus (count, hours – chốt lúc gieo), OrderBonus (mult = xu, xpMult), ExtraOrder (count), UnlockCrop (id = cây eventOnly), MailReward (rewards như build_mails.json), Overlay (id). target: all | crop:<id> | group:LeafyGreen/Fruit/RootGrain | random:<số cây> | fish:<id> | rarity:Common/Uncommon/Rare/Epic/Legendary | npc:<id> | fishorders. Không đổi id đã phát hành (thư quà dùng id).",
+  "randomChancePercent": 33,
+  "events": [
+    {
+      "id": "mua_rao",
+      "title": "Mưa rào",
+      "loa": "Alô alô, hôm nay trời mưa rào! Bà con gieo hạt khỏi phải tưới, trê với lươn cũng ra ăn mồi nhiều đấy.",
+      "weight": 10,
+      "cooldownDays": 3,
+      "trigger": { "kind": "Random" },
+      "effects": [
+        { "type": "AutoWater" },
+        { "type": "FishWeightMult", "target": "fish:ca_tre", "mult": 2 },
+        { "type": "FishWeightMult", "target": "fish:luon", "mult": 2 },
+        { "type": "Overlay", "id": "mua" }
+      ]
+    },
+    {
+      "id": "nang_dep",
+      "title": "Nắng đẹp",
+      "loa": "Alô alô, hôm nay trời nắng đẹp, cây gieo hôm nay lớn nhanh hơn đấy bà con ơi!",
+      "weight": 10,
+      "cooldownDays": 3,
+      "trigger": { "kind": "Random" },
+      "effects": [
+        { "type": "GrowTimeMult", "mult": 0.9 }
+      ]
+    },
+    {
+      "id": "thuong_lai",
+      "title": "Thương lái về làng",
+      "loa": "Alô alô, có thương lái về làng thu mua, một loại nông sản hôm nay được giá lắm!",
+      "weight": 10,
+      "cooldownDays": 4,
+      "trigger": { "kind": "Random" },
+      "effects": [
+        { "type": "CropPriceMult", "target": "random:1", "mult": 1.5 }
+      ]
+    },
+    {
+      "id": "cho_phien",
+      "title": "Chợ phiên",
+      "loa": "Alô alô, hôm nay chợ phiên! Nông sản bán được giá hơn, làng cũng có thêm người đặt hàng.",
+      "weight": 10,
+      "cooldownDays": 4,
+      "trigger": { "kind": "Random" },
+      "effects": [
+        { "type": "CropPriceMult", "target": "all", "mult": 1.1 },
+        { "type": "ExtraOrder", "count": 1 }
+      ]
+    },
+    {
+      "id": "nuoc_len",
+      "title": "Nước lên",
+      "loa": "Alô alô, nước sông đang lên, cá về to lắm, ai mê câu thì ra bến ngay!",
+      "weight": 10,
+      "cooldownDays": 4,
+      "trigger": { "kind": "Random" },
+      "effects": [
+        { "type": "FishSizeMult", "target": "all", "mult": 1.2 }
+      ]
+    },
+    {
+      "id": "gio_mua",
+      "title": "Gió mùa",
+      "loa": "Alô alô, gió mùa về, sáng nay cá hiếm ăn mồi mạnh đấy bà con ơi!",
+      "weight": 10,
+      "cooldownDays": 4,
+      "trigger": { "kind": "Random" },
+      "windows": [ "Dawn", "Morning" ],
+      "effects": [
+        { "type": "FishWeightMult", "target": "rarity:Rare", "mult": 1.5 },
+        { "type": "FishWeightMult", "target": "rarity:Epic", "mult": 1.5 },
+        { "type": "FishWeightMult", "target": "rarity:Legendary", "mult": 1.5 }
+      ]
+    },
+    {
+      "id": "hoi_lang",
+      "title": "Hội làng",
+      "loa": "Alô alô, hôm nay làng mở hội! Giao hàng cho bà con thì được thêm nhiều kinh nghiệm lắm.",
+      "weight": 10,
+      "cooldownDays": 5,
+      "trigger": { "kind": "Random" },
+      "effects": [
+        { "type": "OrderBonus", "target": "all", "mult": 1, "xpMult": 1.5 }
+      ]
+    },
+    {
+      "id": "duoc_mua",
+      "title": "Ngày được mùa",
+      "loa": "Alô alô, hôm nay ngày được mùa! Cây gieo hôm nay mà lớn từ 4 tiếng trở lên thì thu thêm một phần.",
+      "weight": 10,
+      "cooldownDays": 5,
+      "trigger": { "kind": "Random" },
+      "effects": [
+        { "type": "YieldBonus", "count": 1, "hours": 4 }
+      ]
+    }
+  ]
+}

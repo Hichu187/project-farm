@@ -40,8 +40,13 @@ namespace VeQue.Logic
         public List<CaughtFish> Basket = new List<CaughtFish>();
         // Số ô giỏ đã mở (FishingDef.BasketStartSlots..BasketMaxSlots; Farm chuẩn hóa lúc nạp).
         public int BasketSlots;
-        // Kỷ lục cân nặng (gam) theo loài.
-        public Dictionary<string, int> RecordGrams = new Dictionary<string, int>();
+        // Album (Đợt 2 Phần 5): loài đã câu được → số lần, kỷ lục cân nặng, ngày đầu tiên.
+        public Dictionary<string, FishDexEntry> FishDex = new Dictionary<string, FishDexEntry>();
+        // Rác trong giỏ (chiếm ô giỏ cùng cá) và album "Đồ vớt được".
+        public List<CaughtJunk> JunkBasket = new List<CaughtJunk>();
+        public Dictionary<string, JunkDexEntry> JunkDex = new Dictionary<string, JunkDexEntry>();
+        // Vớt được rác thì bán ngay cho cô đồng nát, không vào giỏ.
+        public bool AutoSellJunk;
         // Đã tặng cần + mồi lúc mở câu cá.
         public bool StarterGranted;
         // Các cặp (loài, kiểu shiny) đã câu được, không trùng.
@@ -73,6 +78,12 @@ namespace VeQue.Logic
             return false;
         }
 
-        public int GetRecord(string fishId) => fishId != null && RecordGrams.TryGetValue(fishId, out int grams) ? grams : 0;
+        // Kỷ lục cân nặng (gam) của loài; 0 = chưa câu được.
+        public int GetRecord(string fishId) => fishId != null && FishDex.TryGetValue(fishId, out FishDexEntry entry) ? entry.MaxGrams : 0;
+
+        public bool HasCaught(string fishId) => fishId != null && FishDex.ContainsKey(fishId);
+
+        // Số ô giỏ đang dùng (cá + rác).
+        public int BasketUsed => Basket.Count + JunkBasket.Count;
     }
 }

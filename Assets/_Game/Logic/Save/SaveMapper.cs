@@ -30,6 +30,7 @@ namespace VeQue.Logic
                 deliveredToday = state.DeliveredToday,
                 lastSeenDayKey = state.LastSeenDayKey,
                 mailbox = ToSaveMailbox(state.Mailbox),
+                checkIn = ToSaveCheckIn(state.CheckIn),
                 fishing = ToSaveFishing(state.Fishing),
                 orderLines = ToSaveCounts(state.LastOrderLines),
                 lastThanks = state.LastThanksLine,
@@ -92,6 +93,7 @@ namespace VeQue.Logic
                 DeliveredToday = data.deliveredToday > 0 ? data.deliveredToday : 0,
                 LastSeenDayKey = data.lastSeenDayKey,
                 Mailbox = FromSaveMailbox(data.mailbox),
+                CheckIn = FromSaveCheckIn(data.checkIn),
                 Fishing = FromSaveFishing(data.fishing),
                 LastOrderLines = orderLines,
                 LastThanksLine = data.lastThanks >= 0 ? data.lastThanks : -1,
@@ -127,6 +129,27 @@ namespace VeQue.Logic
                 if (record != null)
                     shinyDex.Add(new SaveShiny { fishId = record.FishId, kind = (int)record.Kind, firstCaughtAt = record.FirstCaughtAt });
             }
+            // Album / rác: sắp theo id để file lưu ổn định.
+            var dex = new List<SaveDexFish>();
+            foreach (KeyValuePair<string, FishDexEntry> pair in fishing.FishDex)
+            {
+                if (pair.Value != null)
+                    dex.Add(new SaveDexFish { id = pair.Key, count = pair.Value.Count, maxGrams = pair.Value.MaxGrams, firstDay = pair.Value.FirstDayKey });
+            }
+            dex.Sort((a, b) => string.CompareOrdinal(a.id, b.id));
+            var junkDex = new List<SaveDexJunk>();
+            foreach (KeyValuePair<string, JunkDexEntry> pair in fishing.JunkDex)
+            {
+                if (pair.Value != null)
+                    junkDex.Add(new SaveDexJunk { id = pair.Key, count = pair.Value.Count, firstDay = pair.Value.FirstDayKey });
+            }
+            junkDex.Sort((a, b) => string.CompareOrdinal(a.id, b.id));
+            var junk = new List<SaveJunk>();
+            foreach (CaughtJunk item in fishing.JunkBasket)
+            {
+                if (item != null)
+                    junk.Add(new SaveJunk { id = item.JunkId, caughtAt = item.CaughtAt });
+            }
             return new SaveFishing
             {
                 rods = rods.ToArray(),
@@ -134,9 +157,12 @@ namespace VeQue.Logic
                 baits = ToSaveCounts(fishing.Baits),
                 basket = basket.ToArray(),
                 basketSlots = fishing.BasketSlots,
-                records = ToSaveCounts(fishing.RecordGrams),
                 starterGranted = fishing.StarterGranted,
                 shinyDex = shinyDex.ToArray(),
+                dex = dex.ToArray(),
+                junk = junk.ToArray(),
+                junkDex = junkDex.ToArray(),
+                autoSellJunk = fishing.AutoSellJunk,
             };
         }
 
@@ -187,13 +213,65 @@ namespace VeQue.Logic
                     fishing.ShinyDex.Add(new ShinyRecord { FishId = record.fishId, Kind = kind, FirstCaughtAt = record.firstCaughtAt });
                 }
             }
+            if (saved.dex != null)
+            {
+                foreach (SaveDexFish entry in saved.dex)
+                {
+                    if (entry == null || string.IsNullOrEmpty(entry.id) || entry.count <= 0 || entry.maxGrams <= 0)
+                        continue;
+                    fishing.FishDex[entry.id] = new FishDexEntry { Count = entry.count, MaxGrams = entry.maxGrams, FirstDayKey = entry.firstDay };
+                }
+            }
+            if (saved.junkDex != null)
+            {
+                foreach (SaveDexJunk entry in saved.junkDex)
+                {
+                    if (entry == null || string.IsNullOrEmpty(entry.id) || entry.count <= 0)
+                        continue;
+                    fishing.JunkDex[entry.id] = new JunkDexEntry { Count = entry.count, FirstDayKey = entry.firstDay };
+                }
+            }
+            if (saved.junk != null)
+            {
+                foreach (SaveJunk item in saved.junk)
+                {
+                    if (item != null && !string.IsNullOrEmpty(item.id))
+                        fishing.JunkBasket.Add(new CaughtJunk { JunkId = item.id, CaughtAt = item.caughtAt });
+                }
+            }
+            fishing.AutoSellJunk = saved.autoSellJunk;
             ReadCountsLenient(saved.baits, fishing.Baits);
-            ReadCountsLenient(saved.records, fishing.RecordGrams);
             fishing.EquippedRodId = string.IsNullOrEmpty(saved.equippedRod) ? null : saved.equippedRod;
             // Farm chuẩn hóa về khoảng hợp lệ của data hiện tại.
             fishing.BasketSlots = saved.basketSlots;
             fishing.StarterGranted = saved.starterGranted;
             return fishing;
+        }
+
+        private static SaveCheckIn ToSaveCheckIn(CheckInState state)
+        {
+            state = state ?? new CheckInState();
+            return new SaveCheckIn
+            {
+                nextDay = state.NextDay,
+                cycle = state.Cycle,
+                lastDay = state.LastClaimDayKey,
+                lastUtc = state.LastClaimUtc,
+            };
+        }
+
+        // Không có: chưa điểm danh lần nào. Ngày / vòng sai thì Farm chuẩn hóa lúc nạp.
+        private static CheckInState FromSaveCheckIn(SaveCheckIn saved)
+        {
+            if (saved == null)
+                return new CheckInState();
+            return new CheckInState
+            {
+                NextDay = saved.nextDay,
+                Cycle = saved.cycle,
+                LastClaimDayKey = saved.lastDay,
+                LastClaimUtc = saved.lastUtc,
+            };
         }
 
         private static SaveMailbox ToSaveMailbox(MailboxState box)
@@ -429,6 +507,8 @@ namespace VeQue.Logic
                     crop = plot.CropId,
                     plantedAt = plot.PlantedAt,
                     watered = plot.Watered,
+                    growSeconds = plot.GrowSeconds,
+                    bonusYield = plot.BonusYield,
                 });
             }
 
@@ -462,6 +542,9 @@ namespace VeQue.Logic
                 target.CropId = plot.crop;
                 target.PlantedAt = plot.plantedAt;
                 target.Watered = plot.watered;
+                // Chốt lúc gieo (Đợt 2 Phần 7); số âm coi như không có.
+                target.GrowSeconds = Math.Max(0L, plot.growSeconds);
+                target.BonusYield = Math.Max(0, plot.bonusYield);
             }
         }
 

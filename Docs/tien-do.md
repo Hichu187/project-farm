@@ -994,15 +994,157 @@ Kế hoạch: `Docs/ke-hoach-dot-2.md` Phần 4 (thứ tự 1); bảng cây: `Do
 - [ ] Tua thời gian qua 7 khung giờ, chụp màn hình, chỉnh màu trong `DayNightProfile`; 22h cây chín, icon tưới vẫn rõ; chạm đồng hồ đổi Đầy đủ / Nhẹ / Tắt.
 - [ ] FPS trên iPhone cũ / trình duyệt nhúng: để Phần 14.
 
+## Đợt 2 – Phần 5: Album cá + câu rác (XONG – người dùng kiểm tra 22/11/2026)
+### Quyết định (người dùng duyệt kiến trúc 21/11)
+- Nút Album dưới nút Thư, hiện ở cả nông trại và vùng câu (sau này thêm cây đột biến). Cô đồng nát chỉ trong lời thoại bán rác.
+- Rác là danh sách riêng `JunkBasket` (chiếm ô giỏ cùng cá) → code cá (giá, shiny, đơn cá) không đổi. Tung rác lúc tạo phiên bằng random riêng (salt khác shiny) → chuỗi chọn cá / lịch cắn không xê dịch.
+- Mốc album gửi thư id cố định (`SentIds` chặn gửi lại); kiểm tra sau mỗi con cá câu được (không kiểm lúc nạp).
+### Bước 1 – Logic + save + test (đã viết code – 21/11/2026)
+- `FishDex.cs` (mới): `FishDexEntry`, `JunkDexEntry`, `CaughtJunk`, `JunkDef` (id, giá, trọng số), `DexMilestoneDef` (SpeciesCount / RarityComplete + thư + quà).
+- `BaitDef.JunkChancePercent`; `FishingTuning`: `JunkGoodPercent` 60, `JunkPerfectPercent` 30, kéo rác 2–3 mũi tên (`JunkPullSeconds` 3), `JunkChancePer10000`. `FishingDef.Junk`, `DexMilestones`, `TryGetJunk`; id rác không trùng id cá. `FarmDef` kiểm quà mốc + id mốc không trùng thư build.
+- `FishingState`: `RecordGrams` → `FishDex`; thêm `JunkBasket`, `JunkDex`, `AutoSellJunk`, `BasketUsed`, `HasCaught`.
+- `FishingSession`: `Junk` / `IsJunk` (rác: không trượt lưỡi, không shiny, 0 XP, giá = giá rác), `IsNewJunk`, `JunkAutoSold`, `ReachedMilestones`; `RollJunk` public static.
+- `Farm`: `CompleteFishing` ghi album / rác / tự bán + gửi thư mốc; `DexSpeciesCount`, `IsDexMilestoneReached`, `SellJunk`, `SetAutoSellJunk`, `GetJunkPrice`; "Bán hết" gồm rác; giỏ đầy tính cả rác; chống kẹt tính cả rác; **đơn cá chỉ đặt loài đã có trong album**.
+- Save `version` 13 → **14**: `SaveFishing` bỏ `records`, thêm `dex`, `junk`, `junkDex`, `autoSellJunk`.
+- Test mới `DexJunkTests` (22): mồi 0% không ra rác (10.000 lượt × 4 kiểu ném), tỉ lệ khớp cấu hình (±1%), trọng số món, bật rác không đổi chuỗi cá, phiên rác (2–3 mũi, không trượt, không shiny, 0 XP), mất mồi, album rác, tự bán, rác chiếm ô giỏ, bán lẻ / bán hết, album cá (số lần, kỷ lục, ngày đầu), mốc chỉ gửi 1 lần (kể cả sau khi thư bị dọn và qua save), mốc đủ bậc hiếm, quà sai báo lỗi, save. `OrderDialogueTests` thêm `FishPool_OnlyCaughtSpecies`; test cũ cho album đủ loài. Sửa test kỷ lục, version 14.
+- Biên dịch Logic / View / Editor / Tests ngoài Unity: không lỗi. NUnit ngoài Unity (test không cần View): 384/385 – lỗi còn lại là `SmokeTests` kiểm tên assembly (chỉ đúng trong Unity).
+#### Người dùng kiểm tra
+- [x] Test Runner **Run All** trong Unity: không lỗi (21/11).
+### Bước 2 – Data + art tạm (đã viết code – 21/11/2026)
+- `JunkDefinition` (SO: id, tên, icon, giá, câu đùa, trọng số) → `JunkDef`. `BaitDefinition._junkChancePercent`. `FishDefinition._hint` (+ `Hint`, `Depths`, `PreferredBaits` cho album).
+- `FishingDefinition`: `_junk`, `_dexMilestones` (TextAsset) → `FishingDef`. `DexMilestoneLoader` đọc `Data/Fishing/dex_milestones.json`; `BuildMailLoader.ParseRewards` dùng chung.
+- `dex_milestones.json`: 9 mốc (5 / 10 / 15 / 20 loài; đủ Thường / Khá / Hiếm / Quý / Huyền thoại), người gửi "Ông Tư câu cá", quà nháp như kiến trúc.
+- `FishingDataGenerator`: tỉ lệ rác mồi (12 / 12 / 9 / 9 / 6 / 6 / 3 / 0 / 0 / 0); 20 gợi ý nháp (không nhắc giờ; chỉ điền khi trống); 7 rác ở `Data/Fishing/Junk/` (giá 2–3 xu, trọng số 10; hũ tiền xu cổ 150 xu, trọng số 2); gán file mốc.
+- Art tạm: `FishingPlaceholderArt.JunkSquare` – ô vuông màu 12×12 có viền ở `Art/Fishing/junk_tam/`. Gán art thật vào `JunkDefinition` thì chạy lại generator vẫn giữ.
+- Test data thật `ToDef_DefaultData_JunkAndDex`: tỉ lệ rác 10 mồi, 7 rác có icon / tên / câu đùa, hũ xu hiếm + đắt nhất, mốc đủ 5/10/15/20 + 5 bậc, gợi ý đủ 20 loài và không có từ chỉ giờ.
+- Biên dịch View / Editor / Tests ngoài Unity: không lỗi; JSON hợp lệ.
+#### Người dùng kiểm tra
+- [ ] Về Quê → Data → **Tạo data câu cá** (hoặc Tạo data mặc định) → Ctrl+S → Test Runner **Run All**.
+- [ ] Đọc / sửa gợi ý trong 20 asset cá (`_hint`), câu đùa rác, thư mốc trong `dex_milestones.json`.
+#### Người dùng kiểm tra
+- [x] Tạo data câu cá + Test Runner: không lỗi (21/11).
+### Art rác thật (21/11/2026, người dùng thêm 10 file `Art/Fishing/junk/junk_NN_<id>.png` 32×32)
+- Meta chép theo preset là Multiple, 1 ô 16×16 "Piknik basket_0" → chỉ hiện ¼ hình. Sửa bằng code (không sửa tay `.meta`): `FishingSpriteImporter` thêm `JunkFolder` (menu Import art → Sprite cá đưa về Single, PPU 32 như icon cá); `FishingDataGenerator` gán art theo `junk_NN_<id>.png` (gọi `EnsureSingleIcon`), chưa có art thì vẫn ô vuông tạm.
+- Thêm 3 món theo art: túi ni lông 1 xu, cành cây mục 1 xu, săm xe đạp 3 xu. **9 món thường cùng trọng số 10** (người dùng chốt), hũ tiền xu cổ vẫn hiếm (2). Asset hũ đổi `07_` → `10_` (giữ guid).
+- Test data thật: 10 món, icon 32×32 PPU 32, rác thường cùng trọng số.
+#### Người dùng kiểm tra
+- [ ] Về Quê → Data → **Tạo data câu cá** → Ctrl+S → Test Runner. Mở 1 asset rác: icon là cả hình, không phải ¼.
+### Bước 3 – UI Album (đã viết code, chờ kiểm tra – 21/11/2026, người dùng duyệt thiết kế)
+- `AlbumCell` (ô: icon + tên, nền theo độ hiếm; chưa có = bóng đen nhân màu sprite + "???"). `AlbumPanel` (BottomSheet): tab "Cá" (24 ô, cá xếp theo độ hiếm rồi thứ tự data) / "Đồ vớt được" (12 ô), dòng tiến độ ("7/20 loài · Mốc kế: 10 loài" / "Đã vớt 3/10 món"), chi tiết phủ dưới tiêu đề + Quay lại.
+  - Cá đã câu: tên, độ hiếm, độ sâu, mồi ưa thích, số lần, kỷ lục, ngày đầu. Chưa câu: "???", vẫn hiện độ hiếm + độ sâu, mồi "???", gợi ý chữ mờ. Rác đã vớt: giá cô đồng nát, số lần, ngày đầu, câu đùa; chưa vớt: "???".
+- `GameUI`: nút Album mở bảng (đóng các bảng khác), chuyển vùng đóng bảng. `UiBuilder`: nút Album cột trái hàng 3 (dưới Thư, cả hai vùng) + bảng Album.
+- `UiFormat`: `DepthList`, `DayKeyDate`, `AlbumProgress`, `JunkProgress` + test.
+- Biên dịch View / Editor / Tests ngoài Unity: không lỗi. NUnit ngoài Unity (Logic + UiFormat): 453/454 (còn `SmokeTests` chỉ đúng trong Unity).
+#### Người dùng kiểm tra
+- [ ] **Tạo UI** → Ctrl+S → Test Runner. Play: nút Album dưới Thư ở nông trại và vùng câu; 20 ô cá cuộn được, chưa câu = bóng đen; câu 1 con → ô sáng, tiến độ tăng, chi tiết đúng; tab rác 10 ô; chữ có dấu đủ glyph; chuyển vùng bảng tự đóng.
+### Bước 4 – UI rác (đã viết code, chờ kiểm tra – 21/11/2026)
+- `FishingController`: lượt rác không có bóng cá (`Shadow` = null khi `_junkCast`), hình bay lên là icon rác; `LastCastWasJunk` → chữ nổi hết giờ kéo "Rác trôi mất!" thay "Cá thoát!".
+- `CatchResultPanel`: rác hiện tên, hình, "Đồ vớt được", "Món mới!" (chỗ dòng shiny), câu đùa 2 dòng (nhãn `Flavor` mới, chỗ cân nặng + kỷ lục), giá hoặc "Đã bán +x xu", "Mất mồi". Đạt mốc album → toast "Album đạt mốc! Xem hộp thư" lúc bấm OK.
+- `BasketView` (dùng chung bảng Giỏ vùng câu + tab Giỏ cá trong Kho): ô rác sau ô cá (nền màu rác, chữ = giá); chi tiết rác: "Đồ vớt được · Cô đồng nát trả x xu", nút Bán (ẩn Thả); toast "Cô đồng nát trả +x xu"; số ô = cá + rác; "Bán hết N món"; nút **"Tự bán rác: Bật/Tắt"** ở hàng trên. `FishingHud`: số trên nút Giỏ tính cả rác.
+- `UiFormat`: `JunkPrice`, `AutoSellJunk`, `JunkSold`, `AlbumMilestoneToast`, `FishingOutcomeText(outcome, junk)` + test.
+- Biên dịch View / Editor / Tests ngoài Unity: không lỗi. NUnit ngoài Unity: 454/455 (còn `SmokeTests`).
+#### Người dùng kiểm tra
+- [ ] **Tạo UI** → Ctrl+S → Test Runner.
+- [ ] Play, câu bằng giun (12% rác; tạm đặt `junkChancePercent` của giun = 100 để thử nhanh, xong trả về 12): không có bóng cá, kéo 2–3 mũi tên, hình rác bay lên, bảng kết quả có câu đùa (≤ 2 dòng) + "Món mới!" lần đầu; giỏ có ô rác, bán được, không có Thả; "Tự bán rác: Bật" → vớt xong thấy "Đã bán +x xu", rác không vào giỏ; Bán hết gồm rác; để rác hết giờ kéo → "Rác trôi mất!".
+- [ ] Đạt mốc 5 loài (hoặc tạm sửa `count` trong `dex_milestones.json` = 1): bấm OK bảng kết quả → toast, hộp thư có thư Ông Tư, nhận quà được.
+### Còn lại
+- Phần 5 xong code sau khi người dùng kiểm tra Bước 3–4.
+
+## Đợt 2 – Phần 10: Điểm danh (XONG – người dùng kiểm tra 22/11/2026)
+### Quyết định (người dùng duyệt 21/11)
+- Chu kỳ 7 ngày cộng dồn; nhận khi DayKey > ngày nhận trước **và** ≥ 18 giờ thật; xét cùng nhịp RefreshMail (mở game, định kỳ, quay lại tab). Quà vào hộp thư, id `diem_danh_<vòng>_<ngày>`, hết hạn 7 ngày. Xu +10%/vòng, tối đa ×2; mồi / hạt / cần không đổi.
+- **Ngày 7: xu + 1 cần câu** (người dùng chốt; quà các ngày khác người dùng tự config sau). Loại quà mới `RewardKind.Rod` (= 5): chưa có cần → thêm đầy độ bền (chưa cầm cần nào thì cầm); đã có → sửa đầy, không thêm cây trùng; số lượng phải = 1.
+### Bước 1 – Logic + save + test (đã viết code – 21/11/2026)
+- `CheckIn.cs` (mới): `CheckInState` (NextDay, Cycle, LastClaimDayKey, LastClaimUtc), `CheckInResult`, `CheckInDef` (7 ngày quà, MinHoursBetween, CoinBonusPercentPerCycle, MaxCoinBonusPercent, Sender, TitleFormat / BodyFormat có {day} {days}, ExpireDays; `GetRewards(day, cycle)`, `MailId`).
+- `Farm.CheckIn.cs` (mới): `CanCheckIn`, `TryCheckIn()` (gửi thư, qua ngày, 7 → 1 + tăng vòng), event `CheckedIn`, `CheckInNextDay`, `CheckInCycle`; chuẩn hóa lúc nạp. Không tự điểm danh trong hàm dựng Farm (View gọi để popup kịp nghe event).
+- `FarmDef.CheckIn` (kiểm quà 7 ngày), `IsValidReward` cho Rod; `GrantRewards` cho Rod. `MailPanel` hiện tên + icon cần.
+- Save `version` 14 → **15**: `checkIn { nextDay, cycle, lastDay, lastUtc }`.
+- Test mới `CheckInTests` (14): lần đầu nhận ngày 1 + thư; cùng ngày không nhận lại; nhận 23h → 7h hôm sau chưa, 17h được; bỏ 3 ngày vẫn ngày kế; chỉnh giờ tiến 2 ngày chỉ 1 lần + chưa đủ 18 giờ thì chưa; lùi giờ không nhận; 15 lần liền id không trùng, qua 7 về 1, xu tăng theo vòng; giới hạn hệ số; ngày 7 tặng cần rồi vòng sau sửa đầy; tắt điểm danh; quà cần sai / số lượng ≠ 1 báo lỗi; sai số ngày báo lỗi; save giữ chuỗi + thời gian chờ; chuẩn hóa ngày sai. Sửa test version 15.
+- Biên dịch Logic / View / Editor / Tests ngoài Unity: không lỗi. NUnit ngoài Unity: 467/468 (còn `SmokeTests`).
+#### Người dùng kiểm tra
+- [x] Test Runner **Run All**: không lỗi (21/11).
+### Bước 2 – Data + giao diện (đã viết code, chờ kiểm tra – 21/11/2026)
+- `Data/Mail/check_in.json` (18 giờ, +10%/vòng tối đa 100%, hết hạn 7 ngày, người gửi "Trưởng thôn"; quà nháp 50 xu / 5 cám / 100 xu / 10 hạt rau muống / 5 dế / 150 xu / **300 xu + cần nứa**) – người dùng config lại. `CheckInLoader`; `FarmDefinition._checkIn`; `DefaultDataGenerator` gán file.
+- `GameBootstrap`: `TryCheckIn()` mỗi giây cùng nhịp RefreshMail (mở game, quay lại tab).
+- `CheckInPopup`: lịch 7 ô (hàng 4 + hàng 3), ô hôm nay sáng ("Hôm nay"), ô trước "Đã nhận" mờ, ô sau hiện quà ("Ngày N"); dòng phụ "Ngày N/7 · Quà đã gửi vào hộp thư"; nút "Mở hộp thư" (mở bảng Thư) + "Đóng". Nghe `Farm.CheckedIn`, chờ màn tạo nhân vật đóng mới hiện. `ShowCalendar()` xem lại (chưa nhận hôm nay thì ô kế tiếp = "Kế tiếp", dòng phụ "Mai ghé lại…").
+- Bảng Thư: nút **"Điểm danh"** trên thanh tiêu đề (trái "Nhận tất cả") mở lại lịch. Hiển thị quà tách ra `RewardDisplay` (dùng chung bảng Thư + popup).
+- `UiFormat.CheckInSubtitle`, `CheckInDayLabel` + test. Test data thật `ToDef_DefaultData_CheckIn` (bật, 18 giờ, ngày 7 có xu + cần).
+- Biên dịch View / Editor / Tests ngoài Unity: không lỗi. NUnit ngoài Unity: 468/469 (còn `SmokeTests`).
+#### Người dùng kiểm tra
+- [ ] **Tạo data mặc định** (gán check_in.json) → **Tạo UI** → Ctrl+S → Test Runner.
+- [ ] Play với save mới: tạo nhân vật xong thì popup hiện "Hôm nay" ở ô 1; "Mở hộp thư" → thư "Điểm danh ngày 1/7" có quà; Đóng / mở lại từ nút "Điểm danh" trong bảng Thư. Tua thời gian +1 ngày (≥ 18 giờ) → popup ngày 2. Tua tới ngày 7: thư có xu + icon cần nứa, nhận xong có cần trong bảng Cần.
+- [ ] Chữ có dấu đủ glyph, ô ngày 7 không tràn chữ; thanh tiêu đề bảng Thư không đè chữ "Hộp thư".
+### Đổi luồng: người chơi tự bấm Nhận (22/11/2026, người dùng duyệt)
+- Không tự điểm danh nữa (`GameBootstrap` bỏ `TryCheckIn`). `CheckInPopup` mỗi giây xét `Farm.CanCheckIn`: đủ điều kiện và hôm nay chưa tự mở → mở (chờ màn tạo nhân vật). Lịch 7 ô, ô hôm nay "Hôm nay", nút **"Nhận"** + **"Để sau"**.
+- Bấm Nhận: `TryCheckIn` gửi thư; ô chuyển "Đã nhận"; icon quà **bay cong từ ô hôm nay về nút Thư**, nút Thư nảy; nút đổi thành "Mở hộp thư" + "Đóng".
+- "Để sau": không tự mở lại trong ngày; `MailButton` cộng 1 vào chấm đỏ khi còn điểm danh chưa nhận (xét mỗi giây); nút "Điểm danh" trong bảng Thư mở lại (còn nút Nhận).
+- `UiFormat`: enum `CheckInView` (Ready / Claimed / Waiting) cho `CheckInSubtitle`, `CheckInDayLabel` + test. Luật điểm danh, save, test Logic không đổi.
+- **Nút "Điểm danh" ra HUD** (22/11, người dùng yêu cầu): cột trái hàng 4, dưới Album, cả hai vùng (`CheckInButton`: mở popup, chấm đỏ khi còn quà chưa nhận, xét mỗi giây). Bỏ nút trong bảng Thư; nút Thư bỏ phần +1 điểm danh. Icon quà vẫn bay về nút Thư (quà nằm trong hộp thư).
+- Biên dịch View / Editor / Tests ngoài Unity: không lỗi. NUnit ngoài Unity: 500/501 (còn `SmokeTests`).
+#### Người dùng kiểm tra
+- [ ] **Tạo UI** → Ctrl+S → Play save mới: tạo nhân vật xong popup mở, ô 1 "Hôm nay"; Nhận → icon bay về nút Thư, thư "Điểm danh ngày 1/7". Save mới / hôm sau bấm "Để sau" → không tự mở lại hôm đó, nút **Điểm danh** (HUD, dưới Album) có chấm đỏ, bấm vẫn nhận được. Tua +1 ngày → popup tự mở.
+### Còn lại
+- Người dùng config quà 7 ngày trong `check_in.json`.
+
+## Đợt 2 – Phần 7: Bộ máy sự kiện (XONG – người dùng kiểm tra 22/11/2026)
+### Quyết định (người dùng duyệt kiến trúc 21/11)
+- Sự kiện cố định (Solar / Lunar / LunarMonthly, có `lengthDays`) **chạy chồng**, ưu tiên cao hiện trước; ngày không có sự kiện cố định mới bốc ngẫu nhiên: **25%** có sự kiện (data), chọn theo trọng số, loại cooldown. Tính tuần tự từ DayKey 0 + nhớ → cùng ngày luôn cùng kết quả, không lưu gì.
+- `minLevel` không tham gia bốc (lịch giống mọi người); chưa đủ cấp = ngày thường. `windows` chỉ bật hiệu ứng trong khung giờ thật, sự kiện vẫn hiện cả ngày.
+- **OrderBonus tính lúc giao** (thẻ đơn hiện số đã nhân). **FishSizeMult được vượt cân tối đa** (phá kỷ lục), giá / XP theo cân giữ trần. Hiệu ứng nhân dồn.
+- Lớn nhanh / được mùa / tự tưới **chốt lúc gieo** (ô đất lưu `GrowSeconds`, `BonusYield`).
+### Bước 1 – Logic + save + test (đã viết code – 21/11/2026)
+- `Events.cs` (mới): `EventTrigger`, `EffectTarget` (all / crop: / group: / random:N / fish: / rarity: / npc: / fishorders), `EventEffect` (11 loại: CropPriceMult, FishWeightMult, FishSizeMult, GrowTimeMult, AutoWater, YieldBonus, OrderBonus, ExtraOrder, UnlockCrop, MailReward, Overlay), `EventDef`, `EventsDef`, `EventCalendar`.
+- `Farm.Events.cs` (mới): `TodayEvents` (lọc cấp, cache theo ngày + cấp), `GetSellPrice`, `GetCropPriceMult`, `GetFishWeightMult` / `SizeMult`, `GetGrowMultAtPlant`, `AutoWaterAtPlant`, `GetYieldBonusAtPlant`, `GetOrderReward`, `ExtraOrdersToday`, `IsCropEventUnlocked`, `GetOverlays`, `TryEventMail` (id `su_kien_<id>_<ngày>`, người gửi "Loa xã", hết hạn 7 ngày), `RandomCrops` (theo seed ngày + sự kiện, không lấy cây eventOnly).
+- `CropDef.EventOnly` (không vào đơn, quà lên cấp, cứu kẹt; mua hạt chỉ khi UnlockCrop đang chạy, hạt đã có vẫn gieo được). `FarmDef.Events` + kiểm hiệu ứng (cây / cá / quà có thật; UnlockCrop chỉ cây eventOnly).
+- `Farm`: Plant chốt thời gian lớn / sản lượng / tự tưới; Water / Harvest / GetStage / Remaining / IsRipe dùng thời gian đã chốt (`GetGrowSeconds`); Sell theo `GetSellPrice`; Deliver theo `GetOrderReward`; giới hạn đơn / ngày + ExtraOrder. `FishingSession` nhận hệ số trọng số (lúc ném) + cân nặng (lúc câu được).
+- View: Kho hiện / bán theo giá có sự kiện; thẻ đơn + log giao đơn hiện thưởng đã nhân; thanh tiến độ cây theo thời gian đã chốt; `GameBootstrap` gọi `TryEventMail` mỗi giây.
+- Save `version` 15 → **16**: `SavePlot.growSeconds`, `bonusYield`.
+- Test mới `EventTests` (32): cùng ngày cùng kết quả (hỏi xuôi / ngược), cooldown 1000 ngày, tỉ lệ 25% (±3%), cố định thắng ngẫu nhiên + chạy chồng + ưu tiên, trigger âm (Tết 2027 3 ngày, 23 tháng Chạp, Rằm hằng tháng), minLevel, windows, giá (nhóm / cây / nhân dồn / bán), thương lái 1 cây giống nhau mọi người, chốt lúc gieo qua hết sự kiện + save, tự tưới, được mùa chỉ cây dài, OrderBonus theo người, ExtraOrder, cây sự kiện chỉ mua khi có sự kiện + vẫn lớn sau đó, thư quà 1 lần / ngày, trọng số cá, cá vượt cân + giá trần, kiểm data, parse đối tượng. Sửa test version 16.
+- Biên dịch Logic / View / Editor / Tests ngoài Unity: không lỗi. NUnit ngoài Unity: 500/501 (còn `SmokeTests`).
+#### Người dùng kiểm tra
+- [x] Test Runner **Run All**: không lỗi (21/11, sau khi chạy lại Tạo data mặc định cho check_in.json).
+### Bước 2 – Data (đã viết code – 21/11/2026)
+- `Data/Events/events.json`: 25% (**22/11 đổi 33%**, người dùng chốt), 8 sự kiện ngẫu nhiên (trọng số 10, cooldown 3–5 ngày, loa xã giọng Bắc): Mưa rào (tự tưới, trê / lươn ×2, overlay "mua"), Nắng đẹp (lớn ×0,9), Thương lái (1 cây ×1,5), Chợ phiên (giá ×1,1 + 1 đơn), Nước lên (cá ×1,2 cân), Gió mùa (Bình minh + Sáng: Hiếm / Quý / Huyền thoại ×1,5), Hội làng (XP đơn ×1,5), Ngày được mùa (+1 cho cây ≥ 4 giờ). Ghi chú cách viết ở đầu file.
+- `EventsLoader` (dòng hiệu ứng phẳng → `EventEffect`, lỗi báo kèm id sự kiện); `FarmDefinition._events`; `DefaultDataGenerator` gán file. `CropDefinition._eventOnly` (chưa có cây nào bật – Phần 8 thêm hoa cúc, hướng dương).
+- Test data thật `ToDef_DefaultData_Events`: 25%, đủ 8 id, có tên / loa / hiệu ứng; năm 2027 cả 8 đều ra, tỉ lệ ngày có sự kiện ≈ 25% (±6%).
+### Bước 3 – Công cụ Editor (đã viết code – 21/11/2026)
+- Menu **Về Quê → Data → Sự kiện: xem lịch** (`EventCalendarWindow`): nhập ngày (nút Hôm nay theo giờ VN) → sự kiện + ngày âm + loa + từng hiệu ứng; bảng 60 ngày tới; phân bố 60 / 365 ngày; nút Nạp lại data (sửa events.json xong bấm lại).
+- Biên dịch View / Editor / Tests ngoài Unity: không lỗi.
+#### Người dùng kiểm tra
+- [ ] **Tạo data mặc định** (gán events.json) → Ctrl+S → Test Runner.
+- [ ] Mở **Sự kiện: xem lịch**: xem 60 ngày tới, phân bố ~25% ngày có sự kiện, không sự kiện nào lặp trong cooldown; thử ngày 06/02/2027 thấy âm 1/1.
+- [ ] Play vào ngày có sự kiện (Tua thời gian tới ngày tool báo): Kho thấy giá đổi (Thương lái / Chợ phiên); gieo ngày Mưa rào thấy tự tưới; Hội làng thẻ đơn XP ×1,5.
+### Còn lại
+- Phần 8: nội dung mùng 1 / Rằm, loa xã, icon sự kiện HUD, cây eventOnly (hoa cúc, hướng dương).
+
+## Đợt 2 – Phần 9: Giá chợ theo ngày (XONG – người dùng kiểm tra 22/11/2026)
+### Quyết định (người dùng duyệt 22/11)
+- Giá bán = gốc × hệ số ngày (0,85–1,15 theo seed ngày; 1 cây hút hàng ×1,4 + 1 cây rớt giá ×0,7, khác nhau, không lấy cây eventOnly) × trong ngày (rau lá: Bình minh + Sáng +10%, Khuya −10%) × sự kiện. Đơn hàng theo giá gốc. Không lưu gì (tính lại từ seed).
+- **Bỏ nút "Giữ lại"** (người dùng chốt): "Bán hết" mỗi dòng tự giữ phần đang cần cho đơn. Hiện % thay mũi tên ↑↓ (font pixel có thể thiếu glyph).
+### Đã làm
+- Logic: `Market.cs` (`MarketDef`, `MarketService`: hệ số ngày cache 1 ngày, hút hàng / rớt giá, trong ngày, giá ngày); `Farm.Market.cs` (`Market`, `TodayHotCrop` / `ColdCrop`, `GetPriceChangePercent`, `GetPriceHistory`, `GetReservedForOrders`, `GetSellableCount`); `Farm.GetSellPrice` nhân giá chợ; `FarmDef.Market` (None = giá gốc – test cũ không đổi).
+- Data: `FarmDefinition` mục "Giá chợ" (bật, min / max, hot / cold, ±% rau lá); `DefaultDataGenerator` ghi số mặc định.
+- Kho: tên kèm nhãn "Hút hàng" / "Rớt giá"; dòng "x5 · 12 xu/cái +8%" (xanh / đỏ); chạm icon → `PriceChartPopup` (7 cột giá ngày, số trên cột, thứ dưới cột, cột hôm nay xanh, nhãn + % hôm qua); "Bán hết" bán phần dư, toast "+84 xu · giữ 3 cho đơn" hoặc "Đang giữ 3 cho đơn hàng". `CropRow`: `IconButton`, `SetName`.
+- `UiFormat`: `PriceChange`, `MarketTag`, `StorageInfo`, `SoldKeeping`, `KeptForOrders`, `PriceChartTitle`, `WeekdayShort` + test.
+- Test mới `MarketTests` (12): trung bình hệ số ngày 365 ngày ≈ 1 (±0,02) và trong biên độ; mỗi ngày đúng 1 hút hàng + 1 rớt giá khác nhau, không cây sự kiện, cây nào cũng có ngày hút hàng; cùng ngày cùng giá (hỏi xuôi / ngược); rau lá đổi theo giờ, quả không; không phụ thuộc múi giờ máy (đổi ngày đúng 0h VN); sự kiện nhân dồn; Bán theo giá chợ; tắt = giá gốc; lịch sử 7 ngày + % hôm qua; đơn theo giá gốc; "Bán hết" giữ phần cho đơn. Test data thật `ToDef_DefaultData_Market`.
+- Biên dịch Logic / View / Editor / Tests ngoài Unity: không lỗi. NUnit ngoài Unity: 513/514 (còn `SmokeTests`).
+#### Người dùng kiểm tra
+- [ ] **Tạo data mặc định** → **Tạo UI** → Ctrl+S → Test Runner.
+- [ ] Play: Kho thấy giá + % (màu), 1 cây "Hút hàng", 1 cây "Rớt giá" (nếu đang có 2 cây đó); chạm icon → biểu đồ 7 ngày; Tua thời gian sang hôm sau giá đổi; rau lá buổi sáng đắt hơn buổi chiều. Có đơn cần cây X: "Bán hết" X còn giữ đúng số cho đơn.
+- [ ] Chữ có dấu, "Hút hàng" không tràn dòng tên; số trên cột biểu đồ không đè nhau.
+
 ## Sắp xếp menu Về Quê trong Editor (21/11/2026, chờ kiểm tra)
 - Chia menu thành nhóm có vạch ngăn: Tua thời gian, Xóa save ở trên cùng; menu con **Dựng scene** (Tạo map, Tạo UI, Ngày đêm, Khung chọn, Vùng câu tạm), **Data** (data mặc định, data câu cá), **Import art** (tileset, UI 9-slice, nhân vật, sprite cá, art câu cá tạm, font), **Cá shiny** (tạo material, đánh dấu trắng mắt, xem thử).
 - Chỉ đổi đường dẫn và `priority`, không đổi logic. Giữ lại mọi tool (người dùng chốt). Sửa luôn các thông báo / tooltip nhắc tên menu cũ.
 - "Xóa save" bị mờ khi đang Play; "Cá shiny → Xem thử" chỉ bật khi đang Play.
 
-## Nước pixel ở vùng câu (21/11/2026, chờ kiểm tra)
-- Shader `VeQue/PixelWater` (`Assets/_Game/Art/Shaders/PixelWater.shader`, Built-in): giữ tile nước gốc, thêm 2 lớp noise trôi ngược chiều (`PixelWaterNoise.png` 32×32), snap theo PPU 16, thời gian chia bậc 8 FPS, 3 bậc màu cứng (tối = nhân màu gốc, sáng = phủ màu gợn). Không GrabPass, không đổi UV tile → an toàn với Sprite Atlas; WorldLight vẫn nhân đè lên.
-- Menu **Về Quê → Dựng scene → Nước pixel (vùng câu)** (`PixelWaterSetup.cs`): đặt import noise (Repeat, Point, không nén, không mipmap, không sRGB), tạo `Assets/_Game/Art/PixelWater.mat`, gán cho TilemapRenderer `FishingWater`. `FishingRegionBuilder` gọi lại nên dựng lại vùng câu vẫn giữ nước pixel.
-- Kiểm tra: gợn khớp lưới pixel ở mọi bậc zoom, không đường nối giữa tile; ban đêm vẫn tối theo WorldLight; build WebGL thử trên điện thoại ~10 phút (không đứng / rung); so Build Report (thêm ~3 KB).
+## Nước pixel ở vùng câu (21/11/2026, người dùng xác nhận ổn)
+- Shader `VeQue/PixelWater` (`Assets/_Game/Art/Shaders/PixelWater.shader`, Built-in, target 3.0): port "2D Pixel Art Water" của jess::codes (MIT, github.com/jess-hammer/2d-pixel-water-shader). Gồm: màu nước + 3 bậc độ sâu theo khoảng cách tới bờ; lưới caustic (`PixelWaterCaustic.png` 128², R lưới / G điểm sáng, Point) bị noise làm méo; mờ theo mảng; lấp lánh (2 noise overlay, chỉ trên caustic); sóng bọt chạy vào bờ + viền bờ 1 px. `PixelWaterNoise.png` 128² RGB (R méo, G mờ, B lấp lánh, Bilinear). Mọi phép tính theo tâm pixel thế giới (PPU 16). 9 lần đọc texture / pixel, không GrabPass. Màu mặc định `_WaterColor`; bật `Use Tile Color` để dùng màu tile Sunnyside.
+- Menu **Về Quê → Dựng scene → Nước pixel (vùng câu)** (`PixelWaterSetup.cs`): đặt import 2 texture (Repeat, không nén, không mipmap, không sRGB), bake khoảng cách tới bờ từ Tilemap `FishingWater` (8 texel/ô, R8, ~20 KB → `PixelWaterShore_Fishing.asset`; bờ = ô có tile ở Tilemap khác cùng Grid, ô trống coi như nước), tạo/cập nhật `PixelWater.mat` và gán cho `FishingWater`. `FishingRegionBuilder` gọi lại sau `PaintRegion`. Đổi hình hồ → chạy lại menu.
+- Preview đã kiểm bằng bản dựng Python cùng thuật toán; chưa chạy trong Unity.
+- Kiểm tra: shader compile không lỗi (WebGL 2); gợn khớp lưới pixel ở 2 bậc zoom; bọt bám đúng bờ + 3 bến; ban đêm vẫn tối theo WorldLight; bóng cá vẫn rõ; điện thoại thật ~10 phút; Build Report (+~120 KB chưa nén).
+- **Sóng phao** (duyệt 21/11, chờ kiểm tra): bước 6 trong shader vẽ tối đa 2 vòng elip pixel (dẹt 2:1) tỏa từ phao, mờ 3 bậc, tự cắt ở mép nước; không đọc thêm texture. Tâm/tuổi/độ mạnh là biến global `_BobberRipplePos` / `_BobberRippleRings` (không khai báo trong Properties) do `BobberRipple.cs` (trên GameObject phao) gửi mỗi frame. Nhịp: chạm nước 1 vòng mạnh; chờ vòng nhạt mỗi 1,6 s; rỉa 1 vòng 0,7; cắn + kéo vòng 0,8 mỗi 0,45 s; bấm sai 1 vòng mạnh; phao ẩn → tắt. `FishingController` tự thêm component nếu thiếu; `UiBuilder` cũng thêm khi Tạo UI. Chỉnh màu/tốc độ/bán kính ở `PixelWater.mat` (mục Bobber ripple). Người dùng xác nhận ổn 21/11.
+- **Dời bảng kéo cá** (duyệt 21/11, chờ kiểm tra): thanh thời gian + chuỗi mũi tên + "Sẵn sàng..." neo giữa màn hình, cao hơn tâm `PullRowOffsetY` = 90 (trên đầu nhân vật) thay vì cách đáy 290 → không che phao / bóng cá. Chữ thập giữ ở góc dưới. Cần chạy lại **Tạo UI**.
 
 ## Việc đang chờ người dùng (13/11/2026)
 1. **Tạo data câu cá** (cấp mồi, giá ô giỏ, mũi tên tối thiểu 4) → **Câu cá: tạo art tạm** (ổ khóa) nếu chưa chạy → **Tạo UI** → Ctrl+S → Test Runner (dự kiến 451, sửa được test đỏ `FarmDefinitionTests`).

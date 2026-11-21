@@ -19,3 +19,4 @@ MonoBehaviour:
   _buyable: 1
   _rareBonusPercent: 0
   _unlockLevel: 2
+  _junkChancePercent: 9

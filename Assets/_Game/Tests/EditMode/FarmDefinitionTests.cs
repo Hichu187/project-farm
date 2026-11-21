@@ -298,6 +298,152 @@ namespace VeQue.Tests
             Assert.AreEqual(10, fishing.WormChancePercent);
         }
 
+        // Đợt 2 Phần 5: tỉ lệ rác theo mồi (thiet-ke-dot-2 mục 3), 7 món rác, mốc album, gợi ý cá không nhắc giờ.
+        [Test]
+        public void ToDef_DefaultData_JunkAndDex()
+        {
+            FarmDefinition asset = LoadAsset();
+            FishingDef fishing = asset.ToDef().Fishing;
+
+            var junkChance = new System.Collections.Generic.Dictionary<string, int>
+            {
+                { "giun", 12 }, { "cam", 12 }, { "moi_ruoi", 9 }, { "moi_tep", 9 }, { "moi_de", 6 }, { "moi_nhai", 6 },
+                { "moi_gia", 3 }, { "moi_thom", 0 }, { "moi_nhai_hoi", 0 }, { "moi_thia_vang", 0 },
+            };
+            foreach (var pair in junkChance)
+            {
+                Assert.IsTrue(fishing.TryGetBait(pair.Key, out BaitDef bait), pair.Key);
+                Assert.AreEqual(pair.Value, bait.JunkChancePercent, pair.Key);
+            }
+
+            // 21/11/2026: 10 món theo art người dùng (9 thường cùng trọng số + hũ tiền xu cổ hiếm).
+            Assert.AreEqual(10, fishing.Junk.Count, "Chạy Về Quê → Data → Tạo data câu cá.");
+            Assert.IsTrue(fishing.TryGetJunk("hu_tien_co", out JunkDef jar));
+            int commonWeight = -1;
+            foreach (JunkDef junk in fishing.Junk)
+            {
+                Assert.IsTrue(asset.Fishing.TryGetJunk(junk.Id, out JunkDefinition view), junk.Id);
+                Assert.IsNotNull(view.Icon, junk.Id);
+                // Art thật 32×32, import Single (cả hình, không phải 1 ô 16×16 cắt nhầm), PPU 32 như icon cá.
+                Assert.AreEqual(32f, view.Icon.rect.width, junk.Id);
+                Assert.AreEqual(32f, view.Icon.rect.height, junk.Id);
+                Assert.AreEqual(32f, view.Icon.pixelsPerUnit, junk.Id);
+                Assert.IsFalse(string.IsNullOrEmpty(view.DisplayName), junk.Id);
+                Assert.IsFalse(string.IsNullOrEmpty(view.FlavorText), junk.Id);
+                if (junk == jar)
+                    continue;
+                if (commonWeight < 0)
+                    commonWeight = junk.Weight;
+                Assert.AreEqual(commonWeight, junk.Weight, $"Rác thường cùng trọng số: {junk.Id}");
+                // Hũ tiền xu cổ hiếm hơn và đắt hơn mọi món rác thường.
+                Assert.Greater(junk.Weight, jar.Weight, junk.Id);
+                Assert.Less(junk.SellPrice, jar.SellPrice, junk.Id);
+            }
+
+            // Mốc 5 / 10 / 15 / 20 loài + đủ từng bậc độ hiếm; quà hợp lệ đã được FarmDef kiểm lúc ToDef.
+            var species = new System.Collections.Generic.List<int>();
+            var rarities = new System.Collections.Generic.List<FishRarity>();
+            foreach (DexMilestoneDef m in fishing.DexMilestones)
+            {
+                if (m.Kind == DexMilestoneKind.SpeciesCount)
+                    species.Add(m.Count);
+                else
+                    rarities.Add(m.Rarity);
+                Assert.IsFalse(string.IsNullOrEmpty(m.Title), m.Id);
+                Assert.Greater(m.Rewards.Count, 0, m.Id);
+            }
+            CollectionAssert.AreEqual(new[] { 5, 10, 15, 20 }, species);
+            CollectionAssert.AreEquivalent(new[] { FishRarity.Common, FishRarity.Uncommon, FishRarity.Rare, FishRarity.Epic, FishRarity.Legendary },
+                rarities);
+
+            // Gợi ý: có cho mọi loài, không nhắc giờ (giờ ra cá chỉ dev biết – chốt 21/11).
+            string[] timeWords = { "giờ", "sáng", "trưa", "chiều", "tối", "đêm", "khuya", "bình minh", "hoàng hôn", "ban ngày" };
+            foreach (FishDefinition fish in asset.Fishing.Fish)
+            {
+                Assert.IsFalse(string.IsNullOrEmpty(fish.Hint), fish.Id);
+                string hint = fish.Hint.ToLowerInvariant();
+                foreach (string word in timeWords)
+                    Assert.IsFalse(hint.Contains(word), $"Gợi ý '{fish.Id}' nhắc giờ: \"{word}\"");
+            }
+        }
+
+        // Đợt 2 Phần 10: điểm danh 7 ngày, ngày 7 = xu + 1 cần (quà đã được FarmDef kiểm hợp lệ lúc ToDef).
+        [Test]
+        public void ToDef_DefaultData_CheckIn()
+        {
+            CheckInDef checkIn = LoadAsset().ToDef().CheckIn;
+            Assert.IsTrue(checkIn.IsEnabled, "Chạy Về Quê → Tạo data mặc định (gán check_in.json).");
+            Assert.AreEqual(18, checkIn.MinHoursBetween);
+            bool coins = false, rod = false;
+            foreach (Reward reward in checkIn.GetBaseRewards(7))
+            {
+                coins |= reward.Kind == RewardKind.Coins;
+                rod |= reward.Kind == RewardKind.Rod;
+            }
+            Assert.IsTrue(coins && rod, "Ngày 7: xu + 1 cần câu");
+            StringAssert.Contains("{day}", checkIn.TitleFormat);
+        }
+
+        // Đợt 2 Phần 7: 8 sự kiện ngẫu nhiên ban đầu (thiết kế mục 4), 33% (22/11); hiệu ứng đã được FarmDef kiểm lúc ToDef.
+        [Test]
+        public void ToDef_DefaultData_Events()
+        {
+            FarmDef def = LoadAsset().ToDef();
+            EventsDef events = def.Events;
+            Assert.AreEqual(33, events.RandomChancePercent, "Chạy Về Quê → Tạo data mặc định (gán events.json).");
+            var ids = new System.Collections.Generic.List<string>();
+            foreach (EventDef e in events.Events)
+            {
+                if (e.Trigger.Kind == EventTriggerKind.Random)
+                    ids.Add(e.Id);
+                Assert.IsFalse(string.IsNullOrEmpty(e.Title), e.Id);
+                Assert.IsFalse(string.IsNullOrEmpty(e.LoaText), e.Id);
+                Assert.Greater(e.Effects.Count, 0, e.Id);
+            }
+            CollectionAssert.AreEquivalent(
+                new[] { "mua_rao", "nang_dep", "thuong_lai", "cho_phien", "nuoc_len", "gio_mua", "hoi_lang", "duoc_mua" }, ids);
+
+            // Một năm: mọi sự kiện đều ra, tổng số ngày có sự kiện ngẫu nhiên quanh 33%.
+            var calendar = new EventCalendar(events, def.Lunar);
+            var seen = new System.Collections.Generic.HashSet<string>();
+            int randomDays = 0, plainDays = 0;
+            for (int d = GameCalendar.DayKeyFromDate(2027, 1, 1); d < GameCalendar.DayKeyFromDate(2028, 1, 1); d++)
+            {
+                if (calendar.HasFixed(d))
+                    continue;
+                plainDays++;
+                foreach (EventDef e in calendar.GetEvents(d))
+                {
+                    seen.Add(e.Id);
+                    randomDays++;
+                }
+            }
+            CollectionAssert.AreEquivalent(ids, seen);
+            Assert.AreEqual(0.33, randomDays / (double)plainDays, 0.06);
+        }
+
+        // Đợt 2 Phần 9: giá chợ theo thiết kế mục 6 (0,85–1,15; hút hàng ×1,4; rớt giá ×0,7; rau lá ±10%).
+        [Test]
+        public void ToDef_DefaultData_Market()
+        {
+            FarmDef def = LoadAsset().ToDef();
+            MarketDef market = def.Market;
+            Assert.IsTrue(market.IsEnabled, "Chạy Về Quê → Tạo data mặc định.");
+            Assert.AreEqual(0.85f, market.DailyMin, 1e-5);
+            Assert.AreEqual(1.15f, market.DailyMax, 1e-5);
+            Assert.AreEqual(1.4f, market.HotMult, 1e-5);
+            Assert.AreEqual(0.7f, market.ColdMult, 1e-5);
+            Assert.AreEqual(10, market.LeafyMorningPercent);
+            Assert.AreEqual(10, market.LeafyNightPercent);
+            // Mỗi ngày trong 1 năm: đúng 1 cây hút hàng, 1 cây rớt giá, khác nhau.
+            var service = new MarketService(market, def.Crops);
+            for (int d = 0; d < 365; d++)
+            {
+                Assert.IsNotNull(service.GetHotCrop(d));
+                Assert.AreNotEqual(service.GetHotCrop(d), service.GetColdCrop(d));
+            }
+        }
+
         [Test]
         public void ToDef_DefaultData_NewFarmGetsStarterRodAndWorms()
         {
@@ -478,7 +624,11 @@ namespace VeQue.Tests
             FarmDefinition asset = LoadAsset();
             FarmDef def = asset.ToDef();
             OrderDialogue dialogue = def.Orders.Dialogue;
-            var farm = new Farm(def, FarmState.CreateNew(def), new FakeClock());
+            // Đơn cá chỉ đặt loài trong album (Phần 5): cho album đủ loài để xét mọi tên cá.
+            FarmState fullDex = FarmState.CreateNew(def);
+            foreach (FishDef fish in def.Fishing.Fish)
+                fullDex.Fishing.FishDex[fish.Id] = new FishDexEntry { Count = 1, MaxGrams = fish.MinGrams };
+            var farm = new Farm(def, fullDex, new FakeClock());
             var fishNames = new System.Collections.Generic.List<string>();
             foreach (FishDef fish in farm.GetFishOrderPool())
             {

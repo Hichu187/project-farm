@@ -69,6 +69,8 @@ MonoBehaviour:
   _npcPortraits: []
   _lunarTable: {fileID: 4900000, guid: 9308ea92269b65b4fb267636c7ade9bc, type: 3}
   _buildMails: {fileID: 4900000, guid: 7faa121ea96c1cd4e9003d7ec9ba7c49, type: 3}
+  _checkIn: {fileID: 4900000, guid: bc13457a72e4f9b469f97e4ec7ec2a06, type: 3}
+  _events: {fileID: 4900000, guid: 3ecd7dc59d12d35409e82268606ac7f2, type: 3}
   _fishOrderMinPercent: 10
   _fishOrderMaxPercent: 20
   _fishOrderMaxRarity: 1

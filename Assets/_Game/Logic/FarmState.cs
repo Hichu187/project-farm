@@ -27,6 +27,8 @@ namespace VeQue.Logic
         public int LastSeenDayKey = int.MinValue;
         // Hộp thư (Đợt 2 Phần 3).
         public MailboxState Mailbox = new MailboxState();
+        // Điểm danh 7 ngày (Đợt 2 Phần 10).
+        public CheckInState CheckIn = new CheckInState();
         // Trạng thái SeededRandom; 0 = chưa có, Farm tự gieo từ đồng hồ.
         public uint RandomState;
         // Tên + ngoại hình nhân vật (màn tạo nhân vật).

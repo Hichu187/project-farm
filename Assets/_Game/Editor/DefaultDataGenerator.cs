@@ -51,6 +51,8 @@ namespace VeQue.EditorTools
         private const string LunarTablePath = DataFolder + "/Calendar/lunar_2026_2040.json";
         // Thư theo build (Đợt 2 Phần 3).
         private const string BuildMailsPath = DataFolder + "/Mail/build_mails.json";
+        private const string CheckInPath = DataFolder + "/Mail/check_in.json";
+        private const string EventsPath = DataFolder + "/Events/events.json";
         // Đơn cá: 10% ở cấp mở câu cá, +1%/cấp, tối đa 20% (chốt 20/11/2026).
         private const int FishOrderMinPercent = 10;
         private const int FishOrderMaxPercent = 20;
@@ -279,6 +281,16 @@ namespace VeQue.EditorTools
             farmSo.FindProperty("_fishOrderMaxPercent").intValue = FishOrderMaxPercent;
             farmSo.FindProperty("_lunarTable").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TextAsset>(LunarTablePath);
             farmSo.FindProperty("_buildMails").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TextAsset>(BuildMailsPath);
+            farmSo.FindProperty("_checkIn").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TextAsset>(CheckInPath);
+            farmSo.FindProperty("_events").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TextAsset>(EventsPath);
+            // Giá chợ (Đợt 2 Phần 9, duyệt 22/11/2026).
+            farmSo.FindProperty("_marketEnabled").boolValue = true;
+            farmSo.FindProperty("_marketDailyMin").floatValue = 0.85f;
+            farmSo.FindProperty("_marketDailyMax").floatValue = 1.15f;
+            farmSo.FindProperty("_marketHotMult").floatValue = 1.4f;
+            farmSo.FindProperty("_marketColdMult").floatValue = 0.7f;
+            farmSo.FindProperty("_marketLeafyMorningPercent").intValue = 10;
+            farmSo.FindProperty("_marketLeafyNightPercent").intValue = 10;
             farmSo.ApplyModifiedPropertiesWithoutUndo();
             if (AssetDatabase.LoadAssetAtPath<TextAsset>(NpcsPath) == null)
                 Debug.LogWarning($"Về Quê: thiếu {NpcsPath} – đơn hàng sẽ không có người đặt / thoại.");

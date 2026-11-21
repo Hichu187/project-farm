@@ -132,6 +132,7 @@ DishMap    { cropId → ["canh cua rau muống", "rau muống xào tỏi", ...] 
 
 ### Câu rác
 - 6 món: **dép tổ ong, nón lá rách, lon bia, chai nhựa, ủng cao su, bao tải**. Thêm 1 món "may mắn" là **hũ tiền xu cổ** (hiếm, bán được nhiều xu).
+  - **21/11:** thêm **túi ni lông, cành cây mục, săm xe đạp** theo art người dùng → 9 món thường **cùng trọng số** + hũ tiền xu cổ hiếm.
 - **Tỉ lệ ra rác cấu hình theo mồi** (đã chốt): mỗi `BaitDef` có trường `junkChance`. Mồi rẻ dính rác nhiều, mồi xịn ít dần, **mồi cao cấp đặt 0** để không bao giờ dính rác. Gợi ý ban đầu (chỉnh trong data):
 
   | Mồi | junkChance |
@@ -146,6 +147,7 @@ DishMap    { cropId → ["canh cua rau muống", "rau muống xào tỏi", ...] 
 - Kéo rác chỉ 2–3 mũi tên, bảng kết quả có câu đùa ("Ai vứt dép ở đây vậy trời!").
 - **Trúng rác thì mất mồi** (đã chốt). Mồi xịn lúc này có thêm giá trị rõ ràng: không phí lượt vào rác.
 - Bán cho **cô đồng nát** (bán từng món hoặc bán hết). Album có thêm tab "Đồ vớt được".
+- **Chốt 21/11:** nút **Album** ở cột trái HUD, **dưới nút Thư**, hiện ở **cả nông trại lẫn vùng câu** (sau này album có thể thêm cây đột biến). Cô đồng nát chỉ xuất hiện trong lời thoại khi bán rác (không có nhân vật trên map, chưa đặt đơn). Rác nằm danh sách riêng trong giỏ (chiếm ô chung với cá); "Bán hết" bán cả rác; nút "Tự bán rác" ở bảng Giỏ.
 - Rác chiếm ô giỏ cá. Có nút "Tự bán rác" bật/tắt.
 
 **Công:** album 1,5 ngày; rác 1 ngày (cần vẽ 7 sprite nhỏ).
@@ -192,6 +194,7 @@ IEffect:
 - **Bẫy lớn:** hiệu ứng làm cây lớn nhanh (và `YieldBonus`) **chỉ áp dụng lúc gieo** (chốt `readyAt` ngay khi gieo). Nếu tính lại cho cây đang lớn thì sự kiện vừa hết, cây sẽ "chín lùi".
 - **Không lặp liền nhau:** vì sự kiện suy ra từ seed ngày nên có thể tính lại hôm qua, hôm kia. Khi bốc, loại các sự kiện còn trong `cooldownDays`. Không cần lưu gì thêm.
 - Hiển thị: **khung loa xã** lúc mở game lần đầu trong ngày (banner, không chặn màn hình), và một icon sự kiện nhỏ trên HUD.
+- **Chốt 21/11:** ngày không có sự kiện cố định có **25%** (**22/11 đổi 33%**) ra sự kiện ngẫu nhiên. Sự kiện cố định chạy chồng nhau. `OrderBonus` tính **lúc giao**. `FishSizeMult` cho cá **vượt cân tối đa** (phá kỷ lục), giá theo cân giữ trần. `minLevel` không tham gia bốc (chưa đủ cấp = ngày thường).
 
 ### Kho ngẫu nhiên khởi đầu (8 sự kiện, gần như không cần art)
 
@@ -339,6 +342,8 @@ Save: mailbox[] + sentMailIds (HashSet, chống gửi lại thư đã bị dọn
 - Điều kiện nhận: `DayKey` hôm nay > `lastClaimDayKey`. Xét lại **mỗi lần mở game và mỗi lần quay lại tab**, không chỉ lần đầu trong ngày.
 - **Chống chỉnh giờ tiến:** thêm điều kiện đã qua ít nhất khoảng 18 giờ thật kể từ lần nhận trước (tính theo timestamp đã lưu). Kèm việc chặn lùi giờ sẵn có, chỉnh giờ để nhận nhiều ngày một lúc sẽ không còn lợi.
 - **Popup điểm danh** (chốt 20/11): cửa sổ nhỏ hiện lịch 7 ô và nút mở hộp thư; quà vẫn nằm trong hộp thư.
+- **Chốt 22/11:** popup điểm danh hiện quà cả tuần, người chơi **tự bấm "Nhận"** (không tự nhận); nhận xong quà vào hộp thư, icon bay về nút Thư. "Để sau" thì không tự mở lại trong ngày. Nút **"Điểm danh" ở cột trái HUD** (dưới Album, cả hai vùng), có chấm đỏ khi còn quà chưa nhận.
+- **Chốt 21/11:** ngày 7 tặng **xu + 1 cần câu** (quà các ngày khác người dùng tự config trong `check_in.json`). Đã có cần đó thì quà sửa đầy độ bền. Xu tăng 10% mỗi vòng, tối đa gấp đôi.
 - **Thứ tự cửa sổ khi mở game** (tránh hiện ồ ạt): tóm tắt lúc vắng mặt → popup điểm danh → loa xã (banner, không chặn màn hình).
 
 **Công:** khoảng 1 ngày.

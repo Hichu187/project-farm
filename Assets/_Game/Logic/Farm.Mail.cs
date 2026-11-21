@@ -127,10 +127,27 @@ namespace VeQue.Logic
                     case RewardKind.Bait:
                         FarmState.AddCount(State.Fishing.Baits, reward.Id, (int)reward.Amount);
                         break;
+                    case RewardKind.Rod:
+                        GrantRod(reward.Id);
+                        break;
                 }
             }
             // XP sau cùng: lên cấp vẫn trao thưởng cấp như bình thường.
             AddXp(xp);
+        }
+
+        // Quà cần câu: chưa có thì thêm (đầy độ bền, chưa cầm cần nào thì cầm luôn); đã có thì sửa đầy độ bền.
+        private void GrantRod(string rodId)
+        {
+            Definition.Fishing.TryGetRod(rodId, out RodDef def);
+            FishingState fishing = State.Fishing;
+            if (fishing.TryGetRod(rodId, out RodState owned))
+            {
+                owned.Durability = def.MaxDurability;
+                return;
+            }
+            fishing.Rods.Add(new RodState { Id = rodId, Durability = def.MaxDurability });
+            fishing.EquippedRodId ??= rodId;
         }
 
         private void ClaimInternal(Mail mail, int today)

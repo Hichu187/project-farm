@@ -1,0 +1,108 @@
+{
+  "_ghiChu": "Mốc thưởng album cá (Đợt 2 Phần 5). Đạt mốc thì gửi MỘT thư vào hộp thư, id thư = id mốc (không đổi id đã phát hành; không trùng id trong build_mails.json). kind: SpeciesCount (đủ count loài) hoặc RarityComplete (đủ mọi loài có độ hiếm rarity: Common, Uncommon, Rare, Epic, Legendary). Quà như build_mails.json: Coins, Xp, Seeds, Produce, Bait. Con số là nháp, chỉnh sau khi chơi thử.",
+  "milestones": [
+    {
+      "id": "album_5_loai",
+      "kind": "SpeciesCount",
+      "count": 5,
+      "sender": "Ông Tư câu cá",
+      "title": "Câu được 5 loài rồi à?",
+      "body": "Ông thấy cháu ra bến đều lắm. Mới đó mà đã đủ 5 loài cá! Ông gửi ít tiền với mấy con dế, mai câu tiếp nhé.",
+      "rewards": [
+        { "kind": "Coins", "id": "", "amount": 200 },
+        { "kind": "Bait", "id": "moi_de", "amount": 5 }
+      ]
+    },
+    {
+      "id": "album_10_loai",
+      "kind": "SpeciesCount",
+      "count": 10,
+      "sender": "Ông Tư câu cá",
+      "title": "10 loài cá, giỏi thật!",
+      "body": "Mười loài rồi đấy! Cả làng này ít ai câu được nhiều thế. Ông tặng cháu gói mồi thơm, loại này cá quý mê lắm.",
+      "rewards": [
+        { "kind": "Coins", "id": "", "amount": 500 },
+        { "kind": "Bait", "id": "moi_thom", "amount": 5 }
+      ]
+    },
+    {
+      "id": "album_15_loai",
+      "kind": "SpeciesCount",
+      "count": 15,
+      "sender": "Ông Tư câu cá",
+      "title": "Tay câu có hạng",
+      "body": "15 loài! Ông phục cháu rồi đấy. Đây là mấy con nhái hơi ông để dành, đem ra chỗ nước sâu mà thử.",
+      "rewards": [
+        { "kind": "Coins", "id": "", "amount": 1000 },
+        { "kind": "Bait", "id": "moi_nhai_hoi", "amount": 5 }
+      ]
+    },
+    {
+      "id": "album_20_loai",
+      "kind": "SpeciesCount",
+      "count": 20,
+      "sender": "Ông Tư câu cá",
+      "title": "Vua câu của làng!",
+      "body": "Đủ cả 20 loài! Từ nay cháu là vua câu của làng này rồi. Bộ thìa vàng này ông giữ mấy chục năm, giờ trao lại cho cháu.",
+      "rewards": [
+        { "kind": "Coins", "id": "", "amount": 2000 },
+        { "kind": "Bait", "id": "moi_thia_vang", "amount": 5 }
+      ]
+    },
+    {
+      "id": "album_du_thuong",
+      "kind": "RarityComplete",
+      "rarity": "Common",
+      "sender": "Ông Tư câu cá",
+      "title": "Đủ cá thường",
+      "body": "Cá thường trong làng cháu câu đủ cả rồi. Giờ thử ra xa bờ xem sao!",
+      "rewards": [
+        { "kind": "Coins", "id": "", "amount": 100 }
+      ]
+    },
+    {
+      "id": "album_du_kha",
+      "kind": "RarityComplete",
+      "rarity": "Uncommon",
+      "sender": "Ông Tư câu cá",
+      "title": "Đủ cá khá",
+      "body": "Chép, trê, mè, trôi... cháu có đủ cả. Tay nghề lên nhanh thật.",
+      "rewards": [
+        { "kind": "Coins", "id": "", "amount": 300 }
+      ]
+    },
+    {
+      "id": "album_du_hiem",
+      "kind": "RarityComplete",
+      "rarity": "Rare",
+      "sender": "Ông Tư câu cá",
+      "title": "Đủ cá hiếm",
+      "body": "Cá hiếm mà cháu cũng gom đủ. Ông chịu cháu đấy!",
+      "rewards": [
+        { "kind": "Coins", "id": "", "amount": 600 }
+      ]
+    },
+    {
+      "id": "album_du_quy",
+      "kind": "RarityComplete",
+      "rarity": "Epic",
+      "sender": "Ông Tư câu cá",
+      "title": "Đủ cá quý",
+      "body": "Toàn cá quý cả! Cả đời ông mới câu được hai loài trong số này.",
+      "rewards": [
+        { "kind": "Coins", "id": "", "amount": 1000 }
+      ]
+    },
+    {
+      "id": "album_du_huyen_thoai",
+      "kind": "RarityComplete",
+      "rarity": "Legendary",
+      "sender": "Ông Tư câu cá",
+      "title": "Huyền thoại có thật!",
+      "body": "Cháu câu được hết cá huyền thoại?! Ông cứ tưởng chuyện các cụ kể thôi chứ.",
+      "rewards": [
+        { "kind": "Coins", "id": "", "amount": 1500 }
+      ]
+    }
+  ]
+}

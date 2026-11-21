@@ -46,6 +46,11 @@ namespace VeQue.View.UI
         [Header("Hộp thư (Đợt 2 Phần 3)")]
         [SerializeField] private MailPanel _mailPanel;
         [SerializeField] private Button _mailButton;
+        [Header("Điểm danh (Đợt 2 Phần 10)")]
+        [SerializeField] private CheckInPopup _checkInPopup;
+        [Header("Album (Đợt 2 Phần 5)")]
+        [SerializeField] private AlbumPanel _albumPanel;
+        [SerializeField] private Button _albumButton;
         [Tooltip("Gán các vùng ao, chuồng, nhà kho, đất mở rộng sau khi vẽ xong Decor.")]
         [SerializeField] private ComingSoonArea[] _comingSoonAreas = System.Array.Empty<ComingSoonArea>();
 
@@ -72,6 +77,10 @@ namespace VeQue.View.UI
                 _mailPanel.Message += _toast.Show;
             if (_mailButton != null)
                 _mailButton.onClick.AddListener(OpenMail);
+            if (_albumButton != null)
+                _albumButton.onClick.AddListener(OpenAlbum);
+            if (_checkInPopup != null)
+                _checkInPopup.MailRequested += OpenMail;
             _storagePanel.Message += _toast.Show;
             _interaction.SeedRequested += OpenSeedPicker;
             _interaction.UnlockRequested += _unlockDialog.Show;
@@ -286,6 +295,14 @@ namespace VeQue.View.UI
             _mailPanel.Open();
         }
 
+        private void OpenAlbum()
+        {
+            if (_albumPanel == null || _albumPanel.IsOpen)
+                return;
+            CloseAll();
+            _albumPanel.Open();
+        }
+
         private void CloseAll()
         {
             _progressPopup.Hide();
@@ -294,6 +311,8 @@ namespace VeQue.View.UI
             _orderPanel.Close();
             if (_mailPanel != null)
                 _mailPanel.Close();
+            if (_albumPanel != null)
+                _albumPanel.Close();
             _storagePanel.Close();
             _shopPanel.Close();
         }

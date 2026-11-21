@@ -34,6 +34,11 @@ namespace VeQue.View.Data
         [Header("Con số chung")]
         [SerializeField] private FishingTuning _tuning = new FishingTuning();
 
+        [Header("Album + câu rác (Đợt 2 Phần 5)")]
+        [SerializeField] private JunkDefinition[] _junk = Array.Empty<JunkDefinition>();
+        [Tooltip("Data/Fishing/dex_milestones.json – mốc thưởng album (gửi qua hộp thư).")]
+        [SerializeField] private TextAsset _dexMilestones;
+
         [Header("Cá shiny")]
         [Tooltip("Bảng 8 kiểu (menu Về Quê → Cá shiny → Tạo material). Tham chiếu ở đây để shader vào build.")]
         [SerializeField] private ShinyPalette _shinyPalette;
@@ -41,6 +46,7 @@ namespace VeQue.View.Data
         public IReadOnlyList<FishDefinition> Fish => _fish;
         public IReadOnlyList<RodDefinition> Rods => _rods;
         public IReadOnlyList<BaitDefinition> Baits => _baits;
+        public IReadOnlyList<JunkDefinition> Junk => _junk;
         public ShinyPalette ShinyPalette => _shinyPalette;
 
         // Material của kiểu shiny; cá thường / chưa có bảng → null.
@@ -53,6 +59,7 @@ namespace VeQue.View.Data
         public bool TryGetFish(string id, out FishDefinition fish) => TryFind(_fish, id, f => f.Id, out fish);
         public bool TryGetRod(string id, out RodDefinition rod) => TryFind(_rods, id, r => r.Id, out rod);
         public bool TryGetBait(string id, out BaitDefinition bait) => TryFind(_baits, id, b => b.Id, out bait);
+        public bool TryGetJunk(string id, out JunkDefinition junk) => TryFind(_junk, id, j => j.Id, out junk);
 
         public FishingDef ToDef()
         {
@@ -65,13 +72,17 @@ namespace VeQue.View.Data
             var baits = new List<BaitDef>(_baits.Length);
             for (int i = 0; i < _baits.Length; i++)
                 baits.Add(Require(_baits[i], "mồi", i).ToDef());
+            JunkDefinition[] junkAssets = _junk ?? Array.Empty<JunkDefinition>();
+            var junk = new List<JunkDef>(junkAssets.Length);
+            for (int i = 0; i < junkAssets.Length; i++)
+                junk.Add(Require(junkAssets[i], "rác", i).ToDef());
 
             return new FishingDef(fish, rods, baits,
                 _starterRod != null ? _starterRod.Id : null,
                 _starterBait != null ? _starterBait.Id : null,
                 _starterBaitCount, _unlockLevel, _basketStartSlots, _basketSlotPrices,
                 _wormBait != null ? _wormBait.Id : null, _wormChancePercent, _wormMin, _wormMax,
-                _tuning ?? new FishingTuning());
+                _tuning ?? new FishingTuning(), junk, DexMilestoneLoader.Load(_dexMilestones));
         }
 
         private T Require<T>(T item, string label, int index) where T : UnityEngine.Object

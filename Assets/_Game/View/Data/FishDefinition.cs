@@ -17,6 +17,8 @@ namespace VeQue.View.Data
         [Tooltip("Giá ở cân nặng trung bình; nhẹ nhất / nặng nhất nhân hệ số trong FishingTuning.")]
         [Min(0)] [SerializeField] private int _basePrice = 10;
         [Min(0)] [SerializeField] private int _baseXp = 1;
+        [Tooltip("Gợi ý ở album khi chưa câu được (KHÔNG nhắc giờ – giờ ra cá chỉ dev biết).")]
+        [TextArea] [SerializeField] private string _hint;
 
         [Header("Xuất hiện")]
         [Tooltip("7 khung: Bình minh, Sáng, Trưa, Chiều, Hoàng hôn, Tối, Khuya. 0 = không có, 1 = bình thường, > 1 = ăn mạnh.")]
@@ -39,6 +41,9 @@ namespace VeQue.View.Data
         public string DisplayName => _displayName;
         public Sprite Icon => _icon;
         public FishRarity Rarity => _rarity;
+        public string Hint => _hint;
+        public FishDepth Depths => _depths;
+        public System.Collections.Generic.IReadOnlyList<BaitDefinition> PreferredBaits => _preferredBaits;
 
         public FishDef ToDef()
         {

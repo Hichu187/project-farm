@@ -78,7 +78,9 @@ namespace VeQue.View.UI
                 return;
             }
 
-            _slider.SetValueWithoutNotify(1f - (float)remaining / crop.GrowSeconds);
+            // Thời gian lớn đã chốt lúc gieo (sự kiện "Nắng đẹp" làm ngắn hơn CropDef).
+            long grow = farm.GetGrowSeconds(_plot);
+            _slider.SetValueWithoutNotify(1f - (float)remaining / (grow > 0 ? grow : crop.GrowSeconds));
             if (remaining != _shownSeconds)
             {
                 _shownSeconds = remaining;

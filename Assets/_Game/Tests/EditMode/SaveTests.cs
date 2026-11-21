@@ -208,8 +208,8 @@ namespace VeQue.Tests
 
         [TestCase("{{{khong phai json")]
         [TestCase("{}")]
-        [TestCase("{\"version\":13,\"coins\":-5,\"zones\":[]}")]
-        [TestCase("{\"version\":13,\"coins\":5}")]
+        [TestCase("{\"version\":16,\"coins\":-5,\"zones\":[]}")]
+        [TestCase("{\"version\":16,\"coins\":5}")]
         [TestCase("{\"version\":7,\"coins\":5,\"zones\":[{\"zoneId\":\"khu1\",\"openCount\":6}]}")]
         public void Load_MainInvalid_UsesPreviousSave(string corrupt)
         {

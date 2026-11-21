@@ -1,0 +1,19 @@
+{
+  "_ghiChu": "Điểm danh 7 ngày (Đợt 2 Phần 10). Đúng 7 ngày, mỗi ngày ít nhất 1 quà. kind: Coins, Xp, Seeds, Produce, Bait, Rod (Seeds/Produce: id cây, Bait: id mồi, Rod: id cần, amount = 1; đã có cần đó thì quà sửa đầy độ bền). Nhận khi sang ngày mới VÀ đã qua minHoursBetween giờ thật kể từ lần trước. Xu tăng coinBonusPercentPerCycle% mỗi vòng 7 ngày đã xong, tối đa maxCoinBonusPercent%. title/body: {day} = ngày trong chu kỳ, {days} = 7. Quà là nháp – người dùng config lại.",
+  "minHoursBetween": 18,
+  "coinBonusPercentPerCycle": 10,
+  "maxCoinBonusPercent": 100,
+  "expireDays": 7,
+  "sender": "Trưởng thôn",
+  "title": "Điểm danh ngày {day}/{days}",
+  "body": "Cảm ơn cháu hôm nay lại ghé thăm làng. Đây là quà điểm danh ngày {day}, nhớ nhận kẻo hết hạn nhé!",
+  "days": [
+    { "rewards": [ { "kind": "Coins", "id": "", "amount": 50 } ] },
+    { "rewards": [ { "kind": "Bait", "id": "cam", "amount": 5 } ] },
+    { "rewards": [ { "kind": "Coins", "id": "", "amount": 100 } ] },
+    { "rewards": [ { "kind": "Seeds", "id": "rau_muong", "amount": 10 } ] },
+    { "rewards": [ { "kind": "Bait", "id": "moi_de", "amount": 5 } ] },
+    { "rewards": [ { "kind": "Coins", "id": "", "amount": 150 } ] },
+    { "rewards": [ { "kind": "Coins", "id": "", "amount": 300 }, { "kind": "Rod", "id": "can_nua", "amount": 1 } ] }
+  ]
+}

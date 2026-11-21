@@ -89,6 +89,16 @@ namespace VeQue.View.Fishing
         private Vector3 _alertBase;
         // Lần rỉa đang diễn ra ở khung trước (để báo bóng cá đớp thử đúng 1 lần mỗi lần rỉa).
         private bool _wasNibbling;
+        // Sóng nước quanh phao (trên GameObject phao; thiếu thì tự thêm lúc chạy).
+        private BobberRipple _ripple;
+        // Lượt câu ra rác (Đợt 2 Phần 5): không có bóng cá. Đặt lúc ném, giữ tới lượt sau (cả lúc kết thúc lượt).
+        private bool _junkCast;
+
+        // Lượt vừa rồi móc phải rác (chữ nổi "Rác trôi mất!" thay "Cá thoát!").
+        public bool LastCastWasJunk => _junkCast;
+
+        // Bóng cá của lượt hiện tại; lượt rác → null (mọi lệnh bóng bỏ qua).
+        private FishShadow Shadow => _junkCast ? null : _shadow;
 
         public Phase CurrentPhase => _phase;
         public FishingSession Session => _session;
@@ -169,8 +179,10 @@ namespace VeQue.View.Fishing
                 LastMistakeIndex = PullIndex;
                 PullIndex = 0;
                 _jerkStart = Time.time;
-                if (_shadow != null)
-                    _shadow.Flinch();
+                if (Shadow != null)
+                    Shadow.Flinch();
+                if (_ripple != null)
+                    _ripple.Splash(_bobberBase, 1f);
                 WebBridge.Vibrate(_mistakeVibrateMilliseconds);
                 PullMistake?.Invoke();
                 return;
@@ -181,8 +193,8 @@ namespace VeQue.View.Fishing
                 _pullStart = Time.time;
             PullIndex++;
             // Bóng cá lao theo hướng mũi tên kế tiếp (chỉ là hình ảnh).
-            if (_shadow != null)
-                _shadow.Dart(PullIndex < pull.Count ? pull.Expected(PullIndex) : arrow);
+            if (Shadow != null)
+                Shadow.Dart(PullIndex < pull.Count ? pull.Expected(PullIndex) : arrow);
             PullProgressed?.Invoke();
             if (PullIndex < pull.Count)
                 return;
@@ -190,13 +202,14 @@ namespace VeQue.View.Fishing
             if (_session.CompletePull(PullElapsed) == FishingOutcome.Caught)
             {
                 // Cá bật khỏi nước ở chỗ phao, bay dọc dây về tay; bóng dưới nước tắt.
-                if (_shadow != null)
-                    _shadow.Hide();
+                if (Shadow != null)
+                    Shadow.Hide();
                 float flight = 0f;
                 if (_flyer != null)
                 {
                     FishingDefinition data = _game.Definition.Fishing;
-                    _flyer.Launch(FishIcon(_session.Fish.Id), _bobberBase, HandPosition(),
+                    Sprite icon = _session.IsJunk ? JunkIcon(_session.Junk.Id) : FishIcon(_session.Fish.Id);
+                    _flyer.Launch(icon, _bobberBase, HandPosition(),
                         data != null ? data.GetShiny(_session.Shiny) : null, _session.Grams);
                     flight = _flyer.Seconds;
                 }
@@ -206,8 +219,8 @@ namespace VeQue.View.Fishing
                 SetPhase(Phase.Landing);
                 return;
             }
-            if (_shadow != null)
-                _shadow.Escape();
+            if (Shadow != null)
+                Shadow.Escape();
             Finish();
         }
 
@@ -253,6 +266,8 @@ namespace VeQue.View.Fishing
                 _travel = FindFirstObjectByType<RegionTravel>();
             if (_character == null)
                 _character = FindFirstObjectByType<FarmCharacterController>();
+            if (_bobber != null && !_bobber.TryGetComponent(out _ripple))
+                _ripple = _bobber.gameObject.AddComponent<BobberRipple>();
             ShowBobber(false);
             ShowAlert(false);
             if (_shadow != null)
@@ -394,6 +409,7 @@ namespace VeQue.View.Fishing
             }
 
             _session = session;
+            _junkCast = session.IsJunk;
             CastJudged?.Invoke(session.Quality);
             _character.View.Play(CharacterAnim.Cast, _spot.Facing, true);
             _castEnd = Time.time + Mathf.Max(0.1f, _character.View.GetDuration(CharacterAnim.Cast));
@@ -407,7 +423,9 @@ namespace VeQue.View.Fishing
             _biteShown = false;
             _wasNibbling = false;
             ShowBobber(true);
-            if (_shadow != null)
+            if (_ripple != null)
+                _ripple.Splash(_bobberBase, 1f);
+            if (Shadow != null)
             {
                 // Hiện trước lần rỉa / cắn đầu tiên để người chơi kịp thấy cá tới.
                 float delay = UnityEngine.Random.Range(_shadowAppearSeconds.x, _shadowAppearSeconds.y);
@@ -415,7 +433,7 @@ namespace VeQue.View.Fishing
                 foreach (float nibble in _session.NibbleTimes)
                     first = Mathf.Min(first, nibble);
                 delay = Mathf.Clamp(delay, 0f, Mathf.Max(0f, first - 0.3f));
-                _shadow.Approach(_bobberBase, _session.Fish.Rarity, _spot.Facing == Facing.Left, delay);
+                Shadow.Approach(_bobberBase, _session.Fish.Rarity, _spot.Facing == Facing.Left, delay);
             }
             SetPhase(Phase.Waiting);
         }
@@ -438,8 +456,13 @@ namespace VeQue.View.Fishing
                     _biteShown = true;
                     ShowAlert(true);
                     WebBridge.Vibrate(_vibrateMilliseconds);
-                    if (_shadow != null)
-                        _shadow.Bite();
+                    if (Shadow != null)
+                        Shadow.Bite();
+                    if (_ripple != null)
+                    {
+                        _ripple.Splash(_bobberBase, 1f);
+                        _ripple.SetAgitated(true);
+                    }
                     // HUD đổi nút "Chờ…" → "GIẬT!".
                     Changed?.Invoke();
                 }
@@ -449,8 +472,13 @@ namespace VeQue.View.Fishing
             else if (FishingMath.IsNibbling(_session, t, _nibbleSeconds))
             {
                 drop = _nibbleDropPixels;
-                if (!_wasNibbling && _shadow != null)
-                    _shadow.Nibble();
+                if (!_wasNibbling)
+                {
+                    if (Shadow != null)
+                        Shadow.Nibble();
+                    if (_ripple != null)
+                        _ripple.Splash(_bobberBase, 0.7f);
+                }
                 _wasNibbling = true;
             }
             else
@@ -471,10 +499,10 @@ namespace VeQue.View.Fishing
                 _character.View.Play(CharacterAnim.Reel, _spot.Facing, true);
                 LastMistakeIndex = -1;
                 _jerkStart = -1f;
-                if (_shadow != null)
+                if (Shadow != null)
                 {
-                    _shadow.Hook();
-                    _shadow.Dart(_session.Pull.Expected(0));
+                    Shadow.Hook();
+                    Shadow.Dart(_session.Pull.Expected(0));
                 }
                 // Đặt trước SetPhase để HUD đọc đúng trạng thái xem trước.
                 _pullStart = Time.time + Mathf.Max(0f, Tuning.PullPreviewSeconds);
@@ -490,13 +518,13 @@ namespace VeQue.View.Fishing
             if (PullElapsed > _session.Pull.TimeLimitSeconds)
             {
                 _session.PullTimeout();
-                if (_shadow != null)
-                    _shadow.Escape();
+                if (Shadow != null)
+                    Shadow.Escape();
                 Finish();
                 return;
             }
-            if (_shadow != null)
-                _shadow.SetTension(PullElapsed / _session.Pull.TimeLimitSeconds);
+            if (Shadow != null)
+                Shadow.SetTension(PullElapsed / _session.Pull.TimeLimitSeconds);
             int jitter = Mathf.FloorToInt(t * 10f) % 2 == 0 ? 1 : -1;
             Vector3 position = _bobberBase + new Vector3(jitter / PixelsPerUnit, -_biteSinkPixels / PixelsPerUnit, 0f);
             // Bấm sai: phao giật về phía nhân vật rồi trả lại trong _jerkSeconds.
@@ -524,8 +552,8 @@ namespace VeQue.View.Fishing
             if (_flyer != null)
                 _flyer.Hide();
             // Hụt (sợ, ăn mồi, trượt, thoát): bóng quay đầu bơi đi. Câu được thì bóng đã tắt lúc cá bay lên.
-            if (_shadow != null && outcome != FishingOutcome.Caught)
-                _shadow.Escape();
+            if (Shadow != null && outcome != FishingOutcome.Caught)
+                Shadow.Escape();
             SetPhase(Phase.Result);
             // Sau SetPhase để bảng / chữ nổi mở trên trạng thái đã xong lượt.
             if (announce)
@@ -541,8 +569,8 @@ namespace VeQue.View.Fishing
         {
             if (_session == null)
                 return;
-            if (_shadow != null)
-                _shadow.Escape();
+            if (Shadow != null)
+                Shadow.Escape();
             _session.Abandon();
             Finish(false);
         }
@@ -633,6 +661,12 @@ namespace VeQue.View.Fishing
         {
             FishingDefinition data = _game.Definition.Fishing;
             return data != null && data.TryGetFish(fishId, out FishDefinition fish) ? fish.Icon : null;
+        }
+
+        private Sprite JunkIcon(string junkId)
+        {
+            FishingDefinition data = _game.Definition.Fishing;
+            return data != null && data.TryGetJunk(junkId, out JunkDefinition junk) ? junk.Icon : null;
         }
 
         // Tay nhân vật: art nhìn phải, quay trái thì lật ngang.

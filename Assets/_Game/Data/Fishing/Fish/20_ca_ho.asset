@@ -20,6 +20,8 @@ MonoBehaviour:
   _maxGrams: 60000
   _basePrice: 1100
   _baseXp: 50
+  _hint: "C\xE1 kh\u1ED5ng l\u1ED3 hi\u1EBFm c\xF3, s\u1EE9c k\xE9o nh\u01B0 tr\xE2u.
+    Ch\u1EC9 \u1EDF ch\u1ED7 s\xE2u nh\u1EA5t."
   _slotFactors:
   - 0
   - 0

@@ -14,9 +14,12 @@ namespace VeQue.View.UI
         [SerializeField] private TMP_Text _primaryLabel;
         [SerializeField] private Button _secondary;
         [SerializeField] private TMP_Text _secondaryLabel;
+        [Tooltip("Nút trên icon (Kho: mở biểu đồ giá 7 ngày – Đợt 2 Phần 9). Không gán = icon không bấm được.")]
+        [SerializeField] private Button _iconButton;
 
         public Button Primary => _primary;
         public Button Secondary => _secondary;
+        public Button IconButton => _iconButton;
 
         public void SetCrop(Sprite icon, string displayName)
         {
@@ -29,6 +32,12 @@ namespace VeQue.View.UI
         {
             _primaryLabel.text = primary;
             _secondaryLabel.text = secondary;
+        }
+
+        // Tên kèm nhãn (Kho: "Hút hàng" / "Rớt giá").
+        public void SetName(string displayName)
+        {
+            _name.text = displayName;
         }
 
         public void SetInfo(string info)

@@ -17,11 +17,13 @@ namespace VeQue.View.Data
         [Min(0)] [SerializeField] private int _rareBonusPercent;
         [Tooltip("Cấp tối thiểu để mua.")]
         [Min(1)] [SerializeField] private int _unlockLevel = 1;
+        [Tooltip("Tỉ lệ dính rác (%) trước hệ số kiểu ném (Tốt ×0,6, Perfect ×0,3). 0 = không bao giờ dính rác.")]
+        [Range(0, 100)] [SerializeField] private int _junkChancePercent;
 
         public string Id => _id;
         public string DisplayName => _displayName;
         public Sprite Icon => _icon;
 
-        public BaitDef ToDef() => new BaitDef(_id, _price, _rareBonusPercent, _buyable, _unlockLevel);
+        public BaitDef ToDef() => new BaitDef(_id, _price, _rareBonusPercent, _buyable, _unlockLevel, _junkChancePercent);
     }
 }

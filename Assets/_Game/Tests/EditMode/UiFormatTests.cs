@@ -15,6 +15,85 @@ namespace VeQue.Tests
             Assert.AreEqual(expected, UiFormat.Coins(coins));
         }
 
+        // ---------- Album (Đợt 2 Phần 5) ----------
+
+        [TestCase(FishDepth.Near, "Gần")]
+        [TestCase(FishDepth.Mid | FishDepth.Far, "Vừa, Xa")]
+        [TestCase(FishDepth.All, "Gần, Vừa, Xa")]
+        public void DepthList_JoinsDepths(FishDepth depths, string expected)
+        {
+            Assert.AreEqual(expected, UiFormat.DepthList(depths));
+        }
+
+        [Test]
+        public void DayKeyDate_FromCalendarDayKey()
+        {
+            Assert.AreEqual("01/01/2026", UiFormat.DayKeyDate(0));
+            Assert.AreEqual("21/11/2026", UiFormat.DayKeyDate(GameCalendar.DayKeyFromDate(2026, 11, 21)));
+            Assert.AreEqual("06/02/2027", UiFormat.DayKeyDate(GameCalendar.DayKeyFromDate(2027, 2, 6)));
+        }
+
+        [TestCase(7, 20, 10, "7/20 loài · Mốc kế: 10 loài")]
+        [TestCase(0, 20, 5, "0/20 loài · Mốc kế: 5 loài")]
+        [TestCase(20, 20, 0, "20/20 loài · Đủ cả rồi!")]
+        [TestCase(12, 20, 0, "12/20 loài")]
+        public void AlbumProgress_ShowsNextMilestone(int caught, int total, int next, string expected)
+        {
+            Assert.AreEqual(expected, UiFormat.AlbumProgress(caught, total, next));
+        }
+
+        [Test]
+        public void JunkProgress_CountsFound()
+        {
+            Assert.AreEqual("Đã vớt 3/10 món", UiFormat.JunkProgress(3, 10));
+        }
+
+        [Test]
+        public void MarketTexts()
+        {
+            Assert.AreEqual("<color=#3c8a2e>+8%</color>", UiFormat.PriceChange(8));
+            Assert.AreEqual("<color=#c0392b>-5%</color>", UiFormat.PriceChange(-5));
+            Assert.AreEqual("", UiFormat.PriceChange(0));
+            Assert.AreEqual("x5 · 12 xu/cái", UiFormat.StorageInfo(5, 12, 0));
+            StringAssert.StartsWith("x5 · 1.200 xu/cái <color", UiFormat.StorageInfo(5, 1200, 3));
+            StringAssert.Contains("Hút hàng", UiFormat.MarketTag(true, false));
+            StringAssert.Contains("Rớt giá", UiFormat.MarketTag(false, true));
+            Assert.AreEqual("", UiFormat.MarketTag(false, false));
+            Assert.AreEqual("+84 xu · giữ 3 cho đơn", UiFormat.SoldKeeping(84, 3));
+            Assert.AreEqual("+84 xu", UiFormat.SoldKeeping(84, 0));
+            // 01/01/2026 là thứ Năm; 04/01/2026 Chủ nhật.
+            Assert.AreEqual("T5", UiFormat.WeekdayShort(0));
+            Assert.AreEqual("CN", UiFormat.WeekdayShort(3));
+            Assert.AreEqual("T2", UiFormat.WeekdayShort(4));
+        }
+
+        [Test]
+        public void CheckInTexts()
+        {
+            Assert.AreEqual("Ngày 2/7 · Bấm Nhận để lấy quà", UiFormat.CheckInSubtitle(2, CheckInView.Ready));
+            Assert.AreEqual("Ngày 3/7 · Quà đã gửi vào hộp thư", UiFormat.CheckInSubtitle(3, CheckInView.Claimed));
+            Assert.AreEqual("Mai ghé lại nhận quà ngày 4/7 nhé!", UiFormat.CheckInSubtitle(4, CheckInView.Waiting));
+            Assert.AreEqual("Hôm nay", UiFormat.CheckInDayLabel(2, false, true, CheckInView.Ready));
+            Assert.AreEqual("Hôm nay", UiFormat.CheckInDayLabel(3, true, true, CheckInView.Claimed));
+            Assert.AreEqual("Kế tiếp", UiFormat.CheckInDayLabel(4, false, true, CheckInView.Waiting));
+            Assert.AreEqual("Đã nhận", UiFormat.CheckInDayLabel(1, true, false, CheckInView.Claimed));
+            Assert.AreEqual("Ngày 6", UiFormat.CheckInDayLabel(6, false, false, CheckInView.Ready));
+        }
+
+        [Test]
+        public void JunkTexts()
+        {
+            Assert.AreEqual("Đã bán +150 xu", UiFormat.JunkPrice(150, true));
+            Assert.AreEqual("2 xu", UiFormat.JunkPrice(2, false));
+            Assert.AreEqual("Tự bán rác: Bật", UiFormat.AutoSellJunk(true));
+            Assert.AreEqual("Tự bán rác: Tắt", UiFormat.AutoSellJunk(false));
+            Assert.AreEqual("Cô đồng nát trả +1.250 xu", UiFormat.JunkSold(1250));
+            Assert.AreEqual("Album đạt mốc! Xem hộp thư", UiFormat.AlbumMilestoneToast(1));
+            Assert.AreEqual("Album đạt 2 mốc! Xem hộp thư", UiFormat.AlbumMilestoneToast(2));
+            Assert.AreEqual("Rác trôi mất!", UiFormat.FishingOutcomeText(FishingOutcome.Escaped, true));
+            Assert.AreEqual("Cá thoát!", UiFormat.FishingOutcomeText(FishingOutcome.Escaped));
+        }
+
         [TestCase(0L, "0:00")]
         [TestCase(72L, "1:12")]
         [TestCase(3599L, "59:59")]

@@ -23,6 +23,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _CausticTex:
+        m_Texture: {fileID: 2800000, guid: ee69a23d5c3a96f4ea01a21dc05d6712, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -31,17 +35,50 @@ Material:
         m_Texture: {fileID: 2800000, guid: 8238c41439203ac4eaefce990d5e7229, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _ShoreTex:
+        m_Texture: {fileID: 2800000, guid: c9d18fc51f010424c9ed8081c71ed35e, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _AnimFPS: 8
+    - _CausticScale: 0.8
     - _DarkThreshold: 0.25
+    - _DepthRange: 4.5
+    - _DepthSteps: 3
+    - _FadeLow: 0.12
+    - _FadeScale: 0.004
+    - _FadeSpeed: 0.01
+    - _FoamFreq: 30
+    - _FoamNoiseAmount: 9
+    - _FoamNoiseScale: 0.012
+    - _FoamPeak: 0.55
+    - _FoamQuantize: 3.5
+    - _FoamRange: 1.4
+    - _FoamSpeed: 3
+    - _MoveScale: 0.012
+    - _MoveSpeed: 0.05
+    - _MoveStrength: 2
     - _NoiseScale: 0.15
     - _PPU: 16
     - _ShineThreshold: 0.62
+    - _ShoreLinePx: 1
+    - _ShoreMaxDist: 5
+    - _SpecScale: 0.006
+    - _SpecSpeed: 0.02
+    - _SpecThreshold: 0.16
+    - _UseTileColor: 0
     m_Colors:
+    - _CausticColor: {r: 0.62, g: 0.9, b: 0.95, a: 0.55}
     - _DarkColor: {r: 0.75, g: 0.85, b: 0.95, a: 1}
+    - _DeepTint: {r: 0.72, g: 0.8, b: 0.9, a: 1}
+    - _FoamColor: {r: 1, g: 1, b: 1, a: 0.9}
+    - _HighlightColor: {r: 1, g: 1, b: 1, a: 0.8}
     - _ShineColor: {r: 0.85, g: 0.95, b: 1, a: 0.8}
+    - _ShoreRect: {r: -61, g: 2, b: 14, a: 22}
+    - _SpecColor2: {r: 1, g: 1, b: 1, a: 0.85}
     - _Speed1: {r: 0.03, g: 0.02, b: 0, a: 0}
     - _Speed2: {r: -0.02, g: 0.025, b: 0, a: 0}
+    - _WaterColor: {r: 0.30599996, g: 0.647, b: 0.784, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

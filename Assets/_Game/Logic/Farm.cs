@@ -59,6 +59,8 @@ namespace VeQue.Logic
                 int limit = Definition.Orders.DailyLimit;
                 if (limit <= 0)
                     return int.MaxValue;
+                // Sự kiện ExtraOrder (chợ phiên): thêm lượt giao hôm nay.
+                limit += ExtraOrdersToday;
                 int delivered = CurrentDay > State.OrderDay ? 0 : State.DeliveredToday;
                 return Math.Max(0, limit - delivered);
             }
@@ -136,9 +138,10 @@ namespace VeQue.Logic
                 else
                     FarmState.AddCount(State.Inventory, item.Id, -item.Count);
             }
-            State.Coins += order.RewardCoins;
-            long xp = order.RewardXp;
-            var delivery = new OrderDelivery(slot, order.NpcId, PickThanksLine(order), order.RewardCoins, xp);
+            // Sự kiện (Đợt 2 Phần 7): OrderBonus nhân thưởng lúc giao.
+            GetOrderReward(order, out long coins, out long xp);
+            State.Coins += coins;
+            var delivery = new OrderDelivery(slot, order.NpcId, PickThanksLine(order), coins, xp);
             RollOrderDay();
             State.DeliveredToday++;
             ScheduleNextOrder(order, now, false);
@@ -207,6 +210,12 @@ namespace VeQue.Logic
             plot.Status = PlotStatus.Growing;
             plot.CropId = crop.Id;
             plot.PlantedAt = _clock.UtcNowSeconds;
+            // Sự kiện (Đợt 2 Phần 7): chốt thời gian lớn + sản lượng lúc gieo; mưa rào thì tự tưới.
+            float growMult = GetGrowMultAtPlant();
+            plot.GrowSeconds = growMult == 1f ? crop.GrowSeconds : Math.Max(1L, (long)Math.Round(crop.GrowSeconds * (double)growMult));
+            plot.BonusYield = GetYieldBonusAtPlant(crop);
+            if (AutoWaterAtPlant())
+                ApplyWater(plot, crop);
             NotifyChanged();
             return FarmResult.Ok;
         }
@@ -224,14 +233,22 @@ namespace VeQue.Logic
                 return FarmResult.UnknownCrop;
             if (plot.Watered)
                 return FarmResult.AlreadyWatered;
-            if (GetElapsed(plot) >= crop.GrowSeconds)
+            if (GetElapsed(plot) >= GrowOf(plot, crop))
                 return FarmResult.AlreadyRipe;
 
-            plot.PlantedAt -= crop.GrowSeconds * Definition.WaterReducePercent / 100;
-            plot.Watered = true;
+            ApplyWater(plot, crop);
             NotifyChanged();
             return FarmResult.Ok;
         }
+
+        private void ApplyWater(PlotState plot, CropDef crop)
+        {
+            plot.PlantedAt -= GrowOf(plot, crop) * Definition.WaterReducePercent / 100;
+            plot.Watered = true;
+        }
+
+        // Thời gian lớn đã chốt lúc gieo (save cũ / test dựng tay: 0 → theo CropDef).
+        private static long GrowOf(PlotState plot, CropDef crop) => plot.GrowSeconds > 0 ? plot.GrowSeconds : crop.GrowSeconds;
 
         public FarmResult Harvest(PlotId id)
         {
@@ -243,10 +260,10 @@ namespace VeQue.Logic
                 return FarmResult.NothingToHarvest;
             if (!Definition.TryGetCrop(plot.CropId, out CropDef crop))
                 return FarmResult.UnknownCrop;
-            if (GetElapsed(plot) < crop.GrowSeconds)
+            if (GetElapsed(plot) < GrowOf(plot, crop))
                 return FarmResult.NotRipe;
 
-            FarmState.AddCount(State.Inventory, crop.Id, crop.HarvestYield);
+            FarmState.AddCount(State.Inventory, crop.Id, crop.HarvestYield + Math.Max(0, plot.BonusYield));
             plot.Clear();
             AddXp(crop.Xp);
             TryFindBait();
@@ -258,7 +275,7 @@ namespace VeQue.Logic
         {
             if (!Definition.TryGetCrop(cropId, out CropDef crop))
                 return FarmResult.UnknownCrop;
-            if (crop.UnlockLevel > State.Level)
+            if (!IsCropUnlocked(crop.Id))
                 return FarmResult.CropLocked;
             if (amount <= 0)
                 return FarmResult.InvalidAmount;
@@ -283,7 +300,7 @@ namespace VeQue.Logic
                 return FarmResult.NotEnoughItems;
 
             FarmState.AddCount(State.Inventory, crop.Id, -amount);
-            State.Coins += (long)crop.SellPrice * amount;
+            State.Coins += (long)GetSellPrice(crop.Id) * amount;
             NotifyChanged();
             return FarmResult.Ok;
         }
@@ -339,7 +356,9 @@ namespace VeQue.Logic
 
         public bool IsCropUnlocked(string cropId)
         {
-            return Definition.TryGetCrop(cropId, out CropDef crop) && crop.UnlockLevel <= State.Level;
+            // Cây sự kiện: chỉ mở khi sự kiện UnlockCrop đang chạy (Đợt 2 Phần 7).
+            return Definition.TryGetCrop(cropId, out CropDef crop) && crop.UnlockLevel <= State.Level
+                && (!crop.EventOnly || IsCropEventUnlocked(cropId));
         }
 
         // XP cần để lên cấp kế tiếp; 0 nếu đã ở cấp tối đa.
@@ -361,7 +380,7 @@ namespace VeQue.Logic
                 seeds = Definition.Levels.UnlockSeedCount;
                 foreach (CropDef crop in Definition.Crops)
                 {
-                    if (crop.UnlockLevel == level)
+                    if (crop.UnlockLevel == level && !crop.EventOnly)
                         crops.Add(crop.Id);
                 }
                 for (int i = 0; i < Definition.Zones.Count; i++)
@@ -395,11 +414,12 @@ namespace VeQue.Logic
                 return -1;
 
             long elapsed = GetElapsed(plot);
-            if (elapsed >= crop.GrowSeconds)
+            long grow = GrowOf(plot, crop);
+            if (elapsed >= grow)
                 return crop.StageCount - 1;
             if (crop.StageCount <= 1)
                 return 0;
-            return (int)(elapsed * (crop.StageCount - 1) / crop.GrowSeconds);
+            return (int)(elapsed * (crop.StageCount - 1) / grow);
         }
 
         // Số giây còn lại tới khi chín, 0 nếu đã chín; -1 nếu ô không có cây.
@@ -407,12 +427,20 @@ namespace VeQue.Logic
         {
             if (!TryGetGrowing(id, out PlotState plot, out CropDef crop))
                 return -1;
-            return Math.Max(0L, crop.GrowSeconds - GetElapsed(plot));
+            return Math.Max(0L, GrowOf(plot, crop) - GetElapsed(plot));
+        }
+
+        // Tổng thời gian lớn đã chốt lúc gieo (gồm sự kiện); -1 nếu ô không có cây.
+        public long GetGrowSeconds(PlotId id)
+        {
+            if (!TryGetGrowing(id, out PlotState plot, out CropDef crop))
+                return -1;
+            return GrowOf(plot, crop);
         }
 
         public bool IsRipe(PlotId id)
         {
-            return TryGetGrowing(id, out PlotState plot, out CropDef crop) && GetElapsed(plot) >= crop.GrowSeconds;
+            return TryGetGrowing(id, out PlotState plot, out CropDef crop) && GetElapsed(plot) >= GrowOf(plot, crop);
         }
 
         private bool IsZoneAvailable(int index)
@@ -516,7 +544,7 @@ namespace VeQue.Logic
             var unlocked = new List<CropDef>();
             foreach (CropDef crop in Definition.Crops)
             {
-                if (crop.UnlockLevel <= State.Level)
+                if (crop.UnlockLevel <= State.Level && !crop.EventOnly)
                     unlocked.Add(crop);
             }
             if (unlocked.Count == 0)
@@ -575,15 +603,15 @@ namespace VeQue.Logic
             return SeededRandom.Range(ref State.RandomState, 0, 100) < percent;
         }
 
-        // Loài đặt được trong đơn cá: độ hiếm thấp, câu được ở đủ nhiều khung giờ (không kẹt đơn).
-        // Phần 5 (album) sẽ lọc thêm: chỉ loài đã câu được.
+        // Loài đặt được trong đơn cá: đã có trong album (Đợt 2 Phần 5), độ hiếm thấp, câu được ở đủ nhiều khung giờ
+        // (không kẹt đơn). Album rỗng → không có đơn cá.
         public List<FishDef> GetFishOrderPool()
         {
             OrderDef def = Definition.Orders;
             var pool = new List<FishDef>();
             foreach (FishDef fish in Definition.Fishing.Fish)
             {
-                if (fish.Rarity > def.FishOrderMaxRarity)
+                if (fish.Rarity > def.FishOrderMaxRarity || !State.Fishing.HasCaught(fish.Id))
                     continue;
                 int slots = 0;
                 foreach (float factor in fish.SlotFactors)
@@ -725,7 +753,7 @@ namespace VeQue.Logic
 
             foreach (CropDef crop in Definition.Crops)
             {
-                if (crop.UnlockLevel == level)
+                if (crop.UnlockLevel == level && !crop.EventOnly)
                     FarmState.AddCount(State.Seeds, crop.Id, levels.UnlockSeedCount);
             }
         }
@@ -748,7 +776,7 @@ namespace VeQue.Logic
             {
                 if (State.GetItems(crop.Id) > 0)
                     return false;
-                if (crop.UnlockLevel > State.Level)
+                if (crop.UnlockLevel > State.Level || crop.EventOnly)
                     continue;
                 if (State.GetSeeds(crop.Id) > 0)
                     return false;
@@ -758,8 +786,8 @@ namespace VeQue.Logic
 
             if (State.Coins >= cheapestSeed)
                 return false;
-            // Còn cá trong giỏ thì bán được lấy xu (giai đoạn 5, 13/11/2026). Mồi / cần không tính.
-            if (State.Fishing != null && State.Fishing.Basket.Count > 0)
+            // Còn cá / rác trong giỏ thì bán được lấy xu (giai đoạn 5, 13/11/2026). Mồi / cần không tính.
+            if (State.Fishing != null && State.Fishing.BasketUsed > 0)
                 return false;
 
             foreach (ZoneState zone in State.Zones)
@@ -823,6 +851,7 @@ namespace VeQue.Logic
             NormalizeOrders();
             NormalizeFishing();
             NormalizeMail();
+            NormalizeCheckIn();
             if (State.RandomState == 0)
                 State.RandomState = SeededRandom.Seed(_clock.UtcNowSeconds);
         }

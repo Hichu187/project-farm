@@ -501,7 +501,7 @@ namespace VeQue.Tests
         public void Record_Heavier_IsNewRecordWithPrevious()
         {
             Farm farm = CreateFarm(roSlip: 0);
-            farm.State.Fishing.RecordGrams[Ro] = 1;
+            farm.State.Fishing.FishDex[Ro] = new FishDexEntry { Count = 1, MaxGrams = 1 };
             FishingSession session = CatchOne(farm);
             farm.CompleteFishing(session);
 
@@ -515,7 +515,7 @@ namespace VeQue.Tests
         public void Record_Lighter_NotNewRecord()
         {
             Farm farm = CreateFarm(roSlip: 0);
-            farm.State.Fishing.RecordGrams[Ro] = 100000;
+            farm.State.Fishing.FishDex[Ro] = new FishDexEntry { Count = 1, MaxGrams = 100000 };
             FishingSession session = CatchOne(farm);
             farm.CompleteFishing(session);
 

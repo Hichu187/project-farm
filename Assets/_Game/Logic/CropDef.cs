@@ -26,10 +26,14 @@ namespace VeQue.Logic
         // Cấp cần để gieo và mua hạt.
         public int UnlockLevel { get; }
         public CropGroup Group { get; }
+        // Cây sự kiện (Đợt 2 Phần 7): chỉ mua hạt được khi sự kiện UnlockCrop đang chạy; không vào đơn, quà lên cấp, cứu kẹt.
+        public bool EventOnly { get; }
 
         public CropDef(string id, long growSeconds, int buyPrice, int sellPrice, int harvestYield,
-            int stageCount = DefaultStageCount, int xp = 0, int unlockLevel = 1, CropGroup group = CropGroup.LeafyGreen)
+            int stageCount = DefaultStageCount, int xp = 0, int unlockLevel = 1, CropGroup group = CropGroup.LeafyGreen,
+            bool eventOnly = false)
         {
+            EventOnly = eventOnly;
             if (string.IsNullOrEmpty(id))
                 throw new ArgumentException("Crop id rỗng.", nameof(id));
             if (growSeconds <= 0)

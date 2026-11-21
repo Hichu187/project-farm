@@ -177,7 +177,7 @@ namespace VeQue.View.UI
         private void ShowMiss(FishingOutcome outcome)
         {
             if (_popText != null)
-                _popText.Show(UiFormat.FishingOutcomeText(outcome), _missColor, _controller.HeadPosition);
+                _popText.Show(UiFormat.FishingOutcomeText(outcome, _controller.LastCastWasJunk), _missColor, _controller.HeadPosition);
         }
 
         private void Refresh()
@@ -191,7 +191,7 @@ namespace VeQue.View.UI
             // Số nhỏ ở góc: độ bền cần đang dùng (đỏ khi hỏng), số cá / sức chứa (đỏ khi đầy), số mồi đang chọn (đỏ khi hết).
             bool hasRod = farm.TryGetEquippedRod(out RodDef rodDef, out RodState rod);
             SetBadge(_rodBadge, hasRod ? $"{rod.Durability}/{farm.GetRodMaxDurability(rodDef.Id)}" : "-", !hasRod || farm.IsRodLow(rodDef.Id));
-            SetBadge(_basketBadge, $"{farm.State.Fishing.Basket.Count}/{farm.BasketCapacity}", farm.IsBasketFull);
+            SetBadge(_basketBadge, $"{farm.State.Fishing.BasketUsed}/{farm.BasketCapacity}", farm.IsBasketFull);
             int baits = _controller.BaitId != null ? farm.State.Fishing.GetBaits(_controller.BaitId) : 0;
             SetBadge(_baitBadge, baits.ToString(), baits <= 0);
             RefreshIcons(hasRod ? rodDef.Id : null, _controller.BaitId);

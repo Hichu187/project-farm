@@ -123,6 +123,7 @@ namespace VeQue.EditorTools
             BuildTaskStopButton(safe, game);
             OrderPanel orderPanel = BuildOrderPanel(safe, game);
             MailPanel mailPanel = BuildMailPanel(safe, game);
+            AlbumPanel albumPanel = BuildAlbumPanel(safe, game);
             StoragePanel storagePanel = BuildPanel<StoragePanel>(safe, "StoragePanel", "Kho", game);
             ShopPanel shopPanel = BuildPanel<ShopPanel>(safe, "ShopPanel", "Cửa hàng", game);
             BuildNav(safe, out Button ordersTab, out TMP_Text ordersTabLabel, out Button storageTab, out Button shopTab);
@@ -138,11 +139,17 @@ namespace VeQue.EditorTools
             Button goHome = BuildRegionButton(safe, "GoHome", "Về nhà", 0);
             // Đợt 2 Phần 3: nút Thư dưới Đi câu (hiện ở cả hai vùng).
             Button mailButton = BuildMailButton(safe, game);
+            // Đợt 2 Phần 5: nút Album dưới Thư (hiện ở cả hai vùng).
+            Button albumButton = BuildRegionButton(safe, "AlbumButton", "Album", 3);
             TMP_Text regionLabel = BuildRegionLabel(safe, out GameObject regionPanel);
             BuildFishing(safe, game, toast);
             // Sau BuildFishing (cần FishingController) và BuildToast.
             BuildShopTabs(shopPanel, game, toast);
             CharacterCreator creator = BuildCharacterCreator(safe, game, characterButton);
+            // Đợt 2 Phần 10: popup điểm danh trên màn tạo nhân vật (chờ màn đó đóng mới hiện); bảng Thư mở lại lịch.
+            CheckInPopup checkInPopup = BuildCheckInPopup(safe, game, creator, (RectTransform)mailButton.transform);
+            // 22/11/2026: nút Điểm danh ở cột trái HUD, dưới Album (cả hai vùng), chấm đỏ khi còn quà chưa nhận.
+            BuildCheckInButton(safe, game, checkInPopup);
             // Sau cùng: màn tối chuyển cảnh phủ lên mọi thứ.
             ScreenFader fader = BuildFader(safe);
             var travel = Object.FindFirstObjectByType<RegionTravel>();
@@ -150,6 +157,8 @@ namespace VeQue.EditorTools
                 Wire(travel, ("_fader", fader));
 
             Wire(storagePanel, ("_emptyLabel", BuildEmptyLabel(storagePanel)));
+            // Đợt 2 Phần 9: biểu đồ giá 7 ngày (chạm icon dòng Kho), trên các bảng.
+            Wire(storagePanel, ("_priceChart", BuildPriceChartPopup(safe, game)));
             // Sau nhãn Empty (đưa vào trang Nông sản).
             BuildStorageTabs(storagePanel, game, toast);
             Wire(ui,
@@ -161,7 +170,8 @@ namespace VeQue.EditorTools
                 ("_storagePanel", storagePanel), ("_shopPanel", shopPanel),
                 ("_unlockDialog", dialog), ("_progressPopup", popup), ("_characterCreator", creator),
                 ("_travel", travel), ("_goFishing", goFishing), ("_goHome", goHome), ("_regionLabel", regionLabel), ("_regionPanel", regionPanel),
-                ("_mailPanel", mailPanel), ("_mailButton", mailButton));
+                ("_mailPanel", mailPanel), ("_mailButton", mailButton),
+                ("_albumPanel", albumPanel), ("_albumButton", albumButton), ("_checkInPopup", checkInPopup));
             var uiSo = new SerializedObject(ui);
             SetArray(uiSo.FindProperty("_farmOnly"), new Object[]
             {
@@ -474,7 +484,7 @@ namespace VeQue.EditorTools
                 ("_powerBar", bar.gameObject), ("_goodZone", good), ("_perfectZone", perfect), ("_cursor", cursor),
                 ("_toast", toast), ("_popText", popText));
 
-            BuildCatchResultPanel(parent, game, controller);
+            BuildCatchResultPanel(parent, game, controller, toast);
         }
 
         private const float IconButtonSize = 56f;
@@ -772,12 +782,17 @@ namespace VeQue.EditorTools
             RectTransform top = Node("Top", page, new Vector2(0f, 1f), Vector2.one, new Vector2(0.5f, 1f),
                 new Vector2(0f, -2f), new Vector2(-16f, 36f));
             TMP_Text capacity = AddLabel(top, "Capacity", "Giỏ 0/8", 17f, TextAlignmentOptions.MidlineLeft, TextDark);
-            Inset(capacity.rectTransform, 4f, 0f, 150f, 0f);
+            Inset(capacity.rectTransform, 4f, 0f, 274f, 0f);
             SingleLine(capacity);
             RectTransform sellAllNode = Node("SellAll", top, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
-                Vector2.zero, new Vector2(140f, 34f));
+                Vector2.zero, new Vector2(126f, 34f));
             Button sellAll = MakeButton(sellAllNode, "Bán hết", 14f, Green, Color.white, out TMP_Text sellAllLabel);
             SingleLine(sellAllLabel);
+            // Đợt 2 Phần 5: bật / tắt tự bán rác, giữa số ô và Bán hết.
+            RectTransform autoSellNode = Node("AutoSellJunk", top, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
+                new Vector2(-132f, 0f), new Vector2(136f, 34f));
+            Button autoSell = MakeButton(autoSellNode, "Tự bán rác: Tắt", 12f, Wood, Color.white, out TMP_Text autoSellLabel);
+            SingleLine(autoSellLabel);
 
             // Khung chi tiết cá đang chọn: icon, tên, 2 dòng thông tin; Bán (trên) / Thả (dưới) bên phải.
             RectTransform detailArea = Node("DetailArea", page, new Vector2(0f, 1f), Vector2.one, new Vector2(0.5f, 1f),
@@ -850,6 +865,7 @@ namespace VeQue.EditorTools
             confirmRoot.gameObject.SetActive(false);
 
             Wire(view, ("_game", game), ("_capacity", capacity), ("_sellAll", sellAll), ("_sellAllLabel", sellAllLabel),
+                ("_autoSell", autoSell), ("_autoSellLabel", autoSellLabel),
                 ("_detail", detail.gameObject), ("_hint", hint.gameObject), ("_detailIcon", detailIcon), ("_detailName", detailName),
                 ("_detailInfo", detailInfo), ("_sell", sell), ("_sellLabel", sellLabel), ("_release", release),
                 ("_confirmRoot", confirmRoot.gameObject), ("_confirmText", confirmText), ("_confirmOk", confirmOk),
@@ -906,7 +922,7 @@ namespace VeQue.EditorTools
 
 
         // Bảng cá vừa câu được: tên, hình 4×, độ hiếm, cân nặng, giá, hạng kéo + XP, nút OK.
-        private static void BuildCatchResultPanel(RectTransform parent, GameBootstrap game, FishingController controller)
+        private static void BuildCatchResultPanel(RectTransform parent, GameBootstrap game, FishingController controller, Toast toast)
         {
             RectTransform holder = Stretch("CatchResult", parent);
             var panel = holder.gameObject.AddComponent<CatchResultPanel>();
@@ -955,6 +971,12 @@ namespace VeQue.EditorTools
             TMP_Text detail = AddLabel(box, "Detail", "", 14f, TextAlignmentOptions.Center, TextDark);
             Inset(detail.rectTransform, 12f, 78f, 12f, 254f);
             SingleLine(detail);
+            // Đợt 2 Phần 5: câu đùa khi vớt rác, 2 dòng, chiếm chỗ cân nặng + kỷ lục (hai dòng đó ẩn với rác).
+            TMP_Text flavor = AddLabel(box, "Flavor", "", 15f, TextAlignmentOptions.Center, TextDark);
+            Inset(flavor.rectTransform, 16f, 132f, 16f, 172f);
+            flavor.textWrappingMode = TextWrappingModes.Normal;
+            flavor.overflowMode = TextOverflowModes.Ellipsis;
+            flavor.gameObject.SetActive(false);
 
             RectTransform okNode = Node("Ok", box, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
                 new Vector2(0f, 16f), new Vector2(160f, ButtonHeight));
@@ -962,7 +984,8 @@ namespace VeQue.EditorTools
 
             dim.gameObject.SetActive(false);
             Wire(panel, ("_game", game), ("_controller", controller), ("_root", dim.gameObject), ("_name", name), ("_icon", icon),
-                ("_rarity", rarity), ("_weight", weight), ("_price", price), ("_detail", detail), ("_record", record), ("_shiny", shiny), ("_ok", ok));
+                ("_rarity", rarity), ("_weight", weight), ("_price", price), ("_detail", detail), ("_record", record), ("_shiny", shiny),
+                ("_flavor", flavor), ("_toast", toast), ("_ok", ok));
         }
 
         // Bảng kéo cá (Đợt D, 1 lượt): thanh thời gian + chuỗi mũi tên phía trên, 4 nút mũi tên chữ thập ở giữa dưới.
@@ -973,7 +996,9 @@ namespace VeQue.EditorTools
         private const float PullPadCenterY = 160f;
         private const float PullPadStep = 70f;
         private const float PullPadInsetX = 118f;
-        private const float PullTimeBarY = 290f;
+        // Thanh thời gian + chuỗi mũi tên + "Sẵn sàng..." neo giữa màn hình, cao hơn tâm (= chân nhân vật, camera theo)
+        // bấy nhiêu → nằm trên đầu nhân vật, chừa chỗ thấy phao / bóng cá phía dưới (21/11/2026).
+        private const float PullRowOffsetY = 90f;
 
         private static void BuildPullPanel(RectTransform parent, FishingController controller)
         {
@@ -1001,8 +1026,8 @@ namespace VeQue.EditorTools
             }
 
             // Thanh thời gian (đầy → rỗng).
-            RectTransform timeBar = Node("TimeBar", root, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-                new Vector2(0f, PullTimeBarY), new Vector2(300f, 16f));
+            RectTransform timeBar = Node("TimeBar", root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0f),
+                new Vector2(0f, PullRowOffsetY), new Vector2(300f, 16f));
             AddImage(timeBar, new Color(0.15f, 0.10f, 0.06f, 0.9f), false);
             RectTransform timeTrack = Stretch("Track", timeBar);
             Inset(timeTrack, 3f, 3f, 3f, 3f);
@@ -1010,8 +1035,8 @@ namespace VeQue.EditorTools
             Image timeFillImage = AddImage(timeFill, Color.white, false);
 
             // Chuỗi mũi tên trên nền giấy, tự căn giữa theo số mũi tên đang hiện.
-            RectTransform row = Node("Arrows", root, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-                new Vector2(0f, PullTimeBarY + 24f), new Vector2(MaxPullArrows * 30f + 16f, 40f));
+            RectTransform row = Node("Arrows", root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0f),
+                new Vector2(0f, PullRowOffsetY + 24f), new Vector2(MaxPullArrows * 30f + 16f, 40f));
             Frame(row, Skin.Paper, Cream, false);
             var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
             layout.childAlignment = TextAnchor.MiddleCenter;
@@ -1031,8 +1056,8 @@ namespace VeQue.EditorTools
             }
 
             // "Sẵn sàng..." phía trên chuỗi mũi tên, chỉ hiện lúc xem trước.
-            RectTransform readyNode = Node("Ready", root, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-                new Vector2(0f, PullTimeBarY + 68f), new Vector2(240f, 30f));
+            RectTransform readyNode = Node("Ready", root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0f),
+                new Vector2(0f, PullRowOffsetY + 68f), new Vector2(240f, 30f));
             TMP_Text readyLabel = AddLabel(readyNode, "Label", "Sẵn sàng...", 22f, TextAlignmentOptions.Center, Color.white);
             SingleLine(readyLabel);
             Outlined(readyLabel);
@@ -1085,6 +1110,8 @@ namespace VeQue.EditorTools
                 Debug.LogWarning("Tạo UI: chưa có phao / dấu \"!\". Chạy Về Quê → Câu cá: tạo art tạm rồi Tạo UI lại.");
 
             SpriteRenderer bobber = EnsureWorldSprite(owner.transform, "Bobber", bobberSprite, 300);
+            if (bobber.GetComponent<BobberRipple>() == null)
+                Undo.AddComponent<BobberRipple>(bobber.gameObject);
             SpriteRenderer alert = EnsureWorldSprite(owner.transform, "BiteAlert", alertSprite, 310);
             FishShadow shadow = EnsureFishShadow(owner.transform);
             // Hình cá bay lên: trên phao và "!" (sortingOrder 320); sprite đặt lúc chạy.
@@ -1430,6 +1457,305 @@ namespace VeQue.EditorTools
             return script;
         }
 
+        // ---------- Giá chợ (Đợt 2 Phần 9) ----------
+
+        private const float ChartBarWidth = 30f;
+        private const float ChartBarGap = 10f;
+        private const float ChartBarMax = 110f;
+        private const float ChartBaseline = 78f;
+
+        // Popup giữa màn hình: icon + "<cây> · giá 7 ngày", dòng nhãn (hút hàng / rớt giá, % hôm qua), 7 cột neo đáy
+        // (số trên đầu cột đi theo cột), thứ dưới cột, nút Đóng.
+        private static PriceChartPopup BuildPriceChartPopup(RectTransform parent, GameBootstrap game)
+        {
+            RectTransform holder = Stretch("PriceChart", parent);
+            var popup = holder.gameObject.AddComponent<PriceChartPopup>();
+
+            RectTransform dim = Stretch("Root", holder);
+            dim.offsetMin = new Vector2(-400f, -400f);
+            dim.offsetMax = new Vector2(400f, 400f);
+            AddImage(dim, Dim, true);
+
+            float chartWidth = 7 * ChartBarWidth + 6 * ChartBarGap;
+            RectTransform box = Node("Box", dim, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(chartWidth + 40f, 290f));
+            Frame(box, Skin.Cream, Cream, true);
+
+            RectTransform iconNode = Node("Icon", box, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(14f, -12f), new Vector2(32f, 32f));
+            Image icon = AddImage(iconNode, Color.white, false);
+            icon.preserveAspect = true;
+            TMP_Text title = AddLabel(box, "Title", "", 17f, TextAlignmentOptions.MidlineLeft, TextDark);
+            TopRow(title.rectTransform, 12f, 32f, 54f, 12f);
+            SingleLine(title);
+            TMP_Text note = AddLabel(box, "Note", "", 14f, TextAlignmentOptions.MidlineLeft, TextDark);
+            TopRow(note.rectTransform, 46f, 22f, 54f, 12f);
+            SingleLine(note);
+            note.richText = true;
+
+            var bars = new RectTransform[7];
+            var values = new TMP_Text[7];
+            var days = new TMP_Text[7];
+            for (int i = 0; i < 7; i++)
+            {
+                float x = -chartWidth * 0.5f + i * (ChartBarWidth + ChartBarGap) + ChartBarWidth * 0.5f;
+                bars[i] = Node($"Bar{i + 1}", box, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                    new Vector2(x, ChartBaseline), new Vector2(ChartBarWidth, ChartBarMax * 0.5f));
+                AddImage(bars[i], Wood, false);
+                // Số giá trên đầu cột: con của cột, neo đỉnh → đi theo chiều cao cột.
+                values[i] = AddLabel(bars[i], "Value", "", 11f, TextAlignmentOptions.Bottom, TextDark);
+                RectTransform valueRect = values[i].rectTransform;
+                valueRect.anchorMin = new Vector2(0.5f, 1f);
+                valueRect.anchorMax = new Vector2(0.5f, 1f);
+                valueRect.pivot = new Vector2(0.5f, 0f);
+                valueRect.anchoredPosition = new Vector2(0f, 2f);
+                valueRect.sizeDelta = new Vector2(ChartBarWidth + ChartBarGap, 16f);
+                SingleLine(values[i]);
+                days[i] = AddLabel(box, $"Day{i + 1}", "", 12f, TextAlignmentOptions.Top, TextDark);
+                RectTransform dayRect = days[i].rectTransform;
+                dayRect.anchorMin = new Vector2(0.5f, 0f);
+                dayRect.anchorMax = new Vector2(0.5f, 0f);
+                dayRect.pivot = new Vector2(0.5f, 1f);
+                dayRect.anchoredPosition = new Vector2(x, ChartBaseline - 4f);
+                dayRect.sizeDelta = new Vector2(ChartBarWidth + ChartBarGap, 16f);
+                SingleLine(days[i]);
+            }
+
+            RectTransform closeNode = Node("Close", box, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(0f, 12f), new Vector2(120f, ButtonHeight));
+            Button close = MakeButton(closeNode, "Đóng", 16f, Wood, Color.white, out _, Icon.Cancel);
+
+            dim.gameObject.SetActive(false);
+            Wire(popup, ("_game", game), ("_root", dim.gameObject), ("_icon", icon), ("_title", title), ("_note", note),
+                ("_close", close));
+            var so = new SerializedObject(popup);
+            so.FindProperty("_maxBarHeight").floatValue = ChartBarMax;
+            SetArray(so.FindProperty("_bars"), bars);
+            SetArray(so.FindProperty("_values"), values);
+            SetArray(so.FindProperty("_days"), days);
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return popup;
+        }
+
+        // ---------- Điểm danh (Đợt 2 Phần 10) ----------
+
+        private const float CheckInCellWidth = 72f;
+        private const float CheckInCellHeight = 92f;
+        private const float CheckInCellGap = 8f;
+        private const float CheckInGridTop = 72f;
+
+        // Popup giữa màn hình: tiêu đề, dòng phụ, lịch 7 ô (hàng 4 + hàng 3 căn giữa); nút "Nhận" + "Để sau" (chưa nhận)
+        // hoặc "Mở hộp thư" + "Đóng" (đã nhận / xem lịch). Icon quà bay về nút Thư (22/11/2026).
+        private static CheckInPopup BuildCheckInPopup(RectTransform parent, GameBootstrap game, CharacterCreator creator,
+            RectTransform mailTarget)
+        {
+            RectTransform holder = Stretch("CheckInPopup", parent);
+            var popup = holder.gameObject.AddComponent<CheckInPopup>();
+
+            RectTransform dim = Stretch("Root", holder);
+            dim.offsetMin = new Vector2(-400f, -400f);
+            dim.offsetMax = new Vector2(400f, 400f);
+            AddImage(dim, Dim, true);
+
+            float boxWidth = 4 * CheckInCellWidth + 3 * CheckInCellGap + 28f;
+            RectTransform box = Node("Box", dim, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(boxWidth, 344f));
+            Frame(box, Skin.Cream, Cream, true);
+
+            TMP_Text title = AddLabel(box, "Title", "Điểm danh", 22f, TextAlignmentOptions.Center, TextDark);
+            TopRow(title.rectTransform, 12f, 30f, 12f, 12f);
+            SingleLine(title);
+            TMP_Text subtitle = AddLabel(box, "Subtitle", "", 13f, TextAlignmentOptions.Center, TextDark);
+            TopRow(subtitle.rectTransform, 44f, 22f, 12f, 12f);
+            SingleLine(subtitle);
+
+            var backgrounds = new Image[CheckInDayCount];
+            var days = new TMP_Text[CheckInDayCount];
+            var icons = new Image[CheckInDayCount];
+            var rewards = new TMP_Text[CheckInDayCount];
+            for (int i = 0; i < CheckInDayCount; i++)
+            {
+                int row = i < 4 ? 0 : 1;
+                int col = i < 4 ? i : i - 4;
+                int inRow = row == 0 ? 4 : 3;
+                float rowWidth = inRow * CheckInCellWidth + (inRow - 1) * CheckInCellGap;
+                float x = -rowWidth * 0.5f + col * (CheckInCellWidth + CheckInCellGap);
+                float y = -(CheckInGridTop + row * (CheckInCellHeight + CheckInCellGap));
+                RectTransform cell = Node($"Day{i + 1}", box, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, 1f),
+                    new Vector2(x, y), new Vector2(CheckInCellWidth, CheckInCellHeight));
+                backgrounds[i] = Frame(cell, Skin.Paper, CreamDark, false);
+                days[i] = AddLabel(cell, "Day", "", 12f, TextAlignmentOptions.Center, TextDark);
+                TopRow(days[i].rectTransform, 4f, 16f, 2f, 2f);
+                SingleLine(days[i]);
+                RectTransform iconNode = Node("Icon", cell, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                    new Vector2(0f, -22f), new Vector2(32f, 32f));
+                icons[i] = AddImage(iconNode, Color.white, false);
+                icons[i].preserveAspect = true;
+                rewards[i] = AddLabel(cell, "Reward", "", 11f, TextAlignmentOptions.Top, TextDark);
+                Inset(rewards[i].rectTransform, 2f, 2f, 2f, 58f);
+                rewards[i].textWrappingMode = TextWrappingModes.Normal;
+                rewards[i].overflowMode = TextOverflowModes.Ellipsis;
+            }
+
+            RectTransform closeNode = Node("Close", box, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(1f, 0f),
+                new Vector2(-6f, 14f), new Vector2(120f, ButtonHeight));
+            Button close = MakeButton(closeNode, "Đóng", 16f, Wood, Color.white, out _, Icon.Cancel);
+            RectTransform mailNode = Node("OpenMail", box, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 0f),
+                new Vector2(6f, 14f), new Vector2(150f, ButtonHeight));
+            Button openMail = MakeButton(mailNode, "Mở hộp thư", 16f, Green, Color.white, out TMP_Text mailLabel, Icon.Confirm);
+            SingleLine(mailLabel);
+            // Chưa nhận: "Để sau" (trái) + "Nhận" (phải), cùng chỗ với Đóng / Mở hộp thư.
+            RectTransform laterNode = Node("Later", box, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(1f, 0f),
+                new Vector2(-6f, 14f), new Vector2(120f, ButtonHeight));
+            Button later = MakeButton(laterNode, "Để sau", 16f, Wood, Color.white, out _);
+            RectTransform claimNode = Node("Claim", box, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 0f),
+                new Vector2(6f, 14f), new Vector2(150f, ButtonHeight));
+            Button claim = MakeButton(claimNode, "Nhận", 17f, Green, Color.white, out _, Icon.Confirm);
+
+            // Icon bay (mẫu, tắt sẵn): con của holder, trên lớp tối, vẫn bay tiếp khi popup đã đóng.
+            RectTransform flyNode = Node("FlyIcon", holder, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(32f, 32f));
+            Image flyIcon = AddImage(flyNode, Color.white, false);
+            flyIcon.preserveAspect = true;
+            flyIcon.raycastTarget = false;
+            flyNode.gameObject.SetActive(false);
+
+            dim.gameObject.SetActive(false);
+            Wire(popup, ("_game", game), ("_root", dim.gameObject), ("_subtitle", subtitle), ("_openMail", openMail),
+                ("_close", close), ("_claim", claim), ("_later", later), ("_creator", creator),
+                ("_mailTarget", mailTarget), ("_flyTemplate", flyIcon));
+            var so = new SerializedObject(popup);
+            SetArray(so.FindProperty("_cellBackgrounds"), backgrounds);
+            SetArray(so.FindProperty("_cellDays"), days);
+            SetArray(so.FindProperty("_cellIcons"), icons);
+            SetArray(so.FindProperty("_cellRewards"), rewards);
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return popup;
+        }
+
+        private const int CheckInDayCount = VeQue.Logic.CheckInDef.DayCount;
+
+        // Nút cột trái hàng 4 (dưới Album) + chấm đỏ góc trên phải.
+        private static void BuildCheckInButton(RectTransform parent, GameBootstrap game, CheckInPopup popup)
+        {
+            Button button = BuildRegionButton(parent, "CheckInButton", "Điểm danh", 4);
+            var node = (RectTransform)button.transform;
+            RectTransform badge = Node("Badge", node, Vector2.one, Vector2.one, new Vector2(0.5f, 0.5f), new Vector2(-4f, -4f), new Vector2(14f, 14f));
+            AddImage(badge, UrgentText, false);
+            badge.gameObject.SetActive(false);
+            var script = button.gameObject.AddComponent<CheckInButton>();
+            Wire(script, ("_game", game), ("_button", button), ("_popup", popup), ("_badge", badge.gameObject));
+        }
+
+        // ---------- Album (Đợt 2 Phần 5) ----------
+
+        private const int AlbumFishCells = 24;
+        private const int AlbumJunkCells = 12;
+        private const float AlbumCellWidth = 80f;
+        private const float AlbumCellHeight = 84f;
+        private const float AlbumProgressTop = TabbedPageTop;
+        private const float AlbumGridTop = AlbumProgressTop + 26f;
+
+        // Bảng Album: tiêu đề, tab "Cá | Đồ vớt được", dòng tiến độ, lưới 4 cột cuộn dọc; trang Chi tiết phủ dưới tiêu đề.
+        private static AlbumPanel BuildAlbumPanel(RectTransform parent, GameBootstrap game)
+        {
+            RectTransform root = Stretch("AlbumPanel", parent);
+            BottomSheet sheetScript = BuildSheet(root, "Album", out RectTransform sheet);
+            var panel = root.gameObject.AddComponent<AlbumPanel>();
+
+            Button[] tabs = BuildTabRow(sheet, "Cá", "Đồ vớt được");
+
+            TMP_Text progress = AddLabel(sheet, "Progress", "", 15f, TextAlignmentOptions.Center, TextDark);
+            TopRow(progress.rectTransform, AlbumProgressTop, 22f, 12f, 12f);
+            SingleLine(progress);
+
+            RectTransform fishPage = BuildAlbumGrid(sheet, "FishPage", AlbumFishCells, out AlbumCell[] fishCells);
+            RectTransform junkPage = BuildAlbumGrid(sheet, "JunkPage", AlbumJunkCells, out AlbumCell[] junkCells);
+            junkPage.gameObject.SetActive(false);
+
+            // Chi tiết: phủ từ dưới tiêu đề (che cả tab).
+            RectTransform detail = Stretch("Detail", sheet);
+            Inset(detail, 8f, 8f, 8f, 52f);
+            Frame(detail, Skin.Paper, CreamDark, true);
+            RectTransform backNode = Node("Back", detail, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(6f, -6f), new Vector2(110f, ButtonHeight));
+            Button back = MakeButton(backNode, "Quay lại", 15f, Wood, Color.white, out _);
+            RectTransform iconNode = Node("Icon", detail, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(14f, -(ButtonHeight + 14f)), new Vector2(64f, 64f));
+            Image icon = AddImage(iconNode, Color.white, false);
+            icon.preserveAspect = true;
+            TMP_Text name = AddLabel(detail, "Name", "", 20f, TextAlignmentOptions.BottomLeft, TextDark);
+            TopRow(name.rectTransform, ButtonHeight + 14f, 32f, 92f, 12f);
+            SingleLine(name);
+            TMP_Text rarity = AddLabel(detail, "Rarity", "", 15f, TextAlignmentOptions.TopLeft, TextDark);
+            TopRow(rarity.rectTransform, ButtonHeight + 48f, 24f, 92f, 12f);
+            SingleLine(rarity);
+            TMP_Text info = AddLabel(detail, "Info", "", 15f, TextAlignmentOptions.TopLeft, TextDark);
+            Inset(info.rectTransform, 14f, 10f, 14f, ButtonHeight + 92f);
+            info.richText = true;
+            info.textWrappingMode = TextWrappingModes.Normal;
+            info.overflowMode = TextOverflowModes.Ellipsis;
+            detail.gameObject.SetActive(false);
+
+            Wire(panel, ("_game", game), ("_sheet", sheetScript), ("_progress", progress),
+                ("_fishTab", tabs[0]), ("_junkTab", tabs[1]), ("_fishPage", fishPage.gameObject), ("_junkPage", junkPage.gameObject),
+                ("_detail", detail.gameObject), ("_back", back), ("_detailIcon", icon), ("_detailName", name),
+                ("_detailRarity", rarity), ("_detailInfo", info));
+            var so = new SerializedObject(panel);
+            SetArray(so.FindProperty("_fishCells"), fishCells);
+            SetArray(so.FindProperty("_junkCells"), junkCells);
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return panel;
+        }
+
+        // Trang lưới album: cuộn dọc, 4 cột, count ô (ô thừa ẩn lúc chạy).
+        private static RectTransform BuildAlbumGrid(RectTransform sheet, string name, int count, out AlbumCell[] cells)
+        {
+            RectTransform page = Stretch(name, sheet);
+            Inset(page, 8f, 8f, 8f, AlbumGridTop);
+            var scroll = page.gameObject.AddComponent<ScrollRect>();
+            scroll.horizontal = false;
+            RectTransform viewport = Stretch("Viewport", page);
+            AddImage(viewport, new Color(1f, 1f, 1f, 0f), true);
+            viewport.gameObject.AddComponent<RectMask2D>();
+            RectTransform content = Node("Content", viewport, new Vector2(0f, 1f), Vector2.one, new Vector2(0.5f, 1f), Vector2.zero, Vector2.zero);
+            var grid = content.gameObject.AddComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(AlbumCellWidth, AlbumCellHeight);
+            grid.spacing = new Vector2(8f, 8f);
+            grid.padding = new RectOffset(0, 0, 2, 8);
+            grid.childAlignment = TextAnchor.UpperCenter;
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 4;
+            var fitter = content.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            scroll.viewport = viewport;
+            scroll.content = content;
+
+            cells = new AlbumCell[count];
+            for (int i = 0; i < count; i++)
+                cells[i] = BuildAlbumCell(content, i);
+            return page;
+        }
+
+        // Ô album: icon trên, tên nhỏ ở đáy; cả ô là nút.
+        private static AlbumCell BuildAlbumCell(RectTransform content, int index)
+        {
+            RectTransform cell = Create($"Cell{index + 1}", content);
+            Image background = Frame(cell, Skin.Paper, CreamDark, true);
+            var button = cell.gameObject.AddComponent<Button>();
+            button.targetGraphic = background;
+            RectTransform iconNode = Node("Icon", cell, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -6f), new Vector2(48f, 48f));
+            Image icon = AddImage(iconNode, Color.white, false);
+            icon.preserveAspect = true;
+            TMP_Text label = AddLabel(cell, "Name", "", 11f, TextAlignmentOptions.Bottom, TextDark);
+            Inset(label.rectTransform, 3f, 5f, 3f, 56f);
+            SingleLine(label);
+            var script = cell.gameObject.AddComponent<AlbumCell>();
+            Wire(script, ("_background", background), ("_icon", icon), ("_name", label), ("_button", button));
+            return script;
+        }
+
         // Nhãn neo trên cùng: cách mép trên top, cao height, cách trái left, cách phải right.
         private static void TopRow(RectTransform rect, float top, float height, float left, float right)
         {
@@ -1645,8 +1971,12 @@ namespace VeQue.EditorTools
             var script = row.gameObject.AddComponent<CropRow>();
 
             RectTransform iconNode = Node("Icon", row, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(8f, 0f), new Vector2(48f, 48f));
-            Image icon = AddImage(iconNode, Color.white, false);
+            Image icon = AddImage(iconNode, Color.white, true);
             icon.preserveAspect = true;
+            // Đợt 2 Phần 9: chạm icon trong Kho → biểu đồ giá 7 ngày (bảng khác không gắn listener).
+            Button iconButton = iconNode.gameObject.AddComponent<Button>();
+            iconButton.transition = Selectable.Transition.None;
+            iconButton.targetGraphic = icon;
 
             TMP_Text name = AddLabel(row, "Name", "", 17f, TextAlignmentOptions.BottomLeft, TextDark);
             Inset(name.rectTransform, 62f, RowHeight * 0.5f, 158f, 2f);
@@ -1660,7 +1990,7 @@ namespace VeQue.EditorTools
 
             Wire(script, ("_icon", icon), ("_name", name), ("_info", info),
                 ("_primary", primary), ("_primaryLabel", primaryLabel),
-                ("_secondary", secondary), ("_secondaryLabel", secondaryLabel));
+                ("_secondary", secondary), ("_secondaryLabel", secondaryLabel), ("_iconButton", iconButton));
             row.gameObject.SetActive(false);
             return script;
         }

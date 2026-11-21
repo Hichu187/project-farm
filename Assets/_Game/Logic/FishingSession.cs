@@ -102,6 +102,10 @@ namespace VeQue.Logic
         public FishDepth Depth { get; }
         // Cá shiny (Đợt 2 Phần 18): tung ngay khi chọn ra cá, để View biết trước. Chỉ có tác dụng khi câu được.
         public ShinyKind Shiny { get; }
+        // Rác (Đợt 2 Phần 5): khác null thì lượt này móc phải rác thay cá (Fish vẫn có để View không bị null,
+        // nhưng không dùng). Tung lúc tạo phiên bằng random riêng → chuỗi chọn cá không đổi.
+        public JunkDef Junk { get; }
+        public bool IsJunk => Junk != null;
 
         // Lịch phao (giây tính từ lúc phao chạm nước): các lần rỉa, lúc cắn, khung giật.
         public IReadOnlyList<float> NibbleTimes => _nibbles;
@@ -132,10 +136,22 @@ namespace VeQue.Logic
         public bool IsNewSpecies => IsNewRecord && PreviousRecordGrams == 0;
         // Lần đầu câu được cặp (loài, kiểu shiny) này – ghi lúc Farm.CompleteFishing.
         public bool IsNewShiny { get; internal set; }
+        // Rác: lần đầu vớt được món này; đã tự bán cho cô đồng nát (không vào giỏ).
+        public bool IsNewJunk { get; internal set; }
+        public bool JunkAutoSold { get; internal set; }
+        // Mốc album vừa đạt nhờ con cá này (thư thưởng đã gửi).
+        public IReadOnlyList<DexMilestoneDef> ReachedMilestones { get; internal set; } = Array.Empty<DexMilestoneDef>();
 
-        internal FishingSession(FishingDef def, RodDef rod, BaitDef bait, DaySlot slot, float power, uint seed)
+        // Sự kiện (Đợt 2 Phần 7): hệ số trọng số chọn cá (FishWeightMult) và cân nặng (FishSizeMult) theo loài; null = 1.
+        private readonly Func<FishDef, float> _weightMult;
+        private readonly Func<FishDef, float> _sizeMult;
+
+        internal FishingSession(FishingDef def, RodDef rod, BaitDef bait, DaySlot slot, float power, uint seed,
+            Func<FishDef, float> weightMult = null, Func<FishDef, float> sizeMult = null)
         {
             _tuning = def.Tuning;
+            _weightMult = weightMult;
+            _sizeMult = sizeMult;
             _random = seed == 0 ? 1u : seed;
             Rod = rod;
             Bait = bait;
@@ -145,8 +161,11 @@ namespace VeQue.Logic
             Depth = DepthOf(Power, Quality, _tuning);
             Fish = PickFish(def);
             // Random riêng sinh từ seed phiên (băm phi tuyến, không dính chuỗi xorshift chính) → các lần tung cũ không xê dịch.
-            uint shinyRandom = MixSeed(seed);
-            Shiny = RollShiny(ref shinyRandom, _tuning);
+            uint shinyRandom = MixSeed(seed, ShinySalt);
+            uint junkRandom = MixSeed(seed, JunkSalt);
+            Junk = RollJunk(ref junkRandom, def, bait, Quality);
+            ShinyKind shiny = RollShiny(ref shinyRandom, _tuning);
+            Shiny = Junk != null ? ShinyKind.None : shiny;
             Phase = FishingPhase.Waiting;
 
             float delay = Lerp(_tuning.BiteMinSeconds, _tuning.BiteMaxSeconds, NextFloat());
@@ -189,10 +208,34 @@ namespace VeQue.Logic
             return kinds[SeededRandom.Range(ref random, 0, kinds.Length)];
         }
 
-        // Băm seed (murmur3 fmix32) cho random riêng của shiny.
-        private static uint MixSeed(uint seed)
+        // Ra rác: JunkChancePer10000(mồi, kiểu ném) / 10000 → chọn món theo trọng số. Không có rác trong data → null.
+        public static JunkDef RollJunk(ref uint random, FishingDef def, BaitDef bait, CastQuality quality)
         {
-            uint h = seed ^ 0x5348494Eu;
+            if (def.Junk.Count == 0)
+                return null;
+            int chance = def.Tuning.JunkChancePer10000(bait, quality);
+            if (chance <= 0 || SeededRandom.Range(ref random, 0, 10000) >= chance)
+                return null;
+            int total = 0;
+            foreach (JunkDef junk in def.Junk)
+                total += junk.Weight;
+            int pick = SeededRandom.Range(ref random, 0, total);
+            foreach (JunkDef junk in def.Junk)
+            {
+                if (pick < junk.Weight)
+                    return junk;
+                pick -= junk.Weight;
+            }
+            return def.Junk[def.Junk.Count - 1];
+        }
+
+        private const uint ShinySalt = 0x5348494Eu;
+        private const uint JunkSalt = 0x4A554E4Bu;
+
+        // Băm seed (murmur3 fmix32) cho random riêng (shiny, rác).
+        private static uint MixSeed(uint seed, uint salt)
+        {
+            uint h = seed ^ salt;
             h ^= h >> 16;
             h *= 0x85EBCA6Bu;
             h ^= h >> 13;
@@ -219,9 +262,13 @@ namespace VeQue.Logic
             if (t > HookDeadline)
                 return Finish(FishingOutcome.BaitStolen);
 
-            int slip = Math.Max(0, Fish.SlipPercent - Rod.SlipReductionPercent);
-            if (SeededRandom.Range(ref _random, 0, 100) < slip)
-                return Finish(FishingOutcome.Slipped);
+            // Rác không trượt lưỡi.
+            if (Junk == null)
+            {
+                int slip = Math.Max(0, Fish.SlipPercent - Rod.SlipReductionPercent);
+                if (SeededRandom.Range(ref _random, 0, 100) < slip)
+                    return Finish(FishingOutcome.Slipped);
+            }
 
             Phase = FishingPhase.Pulling;
             Pull = MakePull();
@@ -276,6 +323,17 @@ namespace VeQue.Logic
         // Chuỗi mũi tên: độ dài theo cá (ném Perfect bớt 1, không dưới MinPullArrows), thời gian theo cá + thưởng của cần.
         private PullRound MakePull()
         {
+            if (Junk != null)
+            {
+                // Rác: chuỗi ngắn, không mũi đỏ.
+                int junkCount = SeededRandom.Range(ref _random, _tuning.JunkMinArrows, _tuning.JunkMaxArrows + 1);
+                var junkArrows = new Arrow[junkCount];
+                for (int i = 0; i < junkCount; i++)
+                    junkArrows[i] = (Arrow)SeededRandom.Range(ref _random, 0, 4);
+                float junkTime = (_tuning.JunkPullSeconds + junkCount * _tuning.PullSecondsPerArrow) * (1f + Rod.BonusTimePercent / 100f);
+                return new PullRound(junkArrows, new bool[junkCount], junkTime);
+            }
+
             int count = SeededRandom.Range(ref _random, Fish.MinArrows, Fish.MaxArrows + 1);
             if (Quality == CastQuality.Perfect)
                 count--;
@@ -295,12 +353,28 @@ namespace VeQue.Logic
         // Cân nặng theo hạng (Perfect lệch về nặng hơn); giá, XP theo cân nặng; Perfect thêm XP.
         private void RollCatch(PullGrade grade)
         {
+            if (Junk != null)
+            {
+                // Rác: không cân, không XP; giá bán cho cô đồng nát.
+                Grams = 0;
+                Price = Junk.SellPrice;
+                Xp = 0;
+                return;
+            }
+
             float exponent = grade == PullGrade.Perfect ? _tuning.PerfectWeightExponent
                 : grade == PullGrade.Good ? _tuning.GoodWeightExponent
                 : _tuning.NormalWeightExponent;
             float u = (float)Math.Pow(NextFloat(), exponent);
             int span = Fish.MaxGrams - Fish.MinGrams;
             Grams = Fish.MinGrams + (int)Math.Round(span * u);
+            // Nước lên: cá to hơn, được vượt cân tối đa (phá kỷ lục); giá / XP theo cân giữ trần (WeightValuePercent).
+            if (_sizeMult != null)
+            {
+                float size = _sizeMult(Fish);
+                if (size != 1f)
+                    Grams = Math.Max(1, (int)Math.Round(Grams * (double)size));
+            }
             float percent = FishingMath.WeightValuePercent(Fish, Grams, _tuning);
             Price = FishingMath.FishPrice(Fish, Grams, _tuning, Shiny);
             int xpPercent = grade == PullGrade.Perfect ? 100 + _tuning.PerfectXpBonusPercent : 100;
@@ -328,6 +402,8 @@ namespace VeQue.Logic
                     weight *= _tuning.PreferredBaitMultiplier;
                 if (fish.Rarity >= FishRarity.Rare)
                     weight *= 1f + rareBonus / 100f;
+                if (_weightMult != null)
+                    weight *= _weightMult(fish);
                 if (weight <= 0f)
                     continue;
                 weights.Add((fish, weight));

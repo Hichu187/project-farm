@@ -17,7 +17,8 @@ namespace VeQue.Logic
         public int BasketCapacity => Math.Max(Definition.Fishing.BasketStartSlots,
             Math.Min(State.Fishing.BasketSlots, Definition.Fishing.BasketMaxSlots));
 
-        public bool IsBasketFull => State.Fishing.Basket.Count >= BasketCapacity;
+        // Cá + rác cùng chiếm ô giỏ.
+        public bool IsBasketFull => State.Fishing.BasketUsed >= BasketCapacity;
 
         public bool CanUnlockBasketSlot => BasketCapacity < Definition.Fishing.BasketMaxSlots;
 
@@ -95,12 +96,14 @@ namespace VeQue.Logic
 
             DaySlot slot = Calendar.TimeWindow;
             uint seed = SeededRandom.Next(ref State.RandomState);
-            session = new FishingSession(def, rodDef, bait, slot, power, seed);
+            // Hệ số sự kiện chốt lúc ném (Đợt 2 Phần 7).
+            session = new FishingSession(def, rodDef, bait, slot, power, seed, GetFishWeightMult, GetFishSizeMult);
             NotifyChanged();
             return FarmResult.Ok;
         }
 
-        // Áp kết quả phiên đã xong: cá vào giỏ + XP + kỷ lục. Không ra cá: không thêm gì (độ bền đã trừ lúc ném).
+        // Áp kết quả phiên đã xong: cá vào giỏ + XP + album + mốc thưởng. Rác: vào giỏ hoặc tự bán, ghi album rác.
+        // Không ra gì: không thêm gì (mồi + độ bền đã trừ lúc ném – trúng rác cũng là mất mồi).
         public FarmResult CompleteFishing(FishingSession session)
         {
             if (session == null || session.Phase != FishingPhase.Finished)
@@ -110,7 +113,24 @@ namespace VeQue.Logic
             session.Applied = true;
 
             FishingState fishing = State.Fishing;
-            if (session.Outcome == FishingOutcome.Caught)
+            if (session.Outcome == FishingOutcome.Caught && session.IsJunk)
+            {
+                string junkId = session.Junk.Id;
+                session.IsNewJunk = !fishing.JunkDex.TryGetValue(junkId, out JunkDexEntry junkEntry);
+                if (junkEntry == null)
+                    fishing.JunkDex[junkId] = junkEntry = new JunkDexEntry { FirstDayKey = Calendar.DayKey };
+                junkEntry.Count++;
+                if (fishing.AutoSellJunk)
+                {
+                    State.Coins += session.Price;
+                    session.JunkAutoSold = true;
+                }
+                else
+                {
+                    fishing.JunkBasket.Add(new CaughtJunk { JunkId = junkId, CaughtAt = _clock.UtcNowSeconds });
+                }
+            }
+            else if (session.Outcome == FishingOutcome.Caught)
             {
                 fishing.Basket.Add(new CaughtFish
                 {
@@ -131,13 +151,99 @@ namespace VeQue.Logic
                 int record = fishing.GetRecord(session.Fish.Id);
                 session.PreviousRecordGrams = record;
                 session.IsNewRecord = session.Grams > record;
-                if (session.IsNewRecord)
-                    fishing.RecordGrams[session.Fish.Id] = session.Grams;
+                if (!fishing.FishDex.TryGetValue(session.Fish.Id, out FishDexEntry entry))
+                    fishing.FishDex[session.Fish.Id] = entry = new FishDexEntry { FirstDayKey = Calendar.DayKey };
+                entry.Count++;
+                entry.MaxGrams = Math.Max(entry.MaxGrams, session.Grams);
+                session.ReachedMilestones = SendDexMilestones();
                 AddXp(session.Xp);
             }
 
             NotifyChanged();
             return FarmResult.Ok;
+        }
+
+        // Số loài (còn trong data) đã câu được.
+        public int DexSpeciesCount
+        {
+            get
+            {
+                int count = 0;
+                foreach (FishDef fish in Definition.Fishing.Fish)
+                {
+                    if (State.Fishing.HasCaught(fish.Id))
+                        count++;
+                }
+                return count;
+            }
+        }
+
+        // Đã đạt mốc chưa (không xét đã gửi thư hay chưa).
+        public bool IsDexMilestoneReached(DexMilestoneDef milestone)
+        {
+            if (milestone.Kind == DexMilestoneKind.SpeciesCount)
+                return DexSpeciesCount >= milestone.Count;
+            bool any = false;
+            foreach (FishDef fish in Definition.Fishing.Fish)
+            {
+                if (fish.Rarity != milestone.Rarity)
+                    continue;
+                any = true;
+                if (!State.Fishing.HasCaught(fish.Id))
+                    return false;
+            }
+            return any;
+        }
+
+        // Gửi thư cho các mốc đã đạt mà chưa gửi (id thư = id mốc → mỗi mốc 1 lần). Không báo Changed.
+        private IReadOnlyList<DexMilestoneDef> SendDexMilestones()
+        {
+            List<DexMilestoneDef> reached = null;
+            foreach (DexMilestoneDef milestone in Definition.Fishing.DexMilestones)
+            {
+                if (State.Mailbox.SentIds.Contains(milestone.Id) || !IsDexMilestoneReached(milestone))
+                    continue;
+                if (AddMail(milestone.Id, milestone.Sender, milestone.Title, milestone.Body, milestone.Rewards, 0))
+                    (reached ??= new List<DexMilestoneDef>()).Add(milestone);
+            }
+            if (reached == null)
+                return Array.Empty<DexMilestoneDef>();
+            CleanupMail(Calendar.DayKey);
+            return reached.AsReadOnly();
+        }
+
+        // Giá bán 1 món rác cho cô đồng nát (rác không còn trong data → 0).
+        public int GetJunkPrice(CaughtJunk junk)
+            => junk != null && Definition.Fishing.TryGetJunk(junk.JunkId, out JunkDef def) ? def.SellPrice : 0;
+
+        // Bán 1 món rác trong giỏ.
+        public FarmResult SellJunk(int junkIndex, out long earned)
+        {
+            earned = 0;
+            List<CaughtJunk> junk = State.Fishing.JunkBasket;
+            if (junkIndex < 0 || junkIndex >= junk.Count)
+                return FarmResult.UnknownFish;
+            earned = GetJunkPrice(junk[junkIndex]);
+            junk.RemoveAt(junkIndex);
+            State.Coins += earned;
+            NotifyChanged();
+            return FarmResult.Ok;
+        }
+
+        public void SetAutoSellJunk(bool on)
+        {
+            if (State.Fishing.AutoSellJunk == on)
+                return;
+            State.Fishing.AutoSellJunk = on;
+            NotifyChanged();
+        }
+
+        private long GetJunkBasketValue()
+        {
+            long total = 0;
+            foreach (CaughtJunk junk in State.Fishing.JunkBasket)
+                total += GetJunkPrice(junk);
+            return total;
         }
 
         // Mua cần chưa có. Cần đã có (kể cả hỏng) thì sửa, không mua lại.
@@ -218,11 +324,11 @@ namespace VeQue.Logic
             return FishingMath.FishPrice(def, fish.Grams, Definition.Fishing.Tuning, fish.Shiny);
         }
 
-        // Số cá "Bán hết" sẽ bán: bỏ qua cá shiny (chốt 20/11/2026) và cá đang cần cho đơn cá (Đợt 2 Phần 11).
+        // Số món "Bán hết" sẽ bán: mọi rác + cá, bỏ qua cá shiny (chốt 20/11/2026) và cá đang cần cho đơn cá (Đợt 2 Phần 11).
         public int GetSellAllCount()
         {
             bool[] kept = GetSellAllKeptMask();
-            int count = 0;
+            int count = State.Fishing.JunkBasket.Count;
             for (int i = 0; i < kept.Length; i++)
             {
                 if (!kept[i])
@@ -323,12 +429,12 @@ namespace VeQue.Logic
             return FarmResult.Ok;
         }
 
-        // Tổng giá cá "Bán hết" sẽ bán (không gồm cá giữ lại) – hiện ở nút / hộp xác nhận.
+        // Tổng giá "Bán hết" sẽ bán (rác + cá, không gồm cá giữ lại) – hiện ở nút / hộp xác nhận.
         public long GetBasketValue()
         {
             List<CaughtFish> basket = State.Fishing.Basket;
             bool[] kept = GetSellAllKeptMask();
-            long total = 0;
+            long total = GetJunkBasketValue();
             for (int i = 0; i < basket.Count; i++)
             {
                 if (!kept[i])
@@ -337,7 +443,7 @@ namespace VeQue.Logic
             return total;
         }
 
-        // Bán hết, giữ lại cá shiny và cá đang cần cho đơn cá (bán lẻ từng con vẫn được). Không có gì để bán → UnknownFish.
+        // Bán hết (cả rác), giữ lại cá shiny và cá đang cần cho đơn cá (bán lẻ từng con vẫn được). Không có gì để bán → UnknownFish.
         public FarmResult SellAllFish(out long earned)
         {
             earned = 0;
@@ -351,6 +457,7 @@ namespace VeQue.Logic
                 if (!kept[i])
                     basket.RemoveAt(i);
             }
+            State.Fishing.JunkBasket.Clear();
             State.Coins += earned;
             NotifyChanged();
             return FarmResult.Ok;
@@ -417,6 +524,20 @@ namespace VeQue.Logic
             BaitFound?.Invoke(def.WormBaitId, amount);
         }
 
+        private static void RemoveInvalid<T>(Dictionary<string, T> map, Func<T, bool> invalid) where T : class
+        {
+            List<string> bad = null;
+            foreach (KeyValuePair<string, T> pair in map)
+            {
+                if (string.IsNullOrEmpty(pair.Key) || pair.Value == null || invalid(pair.Value))
+                    (bad ??= new List<string>()).Add(pair.Key);
+            }
+            if (bad == null)
+                return;
+            foreach (string key in bad)
+                map.Remove(key);
+        }
+
         // Nạp save: giỏ / mức giỏ / cần hợp lệ với data.
         private void NormalizeFishing()
         {
@@ -432,7 +553,13 @@ namespace VeQue.Logic
             fishing.Baits ??= new System.Collections.Generic.Dictionary<string, int>();
             fishing.Basket ??= new System.Collections.Generic.List<CaughtFish>();
             fishing.Basket.RemoveAll(f => f == null || string.IsNullOrEmpty(f.FishId) || f.Grams <= 0);
-            fishing.RecordGrams ??= new System.Collections.Generic.Dictionary<string, int>();
+            fishing.FishDex ??= new Dictionary<string, FishDexEntry>();
+            RemoveInvalid(fishing.FishDex, e => e.Count <= 0 || e.MaxGrams <= 0);
+            fishing.JunkDex ??= new Dictionary<string, JunkDexEntry>();
+            RemoveInvalid(fishing.JunkDex, e => e.Count <= 0);
+            fishing.JunkBasket ??= new List<CaughtJunk>();
+            // Rác không còn trong data: bỏ (không chiếm ô giỏ mãi).
+            fishing.JunkBasket.RemoveAll(j => j == null || !Definition.Fishing.TryGetJunk(j.JunkId, out _));
             fishing.ShinyDex ??= new System.Collections.Generic.List<ShinyRecord>();
             fishing.ShinyDex.RemoveAll(r => r == null || string.IsNullOrEmpty(r.FishId) || r.Kind == ShinyKind.None);
             fishing.BasketSlots = Math.Max(Definition.Fishing.BasketStartSlots,

@@ -88,6 +88,25 @@ namespace VeQue.View.Data
         [Header("Hộp thư (Đợt 2 Phần 3)")]
         [Tooltip("Data/Mail/build_mails.json: thư phát theo bản build (một lần theo id).")]
         [SerializeField] private TextAsset _buildMails;
+        [Tooltip("Data/Mail/check_in.json: điểm danh 7 ngày (Đợt 2 Phần 10). Trống = tắt điểm danh.")]
+        [SerializeField] private TextAsset _checkIn;
+
+        [Header("Giá chợ (Đợt 2 Phần 9)")]
+        [Tooltip("Bật giá chợ theo ngày. Tắt = bán theo giá gốc (vẫn nhân sự kiện).")]
+        [SerializeField] private bool _marketEnabled = true;
+        [Tooltip("Hệ số ngày của mỗi cây nằm trong [Min, Max] (noise theo seed ngày, giống nhau mọi người chơi).")]
+        [SerializeField] private float _marketDailyMin = 0.85f;
+        [SerializeField] private float _marketDailyMax = 1.15f;
+        [Tooltip("Mỗi ngày 1 cây hút hàng × Hot, 1 cây rớt giá × Cold.")]
+        [SerializeField] private float _marketHotMult = 1.4f;
+        [SerializeField] private float _marketColdMult = 0.7f;
+        [Tooltip("Rau lá: Bình minh + Sáng +%, Khuya −%.")]
+        [Range(0, 50)] [SerializeField] private int _marketLeafyMorningPercent = 10;
+        [Range(0, 50)] [SerializeField] private int _marketLeafyNightPercent = 10;
+
+        [Header("Sự kiện (Đợt 2 Phần 7)")]
+        [Tooltip("Data/Events/events.json: sự kiện theo ngày (cố định + ngẫu nhiên). Trống = không có sự kiện.")]
+        [SerializeField] private TextAsset _events;
 
         [Header("Đơn cá")]
         [Tooltip("Tỉ lệ đơn cá (%) ở cấp mở câu cá; mỗi cấp sau +1%, tối đa Max. 0 = không có đơn cá.")]
@@ -160,7 +179,12 @@ namespace VeQue.View.Data
                 _fishOrderMinSlots, _fishOrderMaxCount, _fishOrderLevelsPerFish);
             FishingDef fishing = _fishing != null ? _fishing.ToDef() : null;
             return new FarmDef(zones, crops, _startCoins, seeds, _waterReducePercent, levels, rescueId, orders, fishing,
-                LunarTableLoader.Load(_lunarTable), BuildMailLoader.Load(_buildMails));
+                LunarTableLoader.Load(_lunarTable), BuildMailLoader.Load(_buildMails), CheckInLoader.Load(_checkIn),
+                EventsLoader.Load(_events),
+                _marketEnabled
+                    ? new MarketDef(_marketDailyMin, _marketDailyMax, _marketHotMult, _marketColdMult,
+                        _marketLeafyMorningPercent, _marketLeafyNightPercent)
+                    : MarketDef.None);
         }
     }
 }

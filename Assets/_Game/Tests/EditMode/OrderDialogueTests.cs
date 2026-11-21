@@ -248,6 +248,26 @@ namespace VeQue.Tests
             CollectionAssert.AreEquivalent(new[] { Ro, Diec }, ids);
         }
 
+        // Phần 5: album rỗng → không có loài nào đặt được, không ra đơn cá, chuỗi đơn giống khi tắt đơn cá.
+        [Test]
+        public void FishPool_OnlyCaughtSpecies()
+        {
+            Farm empty = CreateFarm(Dialogue(), fishPercent: 100, dexAll: false);
+            CollectionAssert.IsEmpty(empty.GetFishOrderPool());
+            Farm plain = CreateFarm(Dialogue(), fishPercent: 0, dexAll: false);
+            for (int i = 0; i < Slots; i++)
+            {
+                Assert.IsFalse(empty.State.Orders[i].IsFish);
+                Assert.AreEqual(plain.State.Orders[i].Items[0].Id, empty.State.Orders[i].Items[0].Id);
+            }
+
+            empty.State.Fishing.FishDex[Diec] = new FishDexEntry { Count = 1, MaxGrams = 100 };
+            var ids = new List<string>();
+            foreach (FishDef fish in empty.GetFishOrderPool())
+                ids.Add(fish.Id);
+            CollectionAssert.AreEquivalent(new[] { Diec }, ids);
+        }
+
         [Test]
         public void FishOrders_ValidSpeciesCountAndNpc()
         {
@@ -406,7 +426,7 @@ namespace VeQue.Tests
         }
 
         private Farm CreateFarm(OrderDialogue dialogue, int slots = Slots, int level = 2, int urgentChance = 0,
-            int fishPercent = 0, int fishingLevel = 1)
+            int fishPercent = 0, int fishingLevel = 1, bool dexAll = true)
         {
             var zones = new[] { new ZoneDef(Zone1, new[] { new BedDef(2, 3) }, 2, new[] { 10, 10, 10, 10 }) };
             var crops = new[]
@@ -437,6 +457,12 @@ namespace VeQue.Tests
             FarmState state = FarmState.CreateNew(def);
             state.Level = level;
             state.RandomState = 4242;
+            // Đơn cá chỉ đặt loài đã có trong album (Phần 5): mặc định album đủ loài để giữ hành vi test cũ.
+            if (dexAll)
+            {
+                foreach (FishDef f in fish)
+                    state.Fishing.FishDex[f.Id] = new FishDexEntry { Count = 1, MaxGrams = f.MinGrams };
+            }
             return new Farm(def, state, _clock);
         }
 

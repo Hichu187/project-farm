@@ -20,6 +20,7 @@ MonoBehaviour:
   _maxGrams: 600
   _basePrice: 12
   _baseXp: 1
+  _hint: "Hay l\u1EDFn v\u1EDFn g\u1EA7n b\u1EDD, m\xEA m\xF9i c\xE1m."
   _slotFactors:
   - 1
   - 1

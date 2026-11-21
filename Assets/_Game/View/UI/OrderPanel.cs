@@ -73,7 +73,9 @@ namespace VeQue.View.UI
                 return;
 
             string customer = NpcName(order);
-            string reward = UiFormat.Reward(order.RewardCoins, order.RewardXp);
+            // Thưởng lúc giao, đã nhân sự kiện (OrderBonus).
+            _game.Farm.GetOrderReward(order, out long rewardCoins, out long rewardXp);
+            string reward = UiFormat.Reward(rewardCoins, rewardXp);
             FarmResult result = _game.DeliverOrder(slot);
             if (result == FarmResult.Ok)
                 Message?.Invoke(string.IsNullOrEmpty(customer) ? reward : $"{customer}: {reward}");
@@ -112,7 +114,8 @@ namespace VeQue.View.UI
                 string badge = null;
                 if (order.IsUrgent)
                     badge = farm.TryGetOrderTimeLeft(i, out long left) ? $"KHẨN CẤP · còn {UiFormat.Countdown(left)}" : "KHẨN CẤP";
-                card.ShowOrder(NpcName(order), UiFormat.Reward(order.RewardCoins, order.RewardXp), farm.CanDeliver(i), badge);
+                farm.GetOrderReward(order, out long coins, out long xp);
+                card.ShowOrder(NpcName(order), UiFormat.Reward(coins, xp), farm.CanDeliver(i), badge);
                 ShowSpeaker(card, order);
                 int shown = Math.Min(order.Items.Length, card.ItemSlots);
                 for (int j = 0; j < shown; j++)

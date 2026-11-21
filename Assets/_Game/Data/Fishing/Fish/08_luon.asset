@@ -20,6 +20,8 @@ MonoBehaviour:
   _maxGrams: 1200
   _basePrice: 110
   _baseXp: 8
+  _hint: "Tr\u1ED1n trong hang b\xF9n s\xE1t b\u1EDD, ch\u1EC9 ch\u1ECBu m\u1ED3i
+    giun."
   _slotFactors:
   - 0
   - 0

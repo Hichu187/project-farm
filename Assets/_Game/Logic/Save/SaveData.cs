@@ -12,10 +12,13 @@ namespace VeQue.Logic
         // 11: đơn có thoại + đơn cá – SaveOrder bỏ customer, thêm kind / npc / line / seed; orderLines, lastThanks (Đợt 2 Phần 11).
         // 12: GameCalendar UTC+7 cố định – bỏ utcOffsetSeconds, thêm lastSeenDayKey (Đợt 2 Phần 2).
         // 13: hộp thư – mailbox (Đợt 2 Phần 3).
-        public const int CurrentVersion = 13;
+        // 14: album + rác – SaveFishing bỏ records, thêm dex / junk / junkDex / autoSellJunk (Đợt 2 Phần 5).
+        // 15: điểm danh – checkIn (Đợt 2 Phần 10).
+        // 16: sự kiện – SavePlot thêm growSeconds, bonusYield (chốt lúc gieo, Đợt 2 Phần 7).
+        public const int CurrentVersion = 16;
         // Đợt 2, trước bản thử kín: không migration – save cũ hơn mốc này bị bỏ, tạo save mới.
         // Phần nào đổi cấu trúc save thì tăng cả CurrentVersion và MinSupportedVersion.
-        public const int MinSupportedVersion = 13;
+        public const int MinSupportedVersion = 16;
 
         public int version;
         public long coins;
@@ -37,6 +40,7 @@ namespace VeQue.Logic
         // Ngày lớn nhất đã thấy (GameCalendar.DayKey) – chống lùi ngày.
         public int lastSeenDayKey = int.MinValue;
         public SaveMailbox mailbox;
+        public SaveCheckIn checkIn;
         public SaveFishing fishing;
         // Đơn có thoại: câu đặt đơn vừa dùng của từng người (id người → chỉ số câu), câu cảm ơn vừa dùng (-1 = chưa có).
         public SaveCount[] orderLines;
@@ -52,11 +56,48 @@ namespace VeQue.Logic
         public SaveFish[] basket;
         // Số ô giỏ đã mở.
         public int basketSlots;
-        // Kỷ lục cân nặng (gam) theo loài.
-        public SaveCount[] records;
         public bool starterGranted;
         // Các cặp (loài, kiểu shiny) đã câu được.
         public SaveShiny[] shinyDex;
+        // Album: loài đã câu được (số lần, kỷ lục gam, ngày đầu tiên).
+        public SaveDexFish[] dex;
+        // Rác trong giỏ, album rác, tự bán rác.
+        public SaveJunk[] junk;
+        public SaveDexJunk[] junkDex;
+        public bool autoSellJunk;
+    }
+
+    [Serializable]
+    public sealed class SaveDexFish
+    {
+        public string id;
+        public int count;
+        public int maxGrams;
+        public int firstDay;
+    }
+
+    [Serializable]
+    public sealed class SaveDexJunk
+    {
+        public string id;
+        public int count;
+        public int firstDay;
+    }
+
+    [Serializable]
+    public sealed class SaveJunk
+    {
+        public string id;
+        public long caughtAt;
+    }
+
+    [Serializable]
+    public sealed class SaveCheckIn
+    {
+        public int nextDay = 1;
+        public int cycle;
+        public int lastDay = int.MinValue;
+        public long lastUtc;
     }
 
     [Serializable]
@@ -173,6 +214,9 @@ namespace VeQue.Logic
         public string crop;
         public long plantedAt;
         public bool watered;
+        // Thời gian lớn đã chốt lúc gieo (0 = theo cây) và sản lượng cộng thêm (Đợt 2 Phần 7).
+        public long growSeconds;
+        public int bonusYield;
     }
 
     public enum SaveLoadResult

@@ -20,6 +20,8 @@ MonoBehaviour:
   _maxGrams: 6000
   _basePrice: 900
   _baseXp: 50
+  _hint: "Truy\u1EC1n thuy\u1EBFt c\u1EE7a l\xE0ng: \u1EDF t\xEDt ngo\xE0i xa, ch\u1EC9
+    m\xE0ng t\u1EDBi m\u1ED3i qu\xFD nh\u1EA5t."
   _slotFactors:
   - 1
   - 0

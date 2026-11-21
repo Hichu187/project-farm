@@ -12,13 +12,16 @@ namespace VeQue.EditorTools
     //    gán vào FishDefinition theo id (cá chưa có trong data thì bỏ qua). Từ 20/11/2026 menu Tạo data câu cá cũng tự gán.
     // 2. Bóng cá: chép dải "small fish" / "mediuml fish" (gói Ocean Pack, sẽ xóa cùng Sprout Lands) sang
     //    Assets/_Game/Art/Fishing/shadow/, cắt 4 khung theo hướng (Lên, Xuống, Trái, Phải), bó sát hình, pivot giữa.
-    // 3. (14/11/2026) Icon cần rods/rod_NN_<id>.png và mồi bait/bait_NN_<tên>.png: Single như icon cá
-    //    (meta mặc định chép theo preset là Multiple, sprite "Piknik basket_0"). Gán vào data: menu Về Quê → Data → Tạo data câu cá.
+    // 3. (14/11/2026) Icon cần rods/rod_NN_<id>.png, mồi bait/bait_NN_<tên>.png và (21/11/2026) rác junk/junk_NN_<id>.png:
+    //    Single như icon cá (meta mặc định chép theo preset là Multiple, sprite "Piknik basket_0").
+    //    Gán vào data: menu Về Quê → Data → Tạo data câu cá (cũng tự sửa import).
     public static class FishingSpriteImporter
     {
         public const string IconFolder = FishingPlaceholderArt.Folder + "/fish";
         public const string RodFolder = FishingPlaceholderArt.Folder + "/rods";
         public const string BaitFolder = FishingPlaceholderArt.Folder + "/bait";
+        // (21/11/2026) Icon rác junk/junk_NN_<id>.png, 32×32 như icon cá.
+        public const string JunkFolder = FishingPlaceholderArt.Folder + "/junk";
         public const string ShadowFolder = FishingPlaceholderArt.Folder + "/shadow";
         public const string SmallShadowPath = ShadowFolder + "/fish_shadow_small.png";
         public const string MediumShadowPath = ShadowFolder + "/fish_shadow_medium.png";
@@ -46,6 +49,7 @@ namespace VeQue.EditorTools
             int icons = ImportIcons(out int assigned, out List<string> unused);
             int rodIcons = ImportItemIcons(RodFolder, "rod_");
             int baitIcons = ImportItemIcons(BaitFolder, "bait_");
+            int junkIcons = ImportItemIcons(JunkFolder, "junk_");
             bool small = ImportShadow($"{OceanPack}/small fish.png", SmallShadowPath, SmallFrames);
             bool medium = ImportShadow($"{OceanPack}/mediuml fish.png", MediumShadowPath, MediumFrames);
             AssetDatabase.SaveAssets();
@@ -53,7 +57,7 @@ namespace VeQue.EditorTools
             string message = $"Icon: import {icons} file, gán cho {assigned} cá.";
             if (unused.Count > 0)
                 message += $"\nChưa có trong data (để sau): {string.Join(", ", unused)}.";
-            message += $"\nIcon cần: {rodIcons}, mồi: {baitIcons} (gán bằng Tạo data câu cá).";
+            message += $"\nIcon cần: {rodIcons}, mồi: {baitIcons}, rác: {junkIcons} (gán bằng Tạo data câu cá).";
             message += small && medium
                 ? $"\nBóng cá: đã tạo {ShadowFolder}. Chạy Tạo UI để gắn vào scene."
                 : $"\nBóng cá: không thấy dải gốc trong {OceanPack}.";

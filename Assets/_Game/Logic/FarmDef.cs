@@ -24,12 +24,20 @@ namespace VeQue.Logic
         public LunarTable Lunar { get; }
         // Thư theo bản build (Đợt 2 Phần 3).
         public IReadOnlyList<BuildMailDef> BuildMails { get; }
+        // Điểm danh 7 ngày (Đợt 2 Phần 10); None = tắt.
+        public CheckInDef CheckIn { get; }
+        // Sự kiện theo ngày (Đợt 2 Phần 7); None = không có.
+        public EventsDef Events { get; }
+        // Giá chợ theo ngày (Đợt 2 Phần 9); None = giá gốc.
+        public MarketDef Market { get; }
 
         public FarmDef(IEnumerable<ZoneDef> zones, IEnumerable<CropDef> crops, long startCoins,
             IReadOnlyDictionary<string, int> startSeeds = null, int waterReducePercent = 0,
             LevelDef levels = null, string rescueCropId = null, OrderDef orders = null, FishingDef fishing = null,
-            LunarTable lunar = null, IEnumerable<BuildMailDef> buildMails = null)
+            LunarTable lunar = null, IEnumerable<BuildMailDef> buildMails = null, CheckInDef checkIn = null,
+            EventsDef events = null, MarketDef market = null)
         {
+            Market = market ?? MarketDef.None;
             if (zones == null)
                 throw new ArgumentNullException(nameof(zones));
             if (crops == null)
@@ -113,6 +121,58 @@ namespace VeQue.Logic
                 }
             }
             BuildMails = mails.AsReadOnly();
+
+            // Mốc album (Đợt 2 Phần 5): quà hợp lệ, id không trùng thư build (cùng chung SentIds của hộp thư).
+            foreach (DexMilestoneDef milestone in Fishing.DexMilestones)
+            {
+                if (mailIds.Contains(milestone.Id))
+                    throw new ArgumentException($"Id mốc album '{milestone.Id}' trùng id thư build.");
+                foreach (Reward reward in milestone.Rewards)
+                {
+                    if (!IsValidReward(reward, out string error))
+                        throw new ArgumentException($"Mốc album '{milestone.Id}': {error}", nameof(fishing));
+                }
+            }
+
+            // Điểm danh (Đợt 2 Phần 10): quà 7 ngày hợp lệ.
+            CheckIn = checkIn ?? CheckInDef.None;
+            if (CheckIn.IsEnabled)
+            {
+                for (int day = 1; day <= CheckInDef.DayCount; day++)
+                {
+                    foreach (Reward reward in CheckIn.GetBaseRewards(day))
+                    {
+                        if (!IsValidReward(reward, out string error))
+                            throw new ArgumentException($"Điểm danh ngày {day}: {error}", nameof(checkIn));
+                    }
+                }
+            }
+
+            // Sự kiện (Đợt 2 Phần 7): cây / cá / quà trỏ tới data có thật; UnlockCrop chỉ cho cây eventOnly.
+            Events = events ?? EventsDef.None;
+            foreach (EventDef e in Events.Events)
+            {
+                foreach (EventEffect effect in e.Effects)
+                    ValidateEffect(e, effect);
+            }
+        }
+
+        private void ValidateEffect(EventDef e, EventEffect effect)
+        {
+            string where = $"Sự kiện '{e.Id}' ({effect.Type})";
+            EffectTarget target = effect.Target;
+            if (target.Kind == EffectTargetKind.Crop && !_crops.ContainsKey(target.Id ?? ""))
+                throw new ArgumentException($"{where}: cây '{target.Id}' không có.");
+            if (target.Kind == EffectTargetKind.Fish && !Fishing.TryGetFish(target.Id, out _))
+                throw new ArgumentException($"{where}: cá '{target.Id}' không có.");
+            if (effect.Type == EventEffectType.UnlockCrop
+                && (!_crops.TryGetValue(effect.Id, out CropDef crop) || !crop.EventOnly))
+                throw new ArgumentException($"{where}: '{effect.Id}' phải là cây eventOnly có thật.");
+            foreach (Reward reward in effect.Rewards)
+            {
+                if (!IsValidReward(reward, out string error))
+                    throw new ArgumentException($"{where}: {error}");
+            }
         }
 
         // Quà hợp lệ: số lượng > 0, loại biết, id trỏ tới cây (hạt / nông sản) hoặc mồi có thật.
@@ -129,6 +189,10 @@ namespace VeQue.Logic
                 error = $"cây '{reward.Id}' không có.";
             else if (reward.Kind == RewardKind.Bait && !Fishing.TryGetBait(reward.Id, out _))
                 error = $"mồi '{reward.Id}' không có.";
+            else if (reward.Kind == RewardKind.Rod && !Fishing.TryGetRod(reward.Id, out _))
+                error = $"cần '{reward.Id}' không có.";
+            else if (reward.Kind == RewardKind.Rod && reward.Amount != 1)
+                error = "quà cần câu chỉ được 1 cây.";
             else if ((reward.Kind == RewardKind.Seeds || reward.Kind == RewardKind.Produce || reward.Kind == RewardKind.Bait)
                 && reward.Amount > int.MaxValue)
                 error = "số lượng quà quá lớn.";

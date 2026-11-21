@@ -102,4 +102,21 @@ MonoBehaviour:
     ShinyRareKinds: 0200000008000000
     ShinyCommonPriceMultiplier: 3
     ShinyRarePriceMultiplier: 10
+    JunkGoodPercent: 60
+    JunkPerfectPercent: 30
+    JunkMinArrows: 2
+    JunkMaxArrows: 3
+    JunkPullSeconds: 3
+  _junk:
+  - {fileID: 11400000, guid: dbc7b0c0ded4c5e47913aa7a09279ac4, type: 2}
+  - {fileID: 11400000, guid: e7a7e01d0cc1d134688020d9bb6e4033, type: 2}
+  - {fileID: 11400000, guid: 3fcb34629e05eeb43accb747dec2fe6a, type: 2}
+  - {fileID: 11400000, guid: c2b6c73e97c0c62439103034b745aebc, type: 2}
+  - {fileID: 11400000, guid: 00890cc54badff141bd761cd47e03b68, type: 2}
+  - {fileID: 11400000, guid: 8de306647e456af468fd8854b812eba7, type: 2}
+  - {fileID: 11400000, guid: 323909cb781fd99438d3f13b3ddbe933, type: 2}
+  - {fileID: 11400000, guid: 266bd2ad6c256794faba1b1b3e50b341, type: 2}
+  - {fileID: 11400000, guid: 2a0e90c80aa350d42998db856da76681, type: 2}
+  - {fileID: 11400000, guid: 7a2fafedb486fda4d829cfdcb0935374, type: 2}
+  _dexMilestones: {fileID: 4900000, guid: 4610f6d405f785b4eaf687179f09b2df, type: 3}
   _shinyPalette: {fileID: 11400000, guid: 98b0303d0ce8c4b41808cf1b8b64f6ae, type: 2}

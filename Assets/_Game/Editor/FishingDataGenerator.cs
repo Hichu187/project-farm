@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -6,7 +7,8 @@ using VeQue.View.Data;
 
 namespace VeQue.EditorTools
 {
-    // Data câu cá mặc định (MVP-Plan Phần 10 giai đoạn 4, duyệt 12/11/2026): 20 cá (thêm 7 loài 20/11/2026), 10 cần, 10 mồi.
+    // Data câu cá mặc định (MVP-Plan Phần 10 giai đoạn 4, duyệt 12/11/2026): 20 cá (thêm 7 loài 20/11/2026), 10 cần, 10 mồi,
+    // 7 rác + mốc album (Đợt 2 Phần 5, 21/11/2026).
     // Chạy lại được: ghi số liệu và gán icon cá / cần / mồi theo file trong Art/Fishing. Con số chung (FishingTuning) về mặc định.
     public static class FishingDataGenerator
     {
@@ -99,6 +101,77 @@ namespace VeQue.EditorTools
             new FishRow("ca_ho", "Cá hô", FishRarity.Legendary, 10000, 60000, 1100, new float[] { 0, 0, 1, 0, 0, 0, 0 }, FishDepth.Far, "moi_thom", "moi_thia_vang"),
         };
 
+        // Gợi ý album khi chưa câu được (Đợt 2 Phần 5, nháp – người dùng sửa trong asset cá). KHÔNG nhắc giờ:
+        // chỉ độ sâu, mồi (nói mơ hồ), tính cách cá. FarmDefinitionTests kiểm không có từ chỉ giờ.
+        private static readonly Dictionary<string, string> Hints = new Dictionary<string, string>
+        {
+            { "ca_ro", "Loài quen mặt ở mọi khúc sông, mồi gì cũng đớp." },
+            { "ca_diec", "Hay lởn vởn gần bờ, mê mùi cám." },
+            { "tep", "Bé tí, chỉ quanh quẩn sát bờ. Rắc chút cám là kéo đến." },
+            { "ca_chep", "Ăn đáy ở chỗ nước vừa và xa bờ. Cám thơm là dụ được." },
+            { "ca_tre", "Thích chỗ bùn gần bờ, khoái giun với côn trùng." },
+            { "ca_me", "Bơi thành đàn ở giữa sông, hay đớp mồi nổi." },
+            { "ca_loc", "Kẻ săn mồi hung dữ, thích mồi sống còn động đậy." },
+            { "luon", "Trốn trong hang bùn sát bờ, chỉ chịu mồi giun." },
+            { "tom_cang", "Càng dài, rình gần bờ. Mồi tép là thứ khó cưỡng." },
+            { "ca_bong_tuong", "Nằm im dưới đáy rồi đớp bất ngờ. Ưa mồi sống." },
+            { "ca_chep_do", "Hiếm gặp, chỉ ở chỗ nước sâu xa bờ. Phải có mồi thật xịn." },
+            { "ca_chep_vang", "Truyền thuyết của làng: ở tít ngoài xa, chỉ màng tới mồi quý nhất." },
+            { "ca_tram_den", "Bóng đen khổng lồ ngoài nước sâu, kéo được là phải dai sức." },
+            { "ca_ro_phi", "Dễ tính, ăn khỏe, hay ra gần bờ." },
+            { "ca_chach", "Trơn tuột, rúc bùn sát mép nước, khoái giun." },
+            { "ca_troi", "Hiền lành, ăn tạp ở khúc nước vừa." },
+            { "ca_that_lat", "Thân dẹt như lưỡi dao, hay ẩn ven bờ cỏ." },
+            { "ca_lang", "Có râu dài, sống ở chỗ nước sâu, ưa mồi tanh." },
+            { "ca_anh_vu", "Miệng như cái vòi, quý như vàng. Nghe nói chỉ ăn mồi thơm hảo hạng." },
+            { "ca_ho", "Cá khổng lồ hiếm có, sức kéo như trâu. Chỉ ở chỗ sâu nhất." },
+        };
+
+        // Rác (Đợt 2 Phần 5, nháp): id, tên, giá cô đồng nát trả, trọng số, câu đùa, màu ô vuông tạm.
+        private readonly struct JunkRow
+        {
+            public readonly string Id;
+            public readonly string Name;
+            public readonly int Price;
+            public readonly int Weight;
+            public readonly string Flavor;
+            public readonly Color32 Color;
+
+            public JunkRow(string id, string name, int price, int weight, string flavor, uint rgb)
+            {
+                Id = id;
+                Name = name;
+                Price = price;
+                Weight = weight;
+                Flavor = flavor;
+                Color = new Color32((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb, 0xff);
+            }
+        }
+
+        // Thứ tự = số trong tên file art (junk_NN_<id>.png). 21/11/2026: thêm 3 món theo art người dùng; 9 món thường
+        // cùng trọng số (người dùng chốt), hũ tiền xu cổ vẫn hiếm.
+        private const int JunkWeight = 10;
+        private const int JarWeight = 2;
+
+        private static readonly JunkRow[] Junk =
+        {
+            new JunkRow("dep_to_ong", "Dép tổ ong", 2, JunkWeight, "Ai vứt dép ở đây vậy trời!", 0x4a8fe0),
+            new JunkRow("non_la_rach", "Nón lá rách", 2, JunkWeight, "Nón ai bay xuống sông từ hồi nào không biết.", 0xe0cc8a),
+            new JunkRow("lon_bia", "Lon bia", 3, JunkWeight, "Uống xong vứt luôn xuống sông. Ý thức đâu hết rồi!", 0xd84440),
+            new JunkRow("chai_nhua", "Chai nhựa", 2, JunkWeight, "Lại một cái chai nhựa. Khổ thân con sông.", 0x9ad8e8),
+            new JunkRow("ung_cao_su", "Ủng cao su", 3, JunkWeight, "Một chiếc ủng... chiếc kia đâu rồi?", 0x3e6b3a),
+            new JunkRow("bao_tai", "Bao tải", 2, JunkWeight, "Tưởng cá to, hóa ra cái bao tải.", 0x9a7048),
+            new JunkRow("tui_ni_long", "Túi ni lông", 1, JunkWeight, "Túi ni lông… cá ăn phải thì khổ.", 0x2b2b3a),
+            new JunkRow("canh_cay_muc", "Cành cây mục", 1, JunkWeight, "Cành cây mục, đem về nhóm bếp được không nhỉ?", 0x6b4a2a),
+            new JunkRow("sam_xe_dap", "Săm xe đạp", 3, JunkWeight, "Săm xe đạp thủng, chắc của thằng Tí.", 0x3a3a44),
+            new JunkRow("hu_tien_co", "Hũ tiền xu cổ", 150, JarWeight, "Trời ơi, hũ tiền xu cổ! Hôm nay đúng là ngày may mắn.", 0xf0c040),
+        };
+
+        private static string JunkIconPath(int index, string id) => $"{FishingSpriteImporter.JunkFolder}/junk_{index + 1:00}_{id}.png";
+
+        private const string JunkFolder = FishingFolder + "/Junk";
+        public const string DexMilestonesPath = FishingFolder + "/dex_milestones.json";
+
         private readonly struct RodRow
         {
             public readonly string Id;
@@ -155,9 +228,12 @@ namespace VeQue.EditorTools
             public readonly int UnlockLevel;
             // File icon trong Art/Fishing/bait (tên file khác id ở các mồi cũ).
             public readonly string IconFile;
+            // Tỉ lệ dính rác (%) – Đợt 2 Phần 5 (thiet-ke-dot-2 mục 3).
+            public readonly int JunkChance;
 
-            public BaitRow(string id, string name, int price, bool buyable, int rareBonus, int unlockLevel, string iconFile)
+            public BaitRow(string id, string name, int price, bool buyable, int rareBonus, int unlockLevel, string iconFile, int junkChance)
             {
+                JunkChance = junkChance;
                 UnlockLevel = unlockLevel;
                 IconFile = iconFile;
                 Id = id;
@@ -172,16 +248,17 @@ namespace VeQue.EditorTools
         // mồi thơm 9, nhái hơi 11, thìa vàng 13; giun không bán. Id cũ giữ nguyên cho save.
         private static readonly BaitRow[] Baits =
         {
-            new BaitRow("giun", "Giun", 2, false, 0, 1, "bait_01_giun_dat"),
-            new BaitRow("cam", "Cám", 3, true, 0, 1, "bait_02_cam"),
-            new BaitRow("moi_ruoi", "Ruồi", 4, true, 0, 2, "bait_04_ruoi"),
-            new BaitRow("moi_tep", "Mồi tép", 6, true, 0, 3, "bait_06_tep"),
-            new BaitRow("moi_de", "Dế", 6, true, 5, 4, "bait_05_de"),
-            new BaitRow("moi_nhai", "Nhái", 10, true, 10, 5, "bait_07_nhai"),
-            new BaitRow("moi_gia", "Mồi giả cá", 12, true, 20, 6, "bait_08_moi_gia_ca"),
-            new BaitRow("moi_thom", "Mồi thơm", 25, true, 100, 9, "bait_03_bot"),
-            new BaitRow("moi_nhai_hoi", "Nhái hơi", 30, true, 60, 11, "bait_09_nhai_hoi"),
-            new BaitRow("moi_thia_vang", "Thìa vàng", 50, true, 150, 13, "bait_10_thia_vang"),
+            // Cột cuối: tỉ lệ rác (giun, cám 12; ruồi, tép 9; dế, nhái 6; mồi giả 3; mồi cao cấp 0).
+            new BaitRow("giun", "Giun", 2, false, 0, 1, "bait_01_giun_dat", 12),
+            new BaitRow("cam", "Cám", 3, true, 0, 1, "bait_02_cam", 12),
+            new BaitRow("moi_ruoi", "Ruồi", 4, true, 0, 2, "bait_04_ruoi", 9),
+            new BaitRow("moi_tep", "Mồi tép", 6, true, 0, 3, "bait_06_tep", 9),
+            new BaitRow("moi_de", "Dế", 6, true, 5, 4, "bait_05_de", 6),
+            new BaitRow("moi_nhai", "Nhái", 10, true, 10, 5, "bait_07_nhai", 6),
+            new BaitRow("moi_gia", "Mồi giả cá", 12, true, 20, 6, "bait_08_moi_gia_ca", 3),
+            new BaitRow("moi_thom", "Mồi thơm", 25, true, 100, 9, "bait_03_bot", 0),
+            new BaitRow("moi_nhai_hoi", "Nhái hơi", 30, true, 60, 11, "bait_09_nhai_hoi", 0),
+            new BaitRow("moi_thia_vang", "Thìa vàng", 50, true, 150, 13, "bait_10_thia_vang", 0),
         };
 
         private static string RodIconPath(int index, string id) => $"{FishingSpriteImporter.RodFolder}/rod_{index + 1:00}_{id}.png";
@@ -234,6 +311,7 @@ namespace VeQue.EditorTools
                 so.FindProperty("_buyable").boolValue = row.Buyable;
                 so.FindProperty("_rareBonusPercent").intValue = row.RareBonus;
                 so.FindProperty("_unlockLevel").intValue = row.UnlockLevel;
+                so.FindProperty("_junkChancePercent").intValue = row.JunkChance;
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
 
@@ -288,6 +366,34 @@ namespace VeQue.EditorTools
                 so.FindProperty("_hookWindowSeconds").floatValue = HookWindows[r];
                 so.FindProperty("_slipPercent").intValue = SlipPercents[r];
                 so.FindProperty("_redArrows").boolValue = row.Rarity == FishRarity.Legendary;
+                // Gợi ý: chỉ điền khi đang trống (người dùng sửa trong asset thì giữ).
+                SerializedProperty hint = so.FindProperty("_hint");
+                if (string.IsNullOrEmpty(hint.stringValue) && Hints.TryGetValue(row.Id, out string hintText))
+                    hint.stringValue = hintText;
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            EnsureFolder(JunkFolder);
+            var junk = new JunkDefinition[Junk.Length];
+            for (int i = 0; i < Junk.Length; i++)
+            {
+                JunkRow row = Junk[i];
+                junk[i] = LoadOrCreateById<JunkDefinition>(JunkFolder, i, row.Id);
+                var so = new SerializedObject(junk[i]);
+                so.FindProperty("_id").stringValue = row.Id;
+                so.FindProperty("_displayName").stringValue = row.Name;
+                so.FindProperty("_sellPrice").intValue = row.Price;
+                so.FindProperty("_weight").intValue = row.Weight;
+                so.FindProperty("_flavorText").stringValue = row.Flavor;
+                // Icon: có art junk/junk_NN_<id>.png thì dùng (tự sửa import về Single, PPU 32); chưa có thì giữ icon
+                // đang gán nếu là art khác, còn trống / ô vuông tạm thì gán ô vuông tạm.
+                SerializedProperty icon = so.FindProperty("_icon");
+                string artPath = JunkIconPath(i, row.Id);
+                if (System.IO.File.Exists(artPath))
+                    icon.objectReferenceValue = LoadIcon(artPath);
+                else if (icon.objectReferenceValue == null
+                    || FishingPlaceholderArt.IsPlaceholderJunkIcon(AssetDatabase.GetAssetPath(icon.objectReferenceValue)))
+                    icon.objectReferenceValue = FishingPlaceholderArt.JunkSquare(row.Id, row.Color);
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
 
@@ -301,6 +407,8 @@ namespace VeQue.EditorTools
             SetObjectArray(fishingSo.FindProperty("_fish"), fish);
             SetObjectArray(fishingSo.FindProperty("_rods"), rods);
             SetObjectArray(fishingSo.FindProperty("_baits"), baits);
+            SetObjectArray(fishingSo.FindProperty("_junk"), junk);
+            fishingSo.FindProperty("_dexMilestones").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TextAsset>(DexMilestonesPath);
             fishingSo.FindProperty("_unlockLevel").intValue = UnlockLevel;
             fishingSo.FindProperty("_starterRod").objectReferenceValue = FindRod(rods, StarterRodId);
             fishingSo.FindProperty("_starterBait").objectReferenceValue = FindBait(baits, StarterBaitId);
@@ -322,7 +430,7 @@ namespace VeQue.EditorTools
             farmSo.FindProperty("_fishing").objectReferenceValue = fishing;
             farmSo.ApplyModifiedPropertiesWithoutUndo();
 
-            Debug.Log($"Về Quê: đã tạo {fish.Length} cá, {rods.Length} cần, {baits.Length} mồi → {FishingPath}", fishing);
+            Debug.Log($"Về Quê: đã tạo {fish.Length} cá, {rods.Length} cần, {baits.Length} mồi, {junk.Length} rác → {FishingPath}", fishing);
             return fishing;
         }
 
