@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.CropDefinition
   _id: huong_duong
   _displayName: "H\u01B0\u1EDBng d\u01B0\u01A1ng"
-  _enabled: 0
+  _enabled: 1
   _growMinutes: 240
   _buyPrice: 92
   _sellPrice: 161
@@ -22,6 +22,7 @@ MonoBehaviour:
   _xp: 22
   _unlockLevel: 1
   _group: 1
+  _eventOnly: 1
   _seedSprite: {fileID: 21300000, guid: 0699e9efe1de497c906a7b607472fa87, type: 3}
   _stageSprites:
   - {fileID: 21300000, guid: e332304729db4064867e2ecfd58599dc, type: 3}

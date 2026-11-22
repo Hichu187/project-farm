@@ -155,8 +155,7 @@ namespace VeQue.EditorTools
                     "Chưa có ShinyPalette trong FishingDefinition. Chạy menu Về Quê → Cá shiny → Tạo material (ngoài Play) trước.", "OK");
                 return;
             }
-            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(PixelFontBuilder.AssetPath);
-            ShinyPreview.Toggle(fishing, font);
+            ShinyPreview.Toggle(fishing, UiFontSettings.LoadOrCreate().FontOrDefault);
         }
     }
 }

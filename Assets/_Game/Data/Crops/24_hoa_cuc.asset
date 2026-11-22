@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: VeQue.View::VeQue.View.Data.CropDefinition
   _id: hoa_cuc
   _displayName: "Hoa c\xFAc"
-  _enabled: 0
+  _enabled: 1
   _growMinutes: 240
   _buyPrice: 92
   _sellPrice: 161
@@ -22,6 +22,7 @@ MonoBehaviour:
   _xp: 22
   _unlockLevel: 1
   _group: 1
+  _eventOnly: 1
   _seedSprite: {fileID: 21300000, guid: 18c40bda2c654cca99a009b370e8f99a, type: 3}
   _stageSprites:
   - {fileID: 21300000, guid: 0052fc3fb0d444cbb77c52b5563c261d, type: 3}

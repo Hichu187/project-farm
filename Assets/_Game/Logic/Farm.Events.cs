@@ -162,7 +162,7 @@ namespace VeQue.Logic
                 {
                     if (effect.Type != EventEffectType.MailReward)
                         continue;
-                    sent |= AddMail(EventMailId(e.Id, day), "Loa xã", e.Title, e.LoaText, effect.Rewards, 7);
+                    sent |= AddMail(EventMailId(e.Id, day), e.MailSender, e.Title, e.LoaText, effect.Rewards, 7);
                 }
             }
             if (!sent)

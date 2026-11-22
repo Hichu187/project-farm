@@ -68,13 +68,17 @@ namespace VeQue.EditorTools
             public readonly int Yield;
             public readonly int UnlockLevel;
             public readonly bool Enabled;
+            // Cây sự kiện (Đợt 2 Phần 7–8): chỉ mua hạt khi sự kiện UnlockCrop đang chạy.
+            public readonly bool EventOnly;
             public readonly CropGroup Group;
             public readonly int SeedPrice;
             public readonly int SellPrice;
             public readonly int Xp;
 
-            public CropRow(string id, string name, CropGroup group, int minutes, int yield, int unlockLevel, bool enabled = true)
+            public CropRow(string id, string name, CropGroup group, int minutes, int yield, int unlockLevel, bool enabled = true,
+                bool eventOnly = false)
             {
+                EventOnly = eventOnly;
                 Id = id;
                 Name = name;
                 Minutes = minutes;
@@ -143,10 +147,11 @@ namespace VeQue.EditorTools
             new CropRow("lua", "Lúa", CuHat, 480, 2, 4),
             new CropRow("khoai_lang", "Khoai lang", CuHat, 600, 3, 9),
             new CropRow("khoai_so", "Khoai sọ", CuHat, 720, 3, 13),
-            // Cây sự kiện (eventOnly, Phần 7–8): tắt; thời gian, sản lượng, cấp là số tạm, chốt sau (Docs/note.md).
-            new CropRow("hoa_dao", "Hoa đào", Qua, 240, 1, 1, false),
-            new CropRow("hoa_cuc", "Hoa cúc", Qua, 240, 2, 1, false),
-            new CropRow("huong_duong", "Hướng dương", Qua, 240, 2, 1, false),
+            // Cây sự kiện (eventOnly). 22/11/2026 Phần 8: bật hoa cúc, hướng dương (Chợ đầu tháng – mùng 1 âm),
+            // 4 giờ, sản lượng 2, cấp 1, giá / XP theo công thức (người dùng chốt). Hoa đào vẫn tắt, chờ Tết (12a).
+            new CropRow("hoa_dao", "Hoa đào", Qua, 240, 1, 1, false, eventOnly: true),
+            new CropRow("hoa_cuc", "Hoa cúc", Qua, 240, 2, 1, eventOnly: true),
+            new CropRow("huong_duong", "Hướng dương", Qua, 240, 2, 1, eventOnly: true),
         };
 
         // Art cây: crop_{id}_{seed|stage1|stage2|stage3|icon|packet}.png.
@@ -201,6 +206,7 @@ namespace VeQue.EditorTools
                 so.FindProperty("_id").stringValue = row.Id;
                 so.FindProperty("_displayName").stringValue = row.Name;
                 so.FindProperty("_enabled").boolValue = row.Enabled;
+                so.FindProperty("_eventOnly").boolValue = row.EventOnly;
                 so.FindProperty("_growMinutes").intValue = row.Minutes;
                 so.FindProperty("_buyPrice").intValue = row.SeedPrice;
                 so.FindProperty("_sellPrice").intValue = row.SellPrice;

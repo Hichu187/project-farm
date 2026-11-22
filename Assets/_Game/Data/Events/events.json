@@ -3,6 +3,84 @@
   "randomChancePercent": 33,
   "events": [
     {
+      "id": "cho_dau_thang",
+      "title": "Chợ đầu tháng",
+      "loa": "Alô alô, hôm nay mùng 1, chợ đầu tháng! Quả với hoa bán được giá, hạt hoa cúc, hướng dương cũng có bán, bà con nhanh tay nhé.",
+      "priority": 10,
+      "trigger": { "kind": "LunarMonthly", "day": 1 },
+      "effects": [
+        { "type": "UnlockCrop", "id": "hoa_cuc" },
+        { "type": "UnlockCrop", "id": "huong_duong" },
+        { "type": "CropPriceMult", "target": "group:Fruit", "mult": 1.5 },
+        { "type": "MailReward", "rewards": [ { "kind": "Seeds", "id": "hoa_cuc", "amount": 2 }, { "kind": "Seeds", "id": "huong_duong", "amount": 2 } ] }
+      ]
+    },
+    {
+      "id": "trang_tron",
+      "title": "Ngày trăng tròn",
+      "loa": "Alô alô, hôm nay ngày Rằm, trăng tròn! Cá quý ra ăn mồi nhiều lắm, ai mê câu thì ra bến cả ngày nhé.",
+      "priority": 10,
+      "trigger": { "kind": "LunarMonthly", "day": 15 },
+      "effects": [
+        { "type": "FishWeightMult", "target": "rarity:Epic", "mult": 2 },
+        { "type": "FishWeightMult", "target": "rarity:Legendary", "mult": 2 },
+        { "type": "Overlay", "id": "trang_tron" }
+      ]
+    },
+    {
+      "id": "don_tet",
+      "title": "Đón Tết",
+      "loa": "Alô alô, đã 23 tháng Chạp, Tết sắp về rồi bà con ơi! Làng mình treo câu đối, dựng cây nêu, ai đi làm xa thì nhớ về quê ăn Tết nhé.",
+      "priority": 15,
+      "trigger": { "kind": "Lunar", "day": 23, "month": 12, "lengthDays": 8 },
+      "effects": [
+        { "type": "Overlay", "id": "tet_trang_tri" }
+      ]
+    },
+    {
+      "id": "tet_nguyen_dan",
+      "title": "Tết Nguyên Đán",
+      "loa": "Alô alô, chúc mừng năm mới! Chúc bà con năm mới an khang thịnh vượng, mùa màng bội thu, câu cá được cá to. Nhớ mở hộp thư nhận lì xì nhé!",
+      "priority": 20,
+      "trigger": { "kind": "Lunar", "day": 1, "month": 1, "lengthDays": 10 },
+      "effects": [
+        { "type": "Overlay", "id": "tet_trang_tri" }
+      ]
+    },
+    {
+      "id": "li_xi_mung_1",
+      "title": "Lì xì mùng 1",
+      "loa": "Mẹ chúc con năm mới mạnh khỏe, làm ăn phát đạt. Mẹ gửi con ít lộc đầu năm, con cầm lấy cho may mắn nhé!",
+      "mailSender": "Mẹ",
+      "priority": 19,
+      "trigger": { "kind": "Lunar", "day": 1, "month": 1 },
+      "effects": [
+        { "type": "MailReward", "rewards": [ { "kind": "Coins", "id": "", "amount": 888 }, { "kind": "Bait", "id": "moi_thom", "amount": 3 } ] }
+      ]
+    },
+    {
+      "id": "li_xi_mung_2",
+      "title": "Lì xì mùng 2",
+      "loa": "Bà chúc cháu năm mới vạn sự như ý. Bà cho cháu ít hạt dưa hấu, sang năm trồng cho ngọt nhé!",
+      "mailSender": "Bà Lụa",
+      "priority": 19,
+      "trigger": { "kind": "Lunar", "day": 2, "month": 1 },
+      "effects": [
+        { "type": "MailReward", "rewards": [ { "kind": "Seeds", "id": "dua_hau", "amount": 10 }, { "kind": "Coins", "id": "", "amount": 200 } ] }
+      ]
+    },
+    {
+      "id": "li_xi_mung_3",
+      "title": "Lì xì mùng 3",
+      "loa": "Thay mặt cả làng, chúc cháu năm mới sức khỏe dồi dào. Chút quà đầu năm của làng, mong cháu gắn bó với quê mình lâu dài.",
+      "mailSender": "Trưởng thôn",
+      "priority": 19,
+      "trigger": { "kind": "Lunar", "day": 3, "month": 1 },
+      "effects": [
+        { "type": "MailReward", "rewards": [ { "kind": "Bait", "id": "moi_thia_vang", "amount": 2 }, { "kind": "Coins", "id": "", "amount": 300 } ] }
+      ]
+    },
+    {
       "id": "mua_rao",
       "title": "Mưa rào",
       "loa": "Alô alô, hôm nay trời mưa rào! Bà con gieo hạt khỏi phải tưới, trê với lươn cũng ra ăn mồi nhiều đấy.",

@@ -49,6 +49,38 @@ namespace VeQue.Tests
         }
 
         [Test]
+        public void EventTexts()
+        {
+            Assert.AreEqual("1,5", UiFormat.Mult(1.5f));
+            Assert.AreEqual("2", UiFormat.Mult(2f));
+            Assert.AreEqual("0,9", UiFormat.Mult(0.9f));
+            // 09/12/2026 là thứ Tư.
+            int day = GameCalendar.DayKeyFromDate(2026, 12, 9);
+            Assert.AreEqual("Loa xã · T4 09/12 · Mùng 1 tháng 11", UiFormat.LoaHeader(day, "Mùng 1 tháng 11"));
+            Assert.AreEqual("Loa xã · T4 09/12", UiFormat.LoaHeader(day, null));
+            Assert.AreEqual("Hút hàng: Bí ngô · Rớt giá: Cải xanh", UiFormat.LoaMarket("Bí ngô", "Cải xanh"));
+            Assert.AreEqual("", UiFormat.LoaMarket(null, null));
+            Assert.AreEqual("Chợ phiên", UiFormat.EventBadge("Chợ phiên", 1));
+            Assert.AreEqual("Chợ Tết +1", UiFormat.EventBadge("Chợ Tết", 2));
+
+            Assert.AreEqual("Nhóm quả giá ×1,5", UiFormat.EventEffectLine(
+                new EventEffect(EventEffectType.CropPriceMult, mult: 1.5f), "Nhóm quả"));
+            Assert.AreEqual("Cá quý cắn câu ×2", UiFormat.EventEffectLine(
+                new EventEffect(EventEffectType.FishWeightMult, mult: 2f), "Cá quý"));
+            Assert.AreEqual("Cây gieo hôm nay lớn nhanh hơn 10%", UiFormat.EventEffectLine(
+                new EventEffect(EventEffectType.GrowTimeMult, mult: 0.9f), ""));
+            Assert.AreEqual("Cây lớn từ 4 giờ gieo hôm nay: +1 sản lượng", UiFormat.EventEffectLine(
+                new EventEffect(EventEffectType.YieldBonus, count: 1, hours: 4f), ""));
+            Assert.AreEqual("Đơn hàng: XP ×1,5", UiFormat.EventEffectLine(
+                new EventEffect(EventEffectType.OrderBonus, mult: 1f, xpMult: 1.5f), "Đơn hàng"));
+            Assert.AreEqual("Bán hạt Hoa cúc", UiFormat.EventEffectLine(
+                new EventEffect(EventEffectType.UnlockCrop, id: "hoa_cuc"), "Hoa cúc"));
+            Assert.IsNull(UiFormat.EventEffectLine(new EventEffect(EventEffectType.Overlay, id: "mua"), ""));
+            Assert.AreEqual("Chỉ có tác dụng lúc: Bình minh, Sáng", UiFormat.EventWindows(new[] { DaySlot.Dawn, DaySlot.Morning }));
+            Assert.AreEqual("", UiFormat.EventWindows(new DaySlot[0]));
+        }
+
+        [Test]
         public void MarketTexts()
         {
             Assert.AreEqual("<color=#3c8a2e>+8%</color>", UiFormat.PriceChange(8));

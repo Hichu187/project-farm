@@ -272,6 +272,7 @@ Giữ luật reset. Những thứ khác thì giảm bực bội và tăng cảm 
 - **Mùng 1: "Chợ đầu tháng"**: mở trồng hoa cúc, hướng dương (`eventOnly`); hoa và **nhóm quả** giá ×1,5; mấy người làng đặt đơn "mua hoa, quả cúng đầu tháng"; quà nhỏ trong hộp thư.
 - **Rằm: "Ngày trăng tròn"** (đổi 21/11 – trước là "Đêm trăng tròn"): **cả ngày Rằm** (giờ thật) cá Quý / Huyền thoại ×2, không giới hạn khung giờ; trăng tròn trên trời mỗi khi trời game tối (nối với mục 8); đơn xôi, chè.
 - **Ngày lớn** (sự kiện cố định, ưu tiên cao): Tết Nguyên Đán (06/02/2027, nên làm kịp nếu ra MVP trước Tết), Rằm tháng Giêng, Rằm tháng 7, Trung thu.
+- **Chốt 22/11 (Phần 8):** hoa cúc, hướng dương bật làm cây eventOnly (4 giờ, sản lượng 2, cấp 1); Chợ đầu tháng gồm mở hạt hoa + nhóm quả ×1,5 + thư 2 hạt mỗi loại; Ngày trăng tròn cá Quý / Huyền thoại ×2 cả ngày. **Để sau:** trăng trên trời (cần art) và đơn hàng riêng mùng 1 / Rằm – xem lại cùng đợt Tết.
 - Lời thoại và hình ảnh nên trung tính, ví dụ "mâm cúng", "hoa đầu tháng", tránh đi sâu vào nghi lễ tôn giáo.
 
 **Công:** bảng âm lịch và test nửa ngày; nội dung chạy trên bộ máy sự kiện ở mục 4.

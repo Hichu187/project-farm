@@ -32,5 +32,5 @@ MonoBehaviour:
   - Hour: 21
     Color: {r: 0.65882355, g: 0.7019608, b: 0.92156863, a: 1}
   _lightsOnBelow: 0.92
-  _dayLengthMinutes: 30
+  _dayLengthMinutes: 24
   _phaseMinutes: 0

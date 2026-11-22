@@ -141,6 +141,82 @@ namespace VeQue.View.UI
 
         public static string JunkSold(long earned) => $"Cô đồng nát trả +{Coins(earned)} xu";
 
+        // ---------- Sự kiện, loa xã (Đợt 2 Phần 8) ----------
+
+        // Hệ số: 1.5 → "1,5", 2 → "2", 0.9 → "0,9".
+        public static string Mult(float value)
+            => System.Math.Round(value, 2).ToString("0.##", CultureInfo.InvariantCulture).Replace('.', ',');
+
+        // "Loa xã · T4 09/12 · Mùng 1 tháng 11" (không có âm lịch thì bỏ phần cuối).
+        public static string LoaHeader(int dayKey, string lunarDay)
+        {
+            string date = new System.DateTime(2026, 1, 1).AddDays(dayKey).ToString("dd/MM", CultureInfo.InvariantCulture);
+            string head = $"Loa xã · {WeekdayShort(dayKey)} {date}";
+            return string.IsNullOrEmpty(lunarDay) ? head : $"{head} · {lunarDay}";
+        }
+
+        public const string LoaQuietDay = "Alô alô, hôm nay làng bình yên, bà con cứ thong thả làm ăn nhé.";
+
+        // "Hút hàng: Bí ngô · Rớt giá: Cải xanh"; thiếu cây nào thì bỏ phần đó.
+        public static string LoaMarket(string hot, string cold)
+        {
+            if (string.IsNullOrEmpty(hot) && string.IsNullOrEmpty(cold))
+                return "";
+            if (string.IsNullOrEmpty(cold))
+                return $"Hút hàng: {hot}";
+            if (string.IsNullOrEmpty(hot))
+                return $"Rớt giá: {cold}";
+            return $"Hút hàng: {hot} · Rớt giá: {cold}";
+        }
+
+        public const string EventOnlyShopNote = "Chỉ bán ngày sự kiện";
+
+        // Nút sự kiện trên HUD: tên sự kiện đầu (+N nếu nhiều).
+        public static string EventBadge(string firstTitle, int count)
+            => count > 1 ? $"{firstTitle} +{count - 1}" : firstTitle;
+
+        // Một dòng mô tả hiệu ứng; target = tên đã tra (View): "Nhóm quả", "Bí ngô", "Cá quý", "Đơn hàng"…
+        // null = không hiện (Overlay).
+        public static string EventEffectLine(EventEffect effect, string target)
+        {
+            switch (effect.Type)
+            {
+                case EventEffectType.CropPriceMult: return $"{target} giá ×{Mult(effect.Mult)}";
+                case EventEffectType.FishWeightMult: return $"{target} cắn câu ×{Mult(effect.Mult)}";
+                case EventEffectType.FishSizeMult: return $"{target} nặng hơn ×{Mult(effect.Mult)}";
+                case EventEffectType.GrowTimeMult:
+                    int percent = (int)System.Math.Round(System.Math.Abs(1f - effect.Mult) * 100f);
+                    return effect.Mult < 1f
+                        ? $"Cây gieo hôm nay lớn nhanh hơn {percent}%"
+                        : $"Cây gieo hôm nay lớn chậm hơn {percent}%";
+                case EventEffectType.AutoWater: return "Cây gieo hôm nay tự được tưới";
+                case EventEffectType.YieldBonus:
+                    return $"Cây lớn từ {Mult(effect.Hours)} giờ gieo hôm nay: +{effect.Count} sản lượng";
+                case EventEffectType.OrderBonus:
+                    var parts = new System.Collections.Generic.List<string>(2);
+                    if (effect.Mult != 1f)
+                        parts.Add($"xu ×{Mult(effect.Mult)}");
+                    if (effect.XpMult != 1f)
+                        parts.Add($"XP ×{Mult(effect.XpMult)}");
+                    return parts.Count == 0 ? null : $"{target}: {string.Join(", ", parts)}";
+                case EventEffectType.ExtraOrder: return $"Thêm {effect.Count} lượt giao đơn hôm nay";
+                case EventEffectType.UnlockCrop: return $"Bán hạt {target}";
+                case EventEffectType.MailReward: return "Có quà trong hộp thư";
+                default: return null;
+            }
+        }
+
+        // "Chỉ có tác dụng lúc: Bình minh, Sáng"; cả ngày → "".
+        public static string EventWindows(System.Collections.Generic.IReadOnlyList<DaySlot> windows)
+        {
+            if (windows == null || windows.Count == 0)
+                return "";
+            var names = new System.Collections.Generic.List<string>(windows.Count);
+            foreach (DaySlot slot in windows)
+                names.Add(SlotName(slot));
+            return $"Chỉ có tác dụng lúc: {string.Join(", ", names)}";
+        }
+
         // ---------- Giá chợ (Đợt 2 Phần 9) ----------
 
         // % so với hôm qua: "+8%" xanh, "-5%" đỏ, 0 thì rỗng. Dùng dấu '-' thường (font pixel có thể thiếu '−').

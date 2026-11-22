@@ -22,6 +22,7 @@ MonoBehaviour:
   _xp: 22
   _unlockLevel: 1
   _group: 1
+  _eventOnly: 1
   _seedSprite: {fileID: 21300000, guid: 5e0f39b1d0fe4d86bc5eea97cf0ec6cb, type: 3}
   _stageSprites:
   - {fileID: 21300000, guid: 63c02a4d1e2144c987c13456f1532d1f, type: 3}

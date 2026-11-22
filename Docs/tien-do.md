@@ -1133,6 +1133,42 @@ Kế hoạch: `Docs/ke-hoach-dot-2.md` Phần 4 (thứ tự 1); bảng cây: `Do
 - [ ] Play: Kho thấy giá + % (màu), 1 cây "Hút hàng", 1 cây "Rớt giá" (nếu đang có 2 cây đó); chạm icon → biểu đồ 7 ngày; Tua thời gian sang hôm sau giá đổi; rau lá buổi sáng đắt hơn buổi chiều. Có đơn cần cây X: "Bán hết" X còn giữ đúng số cho đơn.
 - [ ] Chữ có dấu, "Hút hàng" không tràn dòng tên; số trên cột biểu đồ không đè nhau.
 
+## Đợt 2 – Phần 8: Mùng 1, Rằm, loa xã (đã viết code, chờ kiểm tra – 22/11/2026)
+### Quyết định (người dùng duyệt 22/11)
+- Hoa cúc, hướng dương: **bật, eventOnly**, 4 giờ, sản lượng 2, cấp 1, giá / XP theo công thức. Hoa đào vẫn tắt (Tết 12a).
+- **Để sau** (người dùng đồng ý): trăng tròn trên trời khi trời game tối (cần art), đơn hàng riêng mùng 1 / Rằm (mở rộng hệ thống đơn) – xem lại cùng đợt Tết 12a nếu còn thời gian.
+### Đã làm
+- `events.json` thêm 2 sự kiện cố định (priority 10): **Chợ đầu tháng** (LunarMonthly 1: UnlockCrop hoa cúc + hướng dương, nhóm quả ×1,5, thư 2 hạt hoa cúc + 2 hạt hướng dương) và **Ngày trăng tròn** (LunarMonthly 15: cá Quý / Huyền thoại ×2 cả ngày, overlay "trang_tron" cho sau này).
+- `DefaultDataGenerator`: `CropRow.EventOnly`, ghi `_eventOnly`. `Farm.IsCropPlantable` (đủ cấp – hạt cây sự kiện còn thì vẫn gieo được); SeedPicker dùng hàm này; Cửa hàng ghi "Chỉ bán ngày sự kiện · có N hạt" cho cây sự kiện ngoài ngày.
+- **Loa xã** (`LoaXaBanner`): banner dưới HUD, lần đầu mở game mỗi ngày (PlayerPrefs), chờ màn tạo nhân vật + popup điểm danh (`CheckInPopup.WillPromptToday`); "Loa xã · T4 09/12 · Mùng 1 tháng 11", câu loa sự kiện đầu (ngày thường: "làng bình yên…"), "Hút hàng: … · Rớt giá: …"; tự ẩn 8 giây, chạm để đóng; không chặn chạm ngoài banner.
+- **Icon sự kiện HUD** (`EventBadge`): nút xanh dưới đồng hồ ghi tên sự kiện (+N), ngày thường ẩn; chạm → bảng chi tiết (tên, loa, hiệu ứng bằng lời qua `EventText`, khung giờ).
+- `UiFormat`: `Mult`, `LoaHeader`, `LoaQuietDay`, `LoaMarket`, `EventOnlyShopNote`, `EventBadge`, `EventEffectLine`, `EventWindows` + test.
+- Test data thật: 24 cây (2 cây sự kiện), thứ tự lớn chỉ xét cây thường; `DefaultData_Mung1AndRam` (09/12/2026 = mùng 1 tháng 11: Chợ đầu tháng, mở hoa, dưa hấu ×1,5, thư quà; mùng 2 hết bán hoa; 22/01/2027 = Rằm tháng Chạp: cá chép vàng ×2 lúc 3 giờ và 14 giờ, cá rô ×1).
+- Biên dịch Logic / View / Editor / Tests ngoài Unity: không lỗi. NUnit ngoài Unity: 514/515 (còn `SmokeTests`).
+#### Người dùng kiểm tra
+- [ ] **Tạo data mặc định** (bật 2 cây hoa + events.json) → **Tạo UI** → Ctrl+S → Test Runner.
+- [ ] Tua thời gian tới **09/12/2026** (mùng 1): loa xã hiện sau popup điểm danh, icon "Chợ đầu tháng" dưới đồng hồ, chạm xem chi tiết; Cửa hàng mua được hạt hoa cúc / hướng dương; thư quà hạt hoa. Sang 10/12: hoa "Chỉ bán ngày sự kiện", hạt còn thì vẫn gieo.
+- [ ] Tua tới **22/01/2027** (Rằm): icon "Ngày trăng tròn"; câu cá ra cá quý nhiều hơn.
+- [ ] Ngày thường: loa "làng bình yên", không có icon. Mở lại game cùng ngày: loa không hiện lại.
+
+## Đợt 2 – Phần 12a: Tết tối thiểu (đã viết code, chờ kiểm tra – 22/11/2026)
+### Quyết định (người dùng duyệt 22/11)
+- Quà lì xì nháp tạm ổn (chỉnh trong events.json): mùng 1 Mẹ 888 xu + 3 mồi thơm; mùng 2 Bà Lụa 10 hạt dưa hấu + 200 xu; mùng 3 Trưởng thôn 2 thìa vàng + 300 xu.
+- Cây nêu / câu đối: **ô vuông tạm**, người dùng thay art sau.
+### Đã làm
+- `events.json` thêm 5 sự kiện cố định: **Đón Tết** (Lunar 23/12 × 8 ngày, ưu tiên 15, overlay `tet_trang_tri`), **Tết Nguyên Đán** (Lunar 1/1 × 10 ngày, ưu tiên 20, loa chúc Tết, overlay), **Lì xì mùng 1 / 2 / 3** (ưu tiên 19, MailReward, người gửi riêng). Tết 2027: trang trí 30/01 → 15/02, mùng 11 (16/02) tắt.
+- `EventDef.MailSender` (mặc định "Loa xã"), loader đọc `mailSender`; thư sự kiện dùng người gửi này.
+- `TetDecor` (View/Map): bật / tắt các món khi overlay `tet_trang_tri` đang chạy, xét mỗi giây; sortingOrder theo ô Y lúc chạy.
+- Menu **Về Quê → Dựng scene → Trang trí Tết** (`TetDecorBuilder`): sinh `Art/Tet_tam/cay_neu.png` (16×48), `cau_doi.png` (8×32) – ô vuông viền + dải vàng; tạo `TetDecor` + CayNeu / CauDoiTren / CauDoiDuoi gần ô cổng nông trại (PlayRegion Farm); chạy lại giữ vị trí đã kéo.
+- Test: `EventTests.MailReward_SenderFromEvent`; data thật `DefaultData_Tet2027` (22 Chạp chưa có; 23 Chạp Đón Tết + trang trí; mùng 1–3 Tết hiện đầu, mỗi ngày 1 thư lì xì đúng người gửi; nạp save không gửi lại; mùng 4 hết lì xì; mùng 10 còn trang trí; mùng 11 hết Tết + tắt trang trí).
+- Biên dịch Logic / View / Editor / Tests ngoài Unity: không lỗi. NUnit ngoài Unity: 515/516 (còn `SmokeTests`).
+#### Người dùng kiểm tra
+- [ ] **Tạo data mặc định** → **Dựng scene → Trang trí Tết** → kéo 3 món tới cổng → Ctrl+S → Test Runner.
+- [ ] **Sự kiện: xem lịch** ngày 20/01/2027: bảng 60 ngày thấy Đón Tết 30/01–06/02, Tết Nguyên Đán 06/02–15/02, lì xì 06–08/02.
+- [ ] Tua thời gian 30/01/2027: cây nêu / câu đối hiện, loa "Đón Tết"; 06/02: loa chúc Tết, thư lì xì của Mẹ; 07/02, 08/02 thư tiếp; 16/02: trang trí tắt.
+### Còn lại (12b – nếu kịp, thứ tự 18)
+- Tiễn ông Táo (cá chép ×3, nút Thả cá chép), Chợ Tết (dưa hấu / hoa đào / lúa ×1,5, hoa đào eventOnly, đơn Tết có thoại), pháo hoa đêm 30, thư Tết của mẹ / sếp cũ, thư nhắc sao lưu kèm quà. Cùng lúc xem lại: trăng trên trời, đơn riêng mùng 1 / Rằm (Phần 8 để sau).
+
 ## Sắp xếp menu Về Quê trong Editor (21/11/2026, chờ kiểm tra)
 - Chia menu thành nhóm có vạch ngăn: Tua thời gian, Xóa save ở trên cùng; menu con **Dựng scene** (Tạo map, Tạo UI, Ngày đêm, Khung chọn, Vùng câu tạm), **Data** (data mặc định, data câu cá), **Import art** (tileset, UI 9-slice, nhân vật, sprite cá, art câu cá tạm, font), **Cá shiny** (tạo material, đánh dấu trắng mắt, xem thử).
 - Chỉ đổi đường dẫn và `priority`, không đổi logic. Giữ lại mọi tool (người dùng chốt). Sửa luôn các thông báo / tooltip nhắc tên menu cũ.
@@ -1146,11 +1182,43 @@ Kế hoạch: `Docs/ke-hoach-dot-2.md` Phần 4 (thứ tự 1); bảng cây: `Do
 - **Sóng phao** (duyệt 21/11, chờ kiểm tra): bước 6 trong shader vẽ tối đa 2 vòng elip pixel (dẹt 2:1) tỏa từ phao, mờ 3 bậc, tự cắt ở mép nước; không đọc thêm texture. Tâm/tuổi/độ mạnh là biến global `_BobberRipplePos` / `_BobberRippleRings` (không khai báo trong Properties) do `BobberRipple.cs` (trên GameObject phao) gửi mỗi frame. Nhịp: chạm nước 1 vòng mạnh; chờ vòng nhạt mỗi 1,6 s; rỉa 1 vòng 0,7; cắn + kéo vòng 0,8 mỗi 0,45 s; bấm sai 1 vòng mạnh; phao ẩn → tắt. `FishingController` tự thêm component nếu thiếu; `UiBuilder` cũng thêm khi Tạo UI. Chỉnh màu/tốc độ/bán kính ở `PixelWater.mat` (mục Bobber ripple). Người dùng xác nhận ổn 21/11.
 - **Dời bảng kéo cá** (duyệt 21/11, chờ kiểm tra): thanh thời gian + chuỗi mũi tên + "Sẵn sàng..." neo giữa màn hình, cao hơn tâm `PullRowOffsetY` = 90 (trên đầu nhân vật) thay vì cách đáy 290 → không che phao / bóng cá. Chữ thập giữ ở góc dưới. Cần chạy lại **Tạo UI**.
 
+## Gói UI Mega Cozy (dobo_ui) (22/11/2026, chờ kiểm tra trong Unity)
+- `Assets/Art/SourceFile_MegaCozyUIPack_doboui`: 617 PNG + `.aseprite` gốc. Giấy phép: cấm bán lại / phân phối lại / Crypto-NFT / huấn luyện AI → không đưa file gốc lên repo public.
+- Đã xóa `Spritesheet/` (2247×1597, trùng file lẻ, vượt Max Size 2048).
+- Import: PPU 16, Point, Compression None, Mesh Full Rect; Single (kể cả `IconFlat9/10`, trước bị cắt nhầm). Giữ Multiple 4 file `SelectionCursor*Build*` (4 góc cố ý).
+- Atlas `Assets/Art/Atlases/UI_MegaCozy.spriteatlas` (V1, khớp `m_SpritePackerMode: 4`; padding 4, 2048, không nén, Point). Gom 15 thư mục con; bỏ `Cursors`, `TilebleTexture` và file `.aseprite`.
+- Để sau: Sprite Border (9-slice), chỉ đặt cho sprite dùng tới.
+- Lưu ý build: chỉ cần dùng 1 sprite là cả atlas vào build. Khi biết dùng sprite nào thì thu gọn atlas, rồi build lại và so Build Report (mốc 10,8 MB).
+
+## GỠ menu Tạo UI (22/11/2026, người dùng chốt)
+- Người dùng tự dựng / chỉnh UI trong scene. Menu **Về Quê → Dựng scene → Tạo UI** đã gỡ (bỏ `[MenuItem]` trong `UiBuilder.cs`, giữ code để tra số đo; GameUI hiện có trong scene giữ nguyên). UI Skin bên dưới không còn tác dụng (chỉ chạy qua Tạo UI).
+- Từ nay: thêm / sửa UI thì người dùng làm tay; Claude chỉ viết script (MonoBehaviour + trường SerializeField) và hướng dẫn gắn trong Inspector.
+
+## UI Skin – người dùng tự thay art UI (22/11/2026, đã viết code, chờ kiểm tra)
+- Người dùng muốn tự thay art UI bằng bộ Mega Cozy (hoặc art khác). Checklist kiểm tra lại toàn bộ: trang https://claude.ai/artifact/K2Ev3nbQZzGkdUykNMzrKE (lưu db `checks`, Claude đọc mục "Lỗi" để sửa).
+- `Editor/UiSkinDefinition.cs` (ScriptableObject, assembly Editor): tỉ lệ khung / icon; 4 khung (Nền bảng = Cream, Thẻ / dòng = Paper, Khung phụ / tab dưới = Sand, Nhãn HUD = LabelCream); 3 nút + hình lúc nhấn (xanh, nâu, tab); rãnh + phần đầy thanh + lề; 8 icon (✓, ✗, đồng hồ cát, đồng hồ, **đồng xu**, **thư**, **điểm danh**, **album**). Ô trống = art Sunnyside cũ.
+- `UiBuilder`: tự tạo `Assets/_Game/Data/UiSkin.asset` (trống) lần đầu Tạo UI; ghi đè khung / icon / thanh theo Skin; sprite của Skin dùng tỉ lệ riêng (`FrameScale`, `IconScale`); nút có hình nhấn → Sprite Swap; cảnh báo Console khi sprite khung chưa có Border; nút Thư / Album / Điểm danh hiện icon nếu gán; icon đồng xu gán vào bảng Thư + popup điểm danh.
+- Biên dịch Editor ngoài Unity: không lỗi.
+#### Người dùng kiểm tra
+- [ ] Tạo UI lần 1 (sinh UiSkin.asset trống, GUI y như cũ) → kéo sprite (đã đặt Border) vào các ô → Tạo UI lại → xem; chỉnh Frame Scale / Icon Scale nếu viền dày / icon to.
+- [ ] Thu gọn atlas `UI_MegaCozy` chỉ còn sprite dùng tới, build lại, so Build Report (10,8 MB).
+
+## Font UI tạm về mặc định (22/11/2026, chờ áp vào scene)
+- Tạo UI đã tắt (UI chỉnh tay trong scene) → đổi font bằng **Về Quê → Font UI → Áp vào scene đang mở**: đổi font + material cho mọi TMP_Text trong scene (kể cả ẩn), giữ bố cục / cỡ chữ, Ctrl+Z được. Đổi font sau này: sửa asset rồi chạy lại lệnh này.
+- `UiFontSettings` (SO chỉ dùng trong Editor, `Assets/_Game/Data/UiFontSettings.asset`, menu **Về Quê → Font UI → Mở cài đặt**) gồm Font (trống = LiberationSans SDF mặc định của TMP), Outline Material, Pixel Font (cỡ cố định 2 bậc), Pixel Point Size. `UiBuilder` và xem thử shiny đọc font từ đây; không còn tự nạp FatPix.
+- FatPix (`.otf`, `FatPix Pixel.asset`, `FatPix Outline.mat`, `PixelFontBuilder`) giữ nguyên. Muốn dùng lại: Font = `FatPix Pixel`, Outline = `FatPix Outline`, bật Pixel Font, Point Size 24.
+- Font mới chốt sau: dùng font asset tĩnh đủ chữ tiếng Việt, build lại và so Build Report. Hiện font mặc định có fallback động nên kéo theo `LiberationSans.ttf` vào build.
+
 ## Việc đang chờ người dùng (13/11/2026)
 1. **Tạo data câu cá** (cấp mồi, giá ô giỏ, mũi tên tối thiểu 4) → **Câu cá: tạo art tạm** (ổ khóa) nếu chưa chạy → **Tạo UI** → Ctrl+S → Test Runner (dự kiến 451, sửa được test đỏ `FarmDefinitionTests`).
 2. Chơi thử các mục "chờ kiểm tra" ở Phần 10 giai đoạn 4: mua cần / mồi theo cấp, tab Cửa hàng 3 trang, Kho 2 trang + bán cá / Bán hết, thanh tab 3 nút, bóng cá xem xét / đớp thử / căng.
 3. Build lại, so Build Report (mốc 10,8 MB; thêm icon cá, bóng, ổ khóa, icon UI nhỏ).
 4. Cho commit khi muốn.
+
+## TẠM DỪNG kế hoạch (22/11/2026, người dùng yêu cầu)
+- **Pending:** mọi phần chưa làm trong "Lịch tổng" (thứ tự 15 trở đi: Ô ăn quan, Mò cua, Soi đèn, 12b, Phần 14) **và phần Tết (12a đã viết code nhưng chưa kiểm tra, 12b)**.
+- Đang làm: người dùng **kiểm tra lại toàn bộ game từ đầu** theo checklist (gửi trong hội thoại 22/11). Lỗi tìm được sửa trước, rồi mới quay lại kế hoạch.
+- Phần 8 + 12a: code đã viết, **chưa commit** (sau commit `40889d5`).
 
 ## Tiếp theo (khi quay lại)
 0. Phần 10 giai đoạn 4 Đợt E: đã viết code 14/11/2026 – chờ kiểm tra + build, so Build Report.

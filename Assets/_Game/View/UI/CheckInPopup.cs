@@ -66,6 +66,18 @@ namespace VeQue.View.UI
 
         public bool IsOpen => _root.activeSelf;
 
+        // Hôm nay popup sẽ tự mở (đủ điều kiện nhận, chưa tự mở) – loa xã chờ popup xong mới hiện (Đợt 2 Phần 8).
+        public bool WillPromptToday
+        {
+            get
+            {
+                if (_game == null || _game.Farm == null)
+                    return false;
+                Farm farm = _game.Farm;
+                return _promptedDay != farm.Calendar.DayKey && farm.CanCheckIn;
+            }
+        }
+
         private void Start()
         {
             if (_game == null)

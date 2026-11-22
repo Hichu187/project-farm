@@ -234,10 +234,16 @@ namespace VeQue.Logic
         // Khung giờ thật hiệu ứng có tác dụng; rỗng = cả ngày.
         public IReadOnlyList<DaySlot> Windows { get; }
         public IReadOnlyList<EventEffect> Effects { get; }
+        // Người gửi thư quà (MailReward) – Đợt 2 Phần 12a (lì xì của Mẹ, Bà Lụa…). Mặc định "Loa xã".
+        public string MailSender { get; }
+
+        public const string DefaultMailSender = "Loa xã";
 
         public EventDef(string id, string title, string loaText, EventTrigger trigger, IEnumerable<EventEffect> effects,
-            int priority = 0, int weight = 1, int cooldownDays = 0, int minLevel = 1, IEnumerable<DaySlot> windows = null)
+            int priority = 0, int weight = 1, int cooldownDays = 0, int minLevel = 1, IEnumerable<DaySlot> windows = null,
+            string mailSender = null)
         {
+            MailSender = string.IsNullOrEmpty(mailSender) ? DefaultMailSender : mailSender;
             if (string.IsNullOrEmpty(id))
                 throw new ArgumentException("Sự kiện cần id.", nameof(id));
             if (weight < 0 || cooldownDays < 0 || minLevel < 1)

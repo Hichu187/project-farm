@@ -313,6 +313,21 @@ namespace VeQue.Tests
             Assert.IsFalse(farm.TryEventMail(), "Hết sự kiện");
         }
 
+        [Test]
+        public void MailReward_SenderFromEvent()
+        {
+            var reward = new[] { new EventEffect(EventEffectType.MailReward, rewards: new[] { new Reward(RewardKind.Coins, null, 1) }) };
+            var custom = new EventDef("li_xi", "Lì xì", "Chúc mừng năm mới", Today(), reward, mailSender: "Mẹ");
+            var plain = new EventDef("thuong", "Thường", "", new EventTrigger(EventTriggerKind.Solar, 1, 12), reward);
+            Farm farm = CreateFarm(custom, plain);
+            Assert.IsTrue(farm.TryEventMail());
+            Assert.IsTrue(farm.State.Mailbox.TryGet(Farm.EventMailId("li_xi", Day(2026, 12, 1)), out Mail a));
+            Assert.AreEqual("Mẹ", a.Sender);
+            Assert.AreEqual("Chúc mừng năm mới", a.Body);
+            Assert.IsTrue(farm.State.Mailbox.TryGet(Farm.EventMailId("thuong", Day(2026, 12, 1)), out Mail b));
+            Assert.AreEqual(EventDef.DefaultMailSender, b.Sender);
+        }
+
         // ---------- Cá ----------
 
         [Test]

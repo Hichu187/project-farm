@@ -20,7 +20,11 @@ namespace VeQue.View.UI
         {
             if (!Farm.IsCropUnlocked(def.Id))
             {
-                row.SetInfo($"{UiFormat.GrowTime(def.GrowSeconds)} · Mở ở cấp {def.UnlockLevel}");
+                // Cây sự kiện (Phần 8): chỉ bán trong ngày sự kiện (vd. Chợ đầu tháng – mùng 1 âm).
+                bool levelOk = def.UnlockLevel <= Farm.State.Level;
+                row.SetInfo(def.EventOnly && levelOk
+                    ? $"{UiFormat.GrowTime(def.GrowSeconds)} · {UiFormat.EventOnlyShopNote} · có {Farm.State.GetSeeds(def.Id)} hạt"
+                    : $"{UiFormat.GrowTime(def.GrowSeconds)} · Mở ở cấp {def.UnlockLevel}");
                 row.Primary.interactable = false;
                 row.Secondary.interactable = false;
                 return;

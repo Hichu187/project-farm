@@ -354,6 +354,13 @@ namespace VeQue.Logic
 
         public bool TryGetPlotState(PlotId id, out PlotState plot) => TryGetPlot(id, out plot);
 
+        // Gieo được cây này (đủ cấp). Cây sự kiện: hạt đã có vẫn gieo được khi hết sự kiện (Farm.Plant chỉ xét cấp).
+        public bool IsCropPlantable(string cropId)
+        {
+            return Definition.TryGetCrop(cropId, out CropDef crop) && crop.UnlockLevel <= State.Level;
+        }
+
+        // Mua hạt được (đủ cấp; cây sự kiện thì sự kiện UnlockCrop đang chạy).
         public bool IsCropUnlocked(string cropId)
         {
             // Cây sự kiện: chỉ mở khi sự kiện UnlockCrop đang chạy (Đợt 2 Phần 7).

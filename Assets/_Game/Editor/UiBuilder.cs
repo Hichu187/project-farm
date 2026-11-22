@@ -64,13 +64,32 @@ namespace VeQue.EditorTools
             Cancel,
             Sandtimer,
             Stopwatch,
+            // 22/11/2026: chỉ có khi gán trong UI Skin (Sunnyside không có).
+            Coin,
+            Mail,
+            CheckIn,
+            Album,
         }
+
+        // Bộ art UI người dùng gán (Assets/_Game/Data/UiSkin.asset); ô trống dùng Sunnyside.
+        private const string UiSkinPath = "Assets/_Game/Data/UiSkin.asset";
+        private static UiSkinDefinition _uiSkin;
+        // Sprite lấy từ UI Skin (dùng tỉ lệ khung / icon của Skin thay UiPixelScale).
+        private static readonly System.Collections.Generic.HashSet<Sprite> SkinSprites =
+            new System.Collections.Generic.HashSet<Sprite>();
+        // Hình lúc nhấn theo kiểu khung nút (Sprite Swap).
+        private static readonly System.Collections.Generic.Dictionary<Skin, Sprite> PressedSkins =
+            new System.Collections.Generic.Dictionary<Skin, Sprite>();
+        private static Vector4 _barInset;
 
         private static readonly System.Collections.Generic.Dictionary<Icon, Sprite> Icons =
             new System.Collections.Generic.Dictionary<Icon, Sprite>();
         private static Sprite _bar;
-        // Font pixel tiếng Việt (menu Về Quê → Font: tạo font pixel tiếng Việt); null = font mặc định của TMP.
-        private static TMP_FontAsset _pixelFont;
+        // Font chữ lấy từ UiFontSettings (menu Về Quê → Font UI).
+        private static TMP_FontAsset _font;
+        // Font pixel: cỡ chữ cố định theo bội số pixel, tắt tự co chữ.
+        private static bool _pixelFont;
+        private static int _pixelPointSize;
         // Material viền pixel cho chữ trắng trên nền màu (nút, thanh XP); null = không viền.
         private static Material _outlineMaterial;
 
@@ -78,7 +97,9 @@ namespace VeQue.EditorTools
         private static readonly System.Collections.Generic.Dictionary<Skin, Sprite> Skins =
             new System.Collections.Generic.Dictionary<Skin, Sprite>();
 
-        [MenuItem("Về Quê/Dựng scene/Tạo UI", priority = 101)]
+        // 22/11/2026: GỠ menu "Tạo UI" theo yêu cầu người dùng – từ nay UI dựng / chỉnh tay trong scene (Tạo UI sẽ xóa GameUI
+        // dựng lại, mất phần chỉnh tay). Giữ code để tra số đo bố cục; muốn dùng lại thì thêm lại dòng MenuItem bên dưới.
+        // [MenuItem("Về Quê/Dựng scene/Tạo UI", priority = 101)]
         private static void Build()
         {
             Canvas canvas = Object.FindFirstObjectByType<Canvas>();
@@ -104,10 +125,11 @@ namespace VeQue.EditorTools
 
             SetupScaler(canvas);
             LoadSkin();
-            _pixelFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(PixelFontBuilder.AssetPath);
-            _outlineMaterial = _pixelFont != null ? AssetDatabase.LoadAssetAtPath<Material>(PixelFontBuilder.OutlineMaterialPath) : null;
-            if (_pixelFont == null)
-                Debug.LogWarning($"Tạo UI: chưa có {PixelFontBuilder.AssetPath}, dùng font mặc định. Chạy Về Quê → Font: tạo font pixel tiếng Việt rồi Tạo UI lại.");
+            UiFontSettings fontSettings = UiFontSettings.LoadOrCreate();
+            _font = fontSettings.FontOrDefault;
+            _outlineMaterial = fontSettings.OutlineMaterial;
+            _pixelFont = fontSettings.PixelFont;
+            _pixelPointSize = fontSettings.PixelPointSize;
 
             RectTransform root = Stretch(RootName, canvas.transform);
             var ui = root.gameObject.AddComponent<GameUI>();
@@ -130,6 +152,8 @@ namespace VeQue.EditorTools
             BuildHarvestFlyer(safe, game, interaction, view, camera.GetComponent<Camera>(), (RectTransform)storageTab.transform);
             Toast toast = BuildToast(safe);
             BuildGameClock(safe, game);
+            // Đợt 2 Phần 8: icon sự kiện hôm nay dưới đồng hồ (chạm xem chi tiết).
+            BuildEventBadge(safe, game);
             UnlockDialog dialog = BuildDialog(safe, game, interaction);
             BuildLevelUpDialog(safe, game);
             // Sau cùng để nằm trên mọi thứ (lần đầu vào game che cả HUD).
@@ -140,7 +164,7 @@ namespace VeQue.EditorTools
             // Đợt 2 Phần 3: nút Thư dưới Đi câu (hiện ở cả hai vùng).
             Button mailButton = BuildMailButton(safe, game);
             // Đợt 2 Phần 5: nút Album dưới Thư (hiện ở cả hai vùng).
-            Button albumButton = BuildRegionButton(safe, "AlbumButton", "Album", 3);
+            Button albumButton = BuildRegionButton(safe, "AlbumButton", "Album", 3, Icon.Album);
             TMP_Text regionLabel = BuildRegionLabel(safe, out GameObject regionPanel);
             BuildFishing(safe, game, toast);
             // Sau BuildFishing (cần FishingController) và BuildToast.
@@ -150,6 +174,8 @@ namespace VeQue.EditorTools
             CheckInPopup checkInPopup = BuildCheckInPopup(safe, game, creator, (RectTransform)mailButton.transform);
             // 22/11/2026: nút Điểm danh ở cột trái HUD, dưới Album (cả hai vùng), chấm đỏ khi còn quà chưa nhận.
             BuildCheckInButton(safe, game, checkInPopup);
+            // Đợt 2 Phần 8: loa xã (banner dưới HUD) – sau popup điểm danh.
+            BuildLoaXaBanner(safe, game, checkInPopup, creator);
             // Sau cùng: màn tối chuyển cảnh phủ lên mọi thứ.
             ScreenFader fader = BuildFader(safe);
             var travel = Object.FindFirstObjectByType<RegionTravel>();
@@ -220,7 +246,7 @@ namespace VeQue.EditorTools
             RectTransform fillArea = BuildBar(background, out float barHeight);
             sliderNode.sizeDelta = new Vector2(-12f, barHeight);
             RectTransform fill = Stretch("Fill", fillArea);
-            AddImage(fill, BarFillColor, false);
+            AddBarFill(fill);
             slider.fillRect = fill;
 
             // Đồng hồ bấm giờ bên trái chữ thời gian còn lại.
@@ -342,7 +368,7 @@ namespace VeQue.EditorTools
             Inset(level.rectTransform, 4f, 6f + barHeight, 4f, 2f);
             RectTransform fill = Stretch("Fill", track);
             fill.anchorMax = new Vector2(0f, 1f);
-            AddImage(fill, BarFillColor, false);
+            AddBarFill(fill);
             // Chữ XP nằm trên rãnh tối / phần xanh nên dùng màu trắng.
             TMP_Text xp = AddLabel(barBack, "Xp", "0/3", 10f, TextAlignmentOptions.Center, _bar != null ? Color.white : TextDark);
             if (_bar != null)
@@ -375,11 +401,11 @@ namespace VeQue.EditorTools
 
         // Nút "Nhân vật" dưới HUD, góc trái.
         // Nút cột trái dưới HUD (cùng cột nút Nhân vật); row 0 = chỗ nút Nhân vật, 1 = ngay dưới.
-        private static Button BuildRegionButton(RectTransform parent, string name, string text, int row)
+        private static Button BuildRegionButton(RectTransform parent, string name, string text, int row, Icon icon = Icon.None)
         {
             RectTransform node = Node(name, parent, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
                 new Vector2(12f, -(HudHeight + 6f + row * 42f)), new Vector2(100f, 36f));
-            return MakeButton(node, text, 15f, Wood, Color.white, out _);
+            return MakeButton(node, text, 15f, Wood, Color.white, out _, icon);
         }
 
         // Tên vùng (vd. "Bến sông") giữa, ngay dưới HUD; chỉ hiện ở vùng câu (GameUI bật / tắt panel).
@@ -1319,7 +1345,7 @@ namespace VeQue.EditorTools
         // Nút "Thư" cột trái HUD (dưới Đi câu) + chấm đỏ đếm thư cần chú ý.
         private static Button BuildMailButton(RectTransform parent, GameBootstrap game)
         {
-            Button button = BuildRegionButton(parent, "MailButton", "Thư", 2);
+            Button button = BuildRegionButton(parent, "MailButton", "Thư", 2, Icon.Mail);
             var node = (RectTransform)button.transform;
             RectTransform badge = Node("Badge", node, Vector2.one, Vector2.one, new Vector2(0.5f, 0.5f), new Vector2(-4f, -4f), new Vector2(22f, 22f));
             AddImage(badge, UrgentText, false);
@@ -1420,6 +1446,8 @@ namespace VeQue.EditorTools
             SetArray(so.FindProperty("_rewardLabels"), rewardLabels);
             so.FindProperty("_claim").objectReferenceValue = claim;
             so.FindProperty("_claimLabel").objectReferenceValue = claimLabel;
+            // UI Skin: icon đồng xu cho quà xu (chưa gán = không icon).
+            so.FindProperty("_coinIcon").objectReferenceValue = CoinIcon;
             so.ApplyModifiedPropertiesWithoutUndo();
             return panel;
         }
@@ -1455,6 +1483,74 @@ namespace VeQue.EditorTools
             so.FindProperty("_doneColor").colorValue = framed ? new Color(0.82f, 0.80f, 0.76f) : CreamDark;
             so.ApplyModifiedPropertiesWithoutUndo();
             return script;
+        }
+
+        // ---------- Sự kiện, loa xã (Đợt 2 Phần 8) ----------
+
+        // Nút nhỏ dưới đồng hồ (góc phải) + bảng chi tiết giữa màn hình.
+        private static void BuildEventBadge(RectTransform parent, GameBootstrap game)
+        {
+            RectTransform holder = Stretch("EventBadge", parent);
+            var script = holder.gameObject.AddComponent<EventBadge>();
+
+            RectTransform buttonNode = Node("Button", holder, Vector2.one, Vector2.one, Vector2.one,
+                new Vector2(-12f, -(HudHeight + 48f)), new Vector2(104f, 30f));
+            MakeButton(buttonNode, "", 13f, Green, Color.white, out TMP_Text label);
+            SingleLine(label);
+            buttonNode.gameObject.SetActive(false);
+
+            RectTransform dim = Stretch("Detail", holder);
+            dim.offsetMin = new Vector2(-400f, -400f);
+            dim.offsetMax = new Vector2(400f, 400f);
+            AddImage(dim, Dim, true);
+            RectTransform box = Node("Box", dim, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(320f, 330f));
+            Frame(box, Skin.Cream, Cream, true);
+            TMP_Text title = AddLabel(box, "Title", "", 20f, TextAlignmentOptions.Center, TextDark);
+            TopRow(title.rectTransform, 12f, 30f, 12f, 12f);
+            SingleLine(title);
+            TMP_Text body = AddLabel(box, "Body", "", 14f, TextAlignmentOptions.TopLeft, TextDark);
+            Inset(body.rectTransform, 16f, ButtonHeight + 22f, 16f, 50f);
+            body.richText = true;
+            body.textWrappingMode = TextWrappingModes.Normal;
+            body.overflowMode = TextOverflowModes.Ellipsis;
+            RectTransform closeNode = Node("Close", box, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(0f, 12f), new Vector2(120f, ButtonHeight));
+            Button close = MakeButton(closeNode, "Đóng", 16f, Wood, Color.white, out _, Icon.Cancel);
+            dim.gameObject.SetActive(false);
+
+            Wire(script, ("_game", game), ("_button", buttonNode.gameObject), ("_label", label), ("_detailRoot", dim.gameObject),
+                ("_detailTitle", title), ("_detailBody", body), ("_detailClose", close));
+        }
+
+        // Banner dải ngang dưới HUD (cách lề 12), 3 dòng: tiêu đề loa, câu loa (2 dòng), hút hàng / rớt giá.
+        // Cả banner là nút (chạm để đóng); ngoài banner chạm xuống map bình thường.
+        private static void BuildLoaXaBanner(RectTransform parent, GameBootstrap game, CheckInPopup checkInPopup, CharacterCreator creator)
+        {
+            RectTransform holder = Stretch("LoaXa", parent);
+            var script = holder.gameObject.AddComponent<LoaXaBanner>();
+
+            RectTransform panel = Node("Panel", holder, new Vector2(0f, 1f), Vector2.one, new Vector2(0.5f, 1f),
+                new Vector2(0f, -(HudHeight + 50f)), new Vector2(-24f, 96f));
+            Image background = Frame(panel, Skin.LabelCream, Cream, true);
+            Button button = panel.gameObject.AddComponent<Button>();
+            button.transition = Selectable.Transition.None;
+            button.targetGraphic = background;
+
+            TMP_Text header = AddLabel(panel, "Header", "", 13f, TextAlignmentOptions.MidlineLeft, TextDark);
+            TopRow(header.rectTransform, 6f, 18f, 12f, 12f);
+            SingleLine(header);
+            TMP_Text body = AddLabel(panel, "Body", "", 13f, TextAlignmentOptions.TopLeft, TextDark);
+            TopRow(body.rectTransform, 26f, 40f, 12f, 12f);
+            body.textWrappingMode = TextWrappingModes.Normal;
+            body.overflowMode = TextOverflowModes.Ellipsis;
+            TMP_Text market = AddLabel(panel, "Market", "", 12f, TextAlignmentOptions.MidlineLeft, new Color(0.72f, 0.40f, 0.08f));
+            TopRow(market.rectTransform, 70f, 18f, 12f, 12f);
+            SingleLine(market);
+            panel.gameObject.SetActive(false);
+
+            Wire(script, ("_game", game), ("_panel", panel), ("_header", header), ("_body", body), ("_market", market),
+                ("_closeButton", button), ("_checkInPopup", checkInPopup), ("_creator", creator));
         }
 
         // ---------- Giá chợ (Đợt 2 Phần 9) ----------
@@ -1623,7 +1719,7 @@ namespace VeQue.EditorTools
             dim.gameObject.SetActive(false);
             Wire(popup, ("_game", game), ("_root", dim.gameObject), ("_subtitle", subtitle), ("_openMail", openMail),
                 ("_close", close), ("_claim", claim), ("_later", later), ("_creator", creator),
-                ("_mailTarget", mailTarget), ("_flyTemplate", flyIcon));
+                ("_mailTarget", mailTarget), ("_flyTemplate", flyIcon), ("_coinIcon", CoinIcon));
             var so = new SerializedObject(popup);
             SetArray(so.FindProperty("_cellBackgrounds"), backgrounds);
             SetArray(so.FindProperty("_cellDays"), days);
@@ -1638,7 +1734,7 @@ namespace VeQue.EditorTools
         // Nút cột trái hàng 4 (dưới Album) + chấm đỏ góc trên phải.
         private static void BuildCheckInButton(RectTransform parent, GameBootstrap game, CheckInPopup popup)
         {
-            Button button = BuildRegionButton(parent, "CheckInButton", "Điểm danh", 4);
+            Button button = BuildRegionButton(parent, "CheckInButton", "Điểm danh", 4, Icon.CheckIn);
             var node = (RectTransform)button.transform;
             RectTransform badge = Node("Badge", node, Vector2.one, Vector2.one, new Vector2(0.5f, 0.5f), new Vector2(-4f, -4f), new Vector2(14f, 14f));
             AddImage(badge, UrgentText, false);
@@ -2026,7 +2122,7 @@ namespace VeQue.EditorTools
             RectTransform node = Stretch(label, nav);
             Button button = MakeButton(node, label, 15f, Cream, TextDark, out text);
             // Font pixel giữ cỡ cố định (tự co sẽ ra cỡ lẻ, mờ nét); tab hẹp nên dùng cỡ nhỏ.
-            if (_pixelFont == null)
+            if (!_pixelFont)
             {
                 text.enableAutoSizing = true;
                 text.fontSizeMin = 11f;
@@ -2234,9 +2330,9 @@ namespace VeQue.EditorTools
         {
             RectTransform rect = Stretch(name, parent);
             var label = rect.gameObject.AddComponent<TextMeshProUGUI>();
-            label.font = _pixelFont != null ? _pixelFont : TMP_Settings.defaultFontAsset;
+            label.font = _font;
             label.text = text;
-            label.fontSize = _pixelFont != null ? PixelFontSize(size) : size;
+            label.fontSize = _pixelFont ? PixelFontSize(size) : size;
             label.alignment = alignment;
             label.color = color;
             label.raycastTarget = false;
@@ -2247,17 +2343,20 @@ namespace VeQue.EditorTools
         private static Button MakeButton(RectTransform node, string text, float size, Color background, Color textColor, out TMP_Text label,
             Icon icon = Icon.None)
         {
-            Image image;
-            if (background == Cream)
-                image = Frame(node, Skin.LabelPaper, background, true);
-            else if (background == Green)
-                image = Frame(node, Skin.Green, background, true);
-            else if (background == Wood)
-                image = Frame(node, Skin.Brown, background, true);
-            else
-                image = AddImage(node, background, true);
+            Skin? skin = background == Cream ? Skin.LabelPaper : background == Green ? Skin.Green : background == Wood ? Skin.Brown : (Skin?)null;
+            Image image = skin.HasValue ? Frame(node, skin.Value, background, true) : AddImage(node, background, true);
             var button = node.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
+            // UI Skin: có hình lúc nhấn thì đổi sprite khi bấm (thay vì tối màu).
+            if (skin.HasValue && image.sprite != null && PressedSkins.TryGetValue(skin.Value, out Sprite pressed))
+            {
+                button.transition = Selectable.Transition.SpriteSwap;
+                SpriteState state = button.spriteState;
+                state.pressedSprite = pressed;
+                state.selectedSprite = null;
+                state.highlightedSprite = null;
+                button.spriteState = state;
+            }
             label = AddLabel(node, "Label", text, size, TextAlignmentOptions.Center, textColor);
             SingleLine(label);
             // Chữ trắng trên nút xanh / nâu: thêm viền tối cho dễ đọc.
@@ -2296,12 +2395,13 @@ namespace VeQue.EditorTools
             if (icon == Icon.None || !Icons.TryGetValue(icon, out Sprite sprite))
                 return null;
 
-            Vector2 size = sprite.rect.size * UiPixelScale;
+            Vector2 size = sprite.rect.size * (SkinSprites.Contains(sprite) ? _uiSkin.IconScale : UiPixelScale);
             var anchor = new Vector2(anchorX, 0.5f);
             RectTransform node = Node("Icon", parent, anchor, anchor, anchor,
                 new Vector2(anchorX < 0.5f ? offset : 0f, 0f), size);
             Image image = AddImage(node, Color.white, false);
             image.sprite = sprite;
+            image.preserveAspect = true;
             return image;
         }
 
@@ -2309,7 +2409,7 @@ namespace VeQue.EditorTools
         // Chưa có sprite: nền màu phẳng, rãnh = cả khung.
         private static RectTransform BuildBar(RectTransform bar, out float height)
         {
-            height = _bar != null ? _bar.rect.height * UiPixelScale : 12f;
+            height = _bar != null ? _bar.rect.height * FrameScaleOf(_bar) : 12f;
             if (_bar == null)
             {
                 AddImage(bar, CreamDark, false);
@@ -2319,15 +2419,32 @@ namespace VeQue.EditorTools
             Image image = AddImage(bar, Color.white, false);
             image.sprite = _bar;
             image.type = Image.Type.Sliced;
-            image.pixelsPerUnitMultiplier = 100f / (_bar.pixelsPerUnit * UiPixelScale);
+            image.pixelsPerUnitMultiplier = 100f / (_bar.pixelsPerUnit * FrameScaleOf(_bar));
 
             RectTransform track = Stretch("Track", bar);
-            Vector4 inset = SunnysideUiImporter.BarTrackInset * UiPixelScale;
+            Vector4 inset = _barInset * FrameScaleOf(_bar);
             Inset(track, inset.x, inset.y, inset.z, inset.w);
             return track;
         }
 
         private static Color BarFillColor => _bar != null ? SunnysideUiImporter.BarFill : Green;
+
+        // Phần đầy của thanh: sprite 9-slice của UI Skin nếu có, không thì màu phẳng.
+        private static Image AddBarFill(RectTransform fill)
+        {
+            Sprite sprite = _uiSkin != null ? _uiSkin.BarFill : null;
+            if (sprite == null)
+                return AddImage(fill, BarFillColor, false);
+            Image image = AddImage(fill, Color.white, false);
+            image.sprite = sprite;
+            image.type = Image.Type.Sliced;
+            image.pixelsPerUnitMultiplier = 100f / (sprite.pixelsPerUnit * FrameScaleOf(sprite));
+            return image;
+        }
+
+        // 1 pixel art = bao nhiêu đơn vị UI: sprite của UI Skin theo FrameScale, Sunnyside theo UiPixelScale.
+        private static float FrameScaleOf(Sprite sprite)
+            => sprite != null && _uiSkin != null && SkinSprites.Contains(sprite) ? _uiSkin.FrameScale : UiPixelScale;
 
         private static void LoadSkin()
         {
@@ -2346,7 +2463,8 @@ namespace VeQue.EditorTools
             Icons.Clear();
             foreach (Icon icon in System.Enum.GetValues(typeof(Icon)))
             {
-                if (icon == Icon.None)
+                // Icon mới chỉ có trong UI Skin.
+                if (icon == Icon.None || icon >= Icon.Coin)
                     continue;
                 string path = SunnysideUiImporter.IconPath(icon.ToString().ToLowerInvariant());
                 var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
@@ -2358,12 +2476,79 @@ namespace VeQue.EditorTools
             _bar = AssetDatabase.LoadAssetAtPath<Sprite>(SunnysideUiImporter.BarPath);
             if (_bar == null)
                 missing.Add(SunnysideUiImporter.BarPath);
+            _barInset = SunnysideUiImporter.BarTrackInset;
+            ApplyUiSkin();
 
             // Thiếu sprite nào thì chỗ dùng sprite đó dựng bằng màu phẳng / không có icon; các chỗ khác vẫn dùng khung.
             if (missing.Count > 0)
                 Debug.LogWarning("Tạo UI: thiếu sprite UI Sunnyside, các chỗ đó dùng màu phẳng. Chạy Về Quê → UI Sunnyside: ghép 9-slice rồi Tạo UI lại.\n"
                     + string.Join("\n", missing));
         }
+
+        // Ghi đè khung / nút / thanh / icon bằng sprite người dùng gán trong UI Skin (tự tạo asset trống nếu chưa có).
+        private static void ApplyUiSkin()
+        {
+            SkinSprites.Clear();
+            PressedSkins.Clear();
+            _uiSkin = AssetDatabase.LoadAssetAtPath<UiSkinDefinition>(UiSkinPath);
+            if (_uiSkin == null)
+            {
+                _uiSkin = ScriptableObject.CreateInstance<UiSkinDefinition>();
+                AssetDatabase.CreateAsset(_uiSkin, UiSkinPath);
+                AssetDatabase.SaveAssets();
+                Debug.Log($"Tạo UI: đã tạo {UiSkinPath} (trống). Kéo sprite vào các ô rồi Tạo UI lại để đổi art.", _uiSkin);
+            }
+
+            UseFrame(Skin.Cream, _uiSkin.Panel, null);
+            UseFrame(Skin.Paper, _uiSkin.Card, null);
+            UseFrame(Skin.Sand, _uiSkin.SubPanel, null);
+            UseFrame(Skin.LabelCream, _uiSkin.HudLabel, null);
+            UseFrame(Skin.Green, _uiSkin.ButtonGreen, _uiSkin.ButtonGreenPressed);
+            UseFrame(Skin.Brown, _uiSkin.ButtonBrown, _uiSkin.ButtonBrownPressed);
+            UseFrame(Skin.LabelPaper, _uiSkin.ButtonTab, _uiSkin.ButtonTabPressed);
+            if (_uiSkin.BarTrack != null)
+            {
+                _bar = _uiSkin.BarTrack;
+                SkinSprites.Add(_bar);
+                _barInset = _uiSkin.BarInset;
+            }
+            if (_uiSkin.BarFill != null)
+                SkinSprites.Add(_uiSkin.BarFill);
+            UseIcon(Icon.Confirm, _uiSkin.IconConfirm);
+            UseIcon(Icon.Cancel, _uiSkin.IconCancel);
+            UseIcon(Icon.Sandtimer, _uiSkin.IconSandtimer);
+            UseIcon(Icon.Stopwatch, _uiSkin.IconStopwatch);
+            UseIcon(Icon.Coin, _uiSkin.IconCoin);
+            UseIcon(Icon.Mail, _uiSkin.IconMail);
+            UseIcon(Icon.CheckIn, _uiSkin.IconCheckIn);
+            UseIcon(Icon.Album, _uiSkin.IconAlbum);
+        }
+
+        private static void UseFrame(Skin skin, Sprite sprite, Sprite pressed)
+        {
+            if (sprite == null)
+                return;
+            Skins[skin] = sprite;
+            SkinSprites.Add(sprite);
+            if (pressed != null)
+            {
+                PressedSkins[skin] = pressed;
+                SkinSprites.Add(pressed);
+            }
+            if (sprite.border == Vector4.zero)
+                Debug.LogWarning($"UI Skin: sprite '{sprite.name}' ({skin}) chưa có Border 9-slice – kéo to sẽ bị giãn. Đặt Border trong Sprite Editor.", sprite);
+        }
+
+        private static void UseIcon(Icon icon, Sprite sprite)
+        {
+            if (sprite == null)
+                return;
+            Icons[icon] = sprite;
+            SkinSprites.Add(sprite);
+        }
+
+        // Icon đồng xu (quà xu trong thư / lịch điểm danh); null = chưa gán (hiện chữ "50 xu").
+        private static Sprite CoinIcon => Icons.TryGetValue(Icon.Coin, out Sprite coin) ? coin : null;
 
         private static string SkinPath(Skin skin)
         {
@@ -2387,12 +2572,12 @@ namespace VeQue.EditorTools
             image.type = Image.Type.Sliced;
             image.fillCenter = true;
             // Image: pixelsPerUnit = sprite PPU / Canvas.referencePixelsPerUnit × multiplier; muốn 1 pixel art = UiPixelScale đơn vị.
-            image.pixelsPerUnitMultiplier = 100f / (sprite.pixelsPerUnit * UiPixelScale);
+            image.pixelsPerUnitMultiplier = 100f / (sprite.pixelsPerUnit * FrameScaleOf(sprite));
             return image;
         }
 
         // Cỡ chữ để 1 pixel thiết kế (= 1 texel atlas) = N pixel màn hình khi Canvas ×3 (màn 1170): sắc nét.
-        private static float PixelFontSizeFor(int screenPixels) => screenPixels * PixelFontBuilder.PointSize / 3f;
+        private static float PixelFontSizeFor(int screenPixels) => screenPixels * _pixelPointSize / 3f;
 
         // FatPix rộng nên chỉ 2 bậc: chữ thường → nhỏ (2 px / pixel, cỡ 16), tiêu đề (cỡ cũ ≥ 20) → vừa (3 px, cỡ 24).
         // Đã đo độ rộng các chuỗi dài nhất với khung chứa (12/11/2026).

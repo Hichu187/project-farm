@@ -106,7 +106,8 @@ namespace VeQue.Tests
             FarmDef def = asset.ToDef();
 
             Assert.AreEqual(25, asset.Crops.Count);
-            Assert.AreEqual(22, def.Crops.Count);
+            // 22 cây thường + 2 cây sự kiện bật từ Phần 8 (hoa cúc, hướng dương); hoa đào chờ Tết.
+            Assert.AreEqual(24, def.Crops.Count);
             Assert.IsTrue(def.TryGetCrop("rau_muong", out CropDef rauMuong));
             Assert.AreEqual(120, rauMuong.GrowSeconds);
             Assert.IsTrue(def.TryGetCrop("ca_chua", out CropDef caChua));
@@ -114,8 +115,15 @@ namespace VeQue.Tests
             Assert.IsTrue(def.TryGetCrop("bi_ngo", out CropDef biNgo));
             Assert.AreEqual(6 * 3600, biNgo.GrowSeconds);
             Assert.IsFalse(def.TryGetCrop("hoa_dao", out _));
-            Assert.IsFalse(def.TryGetCrop("hoa_cuc", out _));
-            Assert.IsFalse(def.TryGetCrop("huong_duong", out _));
+            Assert.IsTrue(def.TryGetCrop("hoa_cuc", out CropDef cuc) && cuc.EventOnly);
+            Assert.IsTrue(def.TryGetCrop("huong_duong", out CropDef duong) && duong.EventOnly);
+            Assert.AreEqual(4 * 3600, cuc.GrowSeconds);
+            Assert.AreEqual(2, cuc.HarvestYield);
+            foreach (CropDef crop in def.Crops)
+            {
+                if (crop.Id != "hoa_cuc" && crop.Id != "huong_duong")
+                    Assert.IsFalse(crop.EventOnly, crop.Id);
+            }
             Assert.IsFalse(def.TryGetCrop("bi_do", out _), "cây cũ đã bỏ");
         }
 
@@ -125,8 +133,16 @@ namespace VeQue.Tests
         {
             FarmDef def = LoadAsset().ToDef();
 
-            for (int i = 1; i < def.Crops.Count; i++)
-                Assert.GreaterOrEqual(def.Crops[i].GrowSeconds, def.Crops[i - 1].GrowSeconds, def.Crops[i].Id);
+            // Chỉ xét cây thường (cây sự kiện xếp cuối data, ngoài thứ tự này).
+            CropDef previous = null;
+            foreach (CropDef crop in def.Crops)
+            {
+                if (crop.EventOnly)
+                    continue;
+                if (previous != null)
+                    Assert.GreaterOrEqual(crop.GrowSeconds, previous.GrowSeconds, crop.Id);
+                previous = crop;
+            }
         }
 
         // Mỗi cấp 1–13 có ít nhất 1 cây mới; cấp 14–15 dành cho cần và mồi.
@@ -421,6 +437,99 @@ namespace VeQue.Tests
             CollectionAssert.AreEquivalent(ids, seen);
             Assert.AreEqual(0.33, randomDays / (double)plainDays, 0.06);
         }
+
+        // Đợt 2 Phần 8: Chợ đầu tháng (mùng 1 âm) mở hoa cúc / hướng dương + nhóm quả ×1,5;
+        // Ngày trăng tròn (Rằm) cá Quý / Huyền thoại ×2 cả ngày.
+        [Test]
+        public void DefaultData_Mung1AndRam()
+        {
+            FarmDef def = LoadAsset().ToDef();
+            // Mùng 1 tháng 11 âm = 09/12/2026; Rằm tháng Chạp = 22/01/2027 (bảng âm lịch).
+            long mung1 = VietnamUtc(2026, 12, 9, 8);
+            long ram = VietnamUtc(2027, 1, 22, 3);
+            var clock = new FakeClock { UtcNowSeconds = mung1 };
+            var farm = new Farm(def, FarmState.CreateNew(def), clock);
+
+            Assert.IsTrue(ContainsEvent(farm, "cho_dau_thang"), "Mùng 1: Chợ đầu tháng");
+            Assert.IsTrue(farm.IsCropUnlocked("hoa_cuc"));
+            Assert.IsTrue(farm.IsCropUnlocked("huong_duong"));
+            def.TryGetCrop("dua_hau", out CropDef duaHau);
+            Assert.AreEqual(1.5f, farm.GetCropPriceMult(duaHau), 1e-5, "Nhóm quả ×1,5");
+            Assert.IsTrue(farm.TryEventMail(), "Quà hạt hoa trong hộp thư");
+
+            clock.UtcNowSeconds = VietnamUtc(2026, 12, 10, 8);
+            Assert.IsFalse(farm.IsCropUnlocked("hoa_cuc"), "Mùng 2: hết bán hạt hoa");
+
+            clock.UtcNowSeconds = ram;
+            Assert.IsTrue(ContainsEvent(farm, "trang_tron"), "Rằm: Ngày trăng tròn");
+            def.Fishing.TryGetFish("ca_chep_vang", out FishDef legendary);
+            def.Fishing.TryGetFish("ca_ro", out FishDef common);
+            Assert.AreEqual(2f, farm.GetFishWeightMult(legendary), 1e-5, "3 giờ sáng (Khuya)");
+            Assert.AreEqual(1f, farm.GetFishWeightMult(common), 1e-5);
+            clock.UtcNowSeconds = ram + 11 * 3600;
+            Assert.AreEqual(2f, farm.GetFishWeightMult(legendary), 1e-5, "14 giờ (Chiều) – cả ngày");
+        }
+
+        // Đợt 2 Phần 12a: Tết 2027 (mùng 1 = 06/02/2027). Đón Tết từ 23 tháng Chạp (30/01), trang trí tới mùng 10 (15/02),
+        // lì xì mùng 1–3 mỗi ngày 1 thư đúng người gửi, không gửi lại sau khi nạp save.
+        [Test]
+        public void DefaultData_Tet2027()
+        {
+            FarmDef def = LoadAsset().ToDef();
+            var clock = new FakeClock { UtcNowSeconds = VietnamUtc(2027, 1, 29, 9) };
+            var farm = new Farm(def, FarmState.CreateNew(def), clock);
+            var overlays = new System.Collections.Generic.List<string>();
+
+            Assert.IsFalse(ContainsEvent(farm, "don_tet"), "22 tháng Chạp chưa đón Tết");
+            farm.GetOverlays(overlays);
+            CollectionAssert.DoesNotContain(overlays, "tet_trang_tri");
+
+            clock.UtcNowSeconds = VietnamUtc(2027, 1, 30, 9);
+            Assert.IsTrue(ContainsEvent(farm, "don_tet"), "23 tháng Chạp");
+            farm.GetOverlays(overlays);
+            CollectionAssert.Contains(overlays, "tet_trang_tri");
+
+            string[] senders = { "Mẹ", "Bà Lụa", "Trưởng thôn" };
+            for (int i = 0; i < 3; i++)
+            {
+                clock.UtcNowSeconds = VietnamUtc(2027, 2, 6 + i, 9);
+                Assert.IsTrue(ContainsEvent(farm, "tet_nguyen_dan"), $"Mùng {i + 1}");
+                Assert.AreEqual("tet_nguyen_dan", farm.TodayEvents[0].Id, "Tết hiện đầu (loa xã chúc Tết)");
+                farm.TryEventMail();
+                string id = Farm.EventMailId($"li_xi_mung_{i + 1}", farm.Calendar.DayKey);
+                Assert.IsTrue(farm.State.Mailbox.TryGet(id, out Mail mail), id);
+                Assert.AreEqual(senders[i], mail.Sender);
+                Assert.IsTrue(mail.HasRewards);
+            }
+            // Nạp lại save cùng ngày: không gửi lại lì xì mùng 3.
+            SaveData data = SaveMapper.ToSave(farm.State, def, clock.UtcNowSeconds);
+            Assert.AreEqual(SaveLoadResult.Ok, SaveMapper.TryFromSave(data, def, out FarmState loaded));
+            var reloaded = new Farm(def, loaded, clock);
+            Assert.IsFalse(reloaded.TryEventMail());
+
+            clock.UtcNowSeconds = VietnamUtc(2027, 2, 9, 9);
+            Assert.IsFalse(ContainsEvent(farm, "li_xi_mung_3"), "Mùng 4 hết lì xì");
+            clock.UtcNowSeconds = VietnamUtc(2027, 2, 15, 9);
+            farm.GetOverlays(overlays);
+            CollectionAssert.Contains(overlays, "tet_trang_tri", "Mùng 10 vẫn trang trí");
+            clock.UtcNowSeconds = VietnamUtc(2027, 2, 16, 9);
+            Assert.IsFalse(ContainsEvent(farm, "tet_nguyen_dan"), "Mùng 11 hết Tết");
+            farm.GetOverlays(overlays);
+            CollectionAssert.DoesNotContain(overlays, "tet_trang_tri");
+        }
+
+        private static bool ContainsEvent(Farm farm, string id)
+        {
+            foreach (EventDef e in farm.TodayEvents)
+            {
+                if (e.Id == id)
+                    return true;
+            }
+            return false;
+        }
+
+        private static long VietnamUtc(int year, int month, int day, int hour)
+            => (long)GameCalendar.DayKeyFromDate(year, month, day) * 86400 + hour * 3600L + 1767225600L - GameCalendar.OffsetSeconds;
 
         // Đợt 2 Phần 9: giá chợ theo thiết kế mục 6 (0,85–1,15; hút hàng ×1,4; rớt giá ×0,7; rau lá ±10%).
         [Test]

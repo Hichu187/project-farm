@@ -189,7 +189,7 @@ namespace VeQue.View.UI
                 int seeds = AvailableSeeds(item.Crop.Id);
                 if (seeds > 0)
                     withSeeds++;
-                item.Refresh(seeds, farm.IsCropUnlocked(item.Crop.Id));
+                item.Refresh(seeds, farm.IsCropPlantable(item.Crop.Id));
                 if (!_dragging)
                     item.gameObject.SetActive(seeds > 0);
             }
@@ -200,7 +200,7 @@ namespace VeQue.View.UI
         private bool CanUse(CropDefinition crop)
         {
             Farm farm = _game.Farm;
-            if (!farm.IsCropUnlocked(crop.Id))
+            if (!farm.IsCropPlantable(crop.Id))
             {
                 Message?.Invoke($"{crop.DisplayName} mở ở cấp {crop.UnlockLevel}");
                 return false;

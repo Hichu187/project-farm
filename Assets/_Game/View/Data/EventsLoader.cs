@@ -22,6 +22,8 @@ namespace VeQue.View.Data
             public string id;
             public string title;
             public string loa;
+            // Người gửi thư quà (MailReward); trống = "Loa xã".
+            public string mailSender;
             public int priority;
             public int weight = 1;
             public int cooldownDays;
@@ -114,7 +116,7 @@ namespace VeQue.View.Data
                 }
             }
             return new EventDef(row.id, row.title, row.loa, trigger, effects, row.priority, row.weight, row.cooldownDays,
-                Math.Max(1, row.minLevel), windows);
+                Math.Max(1, row.minLevel), windows, row.mailSender);
         }
     }
 }
